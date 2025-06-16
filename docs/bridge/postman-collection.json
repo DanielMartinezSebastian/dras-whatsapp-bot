@@ -1,0 +1,72 @@
+{
+  "info": {
+    "name": "WhatsApp Bridge API",
+    "description": "Colección de endpoints para el WhatsApp Bridge",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "POST /api/send",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{bridge_url}}/api/send",
+          "host": [
+            "{{bridge_url}}"
+          ],
+          "path": [
+            "api",
+            "send"
+          ]
+        },
+        "description": "Only allow POST requests",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"recipient\": \"1234567890\",\n  \"message\": \"Hola mundo!\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST /api/download",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{bridge_url}}/api/download",
+          "host": [
+            "{{bridge_url}}"
+          ],
+          "path": [
+            "api",
+            "download"
+          ]
+        },
+        "description": "Only allow POST requests",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message_id\": \"3EB0C767D82C1D4F0A84\",\n  \"chat_jid\": \"1234567890@s.whatsapp.net\"\n}"
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "bridge_url",
+      "value": "http://127.0.0.1:8080",
+      "type": "string"
+    }
+  ]
+}

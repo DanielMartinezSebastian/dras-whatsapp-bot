@@ -129,8 +129,10 @@ describe("BotProcessor Migration", () => {
 
       expect(result.success).toBe(true);
       expect(result.classification.type).toBe("greeting");
-      expect(result.shouldReply).toBe(true);
-      expect(result.response).toBeDefined();
+      // El ContextualMessageHandler maneja mensajes contextuales silenciosamente
+      // Las respuestas se envían directamente, no a través del BotProcessor
+      expect(result.shouldReply).toBe(false);
+      expect(result.response).toBe("");
     });
 
     it("should process commands", async () => {
@@ -192,7 +194,8 @@ describe("BotProcessor Migration", () => {
       const result = await processor.processMessage(farewellMessage, mockUser);
 
       expect(result.classification.type).toBe("farewell");
-      expect(result.response).toBe("Mensaje contextual procesado exitosamente");
+      // Los mensajes contextuales se manejan silenciosamente
+      expect(result.response).toBe("");
     });
 
     it("should classify help requests", async () => {
@@ -204,7 +207,8 @@ describe("BotProcessor Migration", () => {
       const result = await processor.processMessage(helpMessage, mockUser);
 
       expect(result.classification.type).toBe("help");
-      expect(result.response).toBe("Mensaje contextual procesado exitosamente");
+      // Los mensajes contextuales se manejan silenciosamente
+      expect(result.response).toBe("");
     });
 
     it("should classify questions", async () => {
@@ -216,7 +220,8 @@ describe("BotProcessor Migration", () => {
       const result = await processor.processMessage(questionMessage, mockUser);
 
       expect(result.classification.type).toBe("question");
-      expect(result.response).toBe("Mensaje contextual procesado exitosamente");
+      // Los mensajes contextuales se manejan silenciosamente
+      expect(result.response).toBe("");
     });
   });
 
@@ -343,8 +348,9 @@ describe("BotProcessor Migration", () => {
 
       const result = await processor.processMessage(greetingMessage, mockUser);
       expect(result.success).toBe(true);
-      expect(result.shouldReply).toBe(true);
-      expect(result.response).toBe("Mensaje contextual procesado exitosamente");
+      // Los mensajes contextuales se manejan silenciosamente
+      expect(result.shouldReply).toBe(false);
+      expect(result.response).toBe("");
     });
 
     it("should provide fallback responses when no handlers match", async () => {

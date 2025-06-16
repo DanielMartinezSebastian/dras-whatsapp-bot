@@ -1,0 +1,226 @@
+openapi: "3.0.0"
+info:
+  title: "WhatsApp Bridge API"
+  version: "1.0.0"
+  description: "API para comunicarse con WhatsApp a través del bridge Go"
+  contact:
+    name: "WhatsApp Bridge"
+    url: "https://github.com/your-repo/whatsapp-bridge"
+servers:
+  -
+    url: "http://127.0.0.1:8080"
+    description: "Servidor local del bridge"
+paths:
+  /api/send:
+    post:
+      summary: "Only allow POST requests"
+      description: "Only allow POST requests"
+      requestBody: null
+      responses:
+        200:
+          description: "Respuesta exitosa"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        500:
+          $ref: "#/components/responses/InternalError"
+      examples:
+        request:
+          recipient: "1234567890"
+          message: "Hola mundo!"
+        response:
+          success: true
+          message: "Message sent to 1234567890"
+  /api/download:
+    post:
+      summary: "Only allow POST requests"
+      description: "Only allow POST requests"
+      requestBody: null
+      responses:
+        200:
+          description: "Respuesta exitosa"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponse"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        500:
+          $ref: "#/components/responses/InternalError"
+      examples:
+        request:
+          message_id: "3EB0C767D82C1D4F0A84"
+          chat_jid: "1234567890@s.whatsapp.net"
+        response:
+          success: true
+          filename: "image_20240101_120000.jpg"
+          path: "/absolute/path/to/file.jpg"
+components:
+  schemas:
+    Message:
+      type: "object"
+      properties:
+        time:
+          type: "string"
+          description: "Campo Time"
+        sender:
+          type: "string"
+          description: "Campo Sender"
+        content:
+          type: "string"
+          description: "Campo Content"
+        isfromme:
+          type: "boolean"
+          description: "Campo IsFromMe"
+        mediatype:
+          type: "string"
+          description: "Campo MediaType"
+        filename:
+          type: "string"
+          description: "Campo Filename"
+      required:
+        - time
+        - sender
+        - content
+        - isfromme
+        - mediatype
+        - filename
+    MessageStore:
+      type: "object"
+      properties:
+        db:
+          type: "object"
+          description: "Campo db"
+      required:
+        - db
+    SendMessageResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+          description: "Campo Success"
+        message:
+          type: "string"
+          description: "Campo Message"
+      required:
+        - success
+        - message
+    SendMessageRequest:
+      type: "object"
+      properties:
+        recipient:
+          type: "string"
+          description: "Campo Recipient"
+        message:
+          type: "string"
+          description: "Campo Message"
+        media_path,omitempty:
+          type: "string"
+          description: "Campo MediaPath"
+      required:
+        - recipient
+        - message
+    DownloadMediaRequest:
+      type: "object"
+      properties:
+        message_id:
+          type: "string"
+          description: "Campo MessageID"
+        chat_jid:
+          type: "string"
+          description: "Campo ChatJID"
+      required:
+        - message_id
+        - chat_jid
+    DownloadMediaResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+          description: "Campo Success"
+        message:
+          type: "string"
+          description: "Campo Message"
+        filename,omitempty:
+          type: "string"
+          description: "Campo Filename"
+        path,omitempty:
+          type: "string"
+          description: "Campo Path"
+      required:
+        - success
+        - message
+    MediaDownloader:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+          description: "Campo URL"
+        directpath:
+          type: "string"
+          description: "Campo DirectPath"
+        mediakey:
+          type: "array"
+          description: "Campo MediaKey"
+        filelength:
+          type: "integer"
+          description: "Campo FileLength"
+        filesha256:
+          type: "array"
+          description: "Campo FileSHA256"
+        fileencsha256:
+          type: "array"
+          description: "Campo FileEncSHA256"
+        mediatype:
+          type: "object"
+          description: "Campo MediaType"
+      required:
+        - url
+        - directpath
+        - mediakey
+        - filelength
+        - filesha256
+        - fileencsha256
+        - mediatype
+    BaseResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+          description: "Indica si la operación fue exitosa"
+        message:
+          type: "string"
+          description: "Mensaje descriptivo"
+        data:
+          description: "Datos de respuesta (opcional)"
+      required:
+        - success
+  responses:
+    BadRequest:
+      description: "Parámetros inválidos"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              error:
+                type: "string"
+          example:
+            error: "Recipient is required"
+    InternalError:
+      description: "Error interno del servidor"
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              message:
+                type: "string"
+          example:
+            success: false
+            message: "Error interno del bridge"

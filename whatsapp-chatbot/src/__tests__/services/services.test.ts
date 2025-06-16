@@ -44,7 +44,7 @@ describe("Services Migration", () => {
     });
 
     it("should provide basic user stats", async () => {
-      const stats = await userService.getUserStats(
+      const stats = await userService.getUserStatsById(
         "nonexistent@s.whatsapp.net"
       );
       expect(stats).toBeNull(); // Usuario no existe

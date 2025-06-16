@@ -6,6 +6,21 @@ import axios from "axios";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+// Crear mock del bridge client
+const mockBridgeClient = {
+  ping: jest.fn(),
+  sendMessage: jest.fn(),
+  isAvailable: jest.fn(),
+  getStatus: jest.fn(),
+  destroy: jest.fn(),
+  initialize: jest.fn(),
+};
+
+// Mock WhatsAppBridgeClient
+jest.mock("../../bridge", () => ({
+  WhatsAppBridgeClient: jest.fn().mockImplementation(() => mockBridgeClient),
+}));
+
 // Mock logger ANTES de importar el cliente
 jest.mock("../../utils/logger", () => ({
   logInfo: jest.fn(),
@@ -44,6 +59,22 @@ describe("WhatsAppClient", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Resetear mocks del bridge client
+    mockBridgeClient.ping.mockResolvedValue(true);
+    mockBridgeClient.sendMessage.mockResolvedValue({
+      success: true,
+      data: { messageId: "test123" },
+    });
+    mockBridgeClient.isAvailable.mockResolvedValue(true);
+    mockBridgeClient.getStatus.mockResolvedValue({ connected: true });
+    mockBridgeClient.initialize.mockResolvedValue(true);
+
+    // Resetear mock de axios
+    mockedAxios.post.mockResolvedValue({
+      status: 200,
+      data: { success: true, messageId: "test123" },
+    });
 
     config = {
       apiBaseUrl: "http://localhost:8080",
@@ -109,7 +140,8 @@ describe("WhatsAppClient", () => {
     });
 
     it("should fail to connect when bridge is not available", async () => {
-      mockedAxios.post.mockRejectedValue(new Error("Connection failed"));
+      // Configurar el mock para que ping falle
+      mockBridgeClient.ping.mockResolvedValue(false);
 
       const connected = await client.connect();
 
@@ -152,30 +184,22 @@ describe("WhatsAppClient", () => {
   });
 
   describe("Message Sending", () => {
-    beforeEach(() => {
-      mockedAxios.post.mockResolvedValue({
-        status: 200,
-        data: { success: true, messageId: "test123" },
-      });
-    });
-
     it("should send message successfully", async () => {
       const result = await client.sendMessage("1234567890", "Test message");
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      expect(mockedAxios.post).toHaveBeenCalledWith(
-        "http://localhost:8080/api/send",
-        {
-          recipient: "1234567890",
-          message: "Test message",
-        },
-        expect.any(Object)
+      expect(mockBridgeClient.sendMessage).toHaveBeenCalledWith(
+        "1234567890",
+        "Test message"
       );
     });
 
     it("should handle send message error", async () => {
-      mockedAxios.post.mockRejectedValue(new Error("Send failed"));
+      mockBridgeClient.sendMessage.mockResolvedValue({
+        success: false,
+        message: "Send failed",
+      });
 
       const result = await client.sendMessage("1234567890", "Test message");
 

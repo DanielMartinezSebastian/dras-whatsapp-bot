@@ -11,6 +11,62 @@ jest.mock("../../../utils/logger", () => ({
   logWarn: jest.fn(),
 }));
 
+// Mock de UserService para UsersCommand
+jest.mock("../../../services/userService", () => ({
+  UserService: jest.fn().mockImplementation(() => ({
+    init: jest.fn().mockResolvedValue(undefined),
+    getAllUsers: jest.fn().mockResolvedValue([
+      {
+        id: 1,
+        whatsapp_jid: "123456789@s.whatsapp.net",
+        phone_number: "123456789",
+        display_name: "Test User 1",
+        user_type: "admin",
+        created_at: new Date(),
+        updated_at: new Date(),
+        total_messages: 10,
+        is_active: true,
+      },
+      {
+        id: 2,
+        whatsapp_jid: "987654321@s.whatsapp.net",
+        phone_number: "987654321",
+        display_name: "Test User 2",
+        user_type: "customer",
+        created_at: new Date(),
+        updated_at: new Date(),
+        total_messages: 5,
+        is_active: true,
+      },
+    ]),
+    searchUsers: jest.fn().mockResolvedValue([]),
+    getUserByPhone: jest.fn().mockResolvedValue(null),
+    updateUser: jest.fn().mockResolvedValue(true),
+    deleteUser: jest.fn().mockResolvedValue(true),
+    getUserStats: jest.fn().mockResolvedValue({
+      totalUsers: 2,
+      activeUsers: 2,
+      inactiveUsers: 0,
+      usersByType: {
+        admin: 1,
+        customer: 1,
+        business: 0,
+      },
+      recentActivity: {
+        last24h: 2,
+        lastWeek: 2,
+        lastMonth: 2,
+      },
+      totalMessages: 15,
+      averageMessagesPerUser: 7.5,
+      newUsersToday: 0,
+      newUsersThisWeek: 1,
+      newUsersThisMonth: 2,
+    }),
+    getRecentActivity: jest.fn().mockResolvedValue([]),
+  })),
+}));
+
 describe("Admin Commands Integration", () => {
   let registry: CommandRegistry;
   let mockAdminUser: User;

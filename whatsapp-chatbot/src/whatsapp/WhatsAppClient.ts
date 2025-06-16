@@ -1,3 +1,4 @@
+import { WhatsAppBridgeClient } from "../bridge";
 import axios, { AxiosResponse } from "axios";
 import { EventEmitter } from "events";
 import { IWhatsAppClient } from "../interfaces/whatsapp/IWhatsAppClient";
@@ -42,6 +43,9 @@ export class WhatsAppClient extends EventEmitter implements IWhatsAppClient {
 
   // Control de contadores diarios
   private lastDayReset: number;
+
+  // Cliente bridge tipado
+  private bridgeClient: WhatsAppBridgeClient;
 
   constructor(config?: Partial<WhatsAppClientConfig>) {
     super();
@@ -96,6 +100,13 @@ export class WhatsAppClient extends EventEmitter implements IWhatsAppClient {
     logInfo(
       `🚨 POLÍTICA ANTI-HISTORIAL: Solo procesando mensajes desde ${this.lastProcessedTimestamp}`
     );
+
+    // Inicializar cliente bridge tipado
+    this.bridgeClient = new WhatsAppBridgeClient({
+      baseUrl: this.config.apiBaseUrl,
+      timeout: 15000,
+      enableLogging: true,
+    });
   }
   isConnected(): boolean {
     throw new Error("Method not implemented.");
@@ -374,30 +385,23 @@ export class WhatsAppClient extends EventEmitter implements IWhatsAppClient {
         `📤 Enviando mensaje a ${recipient}: ${message.substring(0, 50)}...`
       );
 
-      const response: AxiosResponse<BridgeResponse> = await axios.post(
-        `${this.config.apiBaseUrl}/api/send`,
-        {
-          recipient: recipient,
-          message: message,
-        },
-        {
-          timeout: 15000, // Aumentado a 15 segundos
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await this.bridgeClient.sendMessage(recipient, message);
 
-      if (response.data) {
+      if (response.success) {
         logInfo(`✅ Mensaje enviado exitosamente`);
         // Registrar la respuesta para rate limiting
         await this.recordResponse(recipient);
         this.stats.messagesSent++;
         return { success: true, data: response.data };
       } else {
-        logError(`❌ Respuesta inesperada del bridge`);
+        logError(
+          `❌ Error del bridge: ${response.message || "Error desconocido"}`
+        );
         this.stats.errors++;
-        return { success: false, error: "Respuesta inesperada" };
+        return {
+          success: false,
+          error: response.message || "Error del bridge",
+        };
       }
     } catch (error) {
       logError(`❌ Error enviando mensaje: ${(error as Error).message}`);
@@ -411,24 +415,16 @@ export class WhatsAppClient extends EventEmitter implements IWhatsAppClient {
    */
   async testConnection(): Promise<boolean> {
     try {
-      const response = await axios.post(
-        `${this.config.apiBaseUrl}/api/send`,
-        {
-          test: "ping",
-        },
-        { timeout: 5000 }
-      );
+      const isAvailable = await this.bridgeClient.ping();
 
-      // Si obtenemos "Recipient is required", significa que está funcionando
-      return response.status === 200;
-    } catch (error: any) {
-      if (error.response && error.response.data) {
-        const responseData = error.response.data.toString().trim();
-        if (responseData === "Recipient is required") {
-          logInfo(`✅ Bridge funcionando correctamente`);
-          return true; // El bridge está funcionando
-        }
+      if (isAvailable) {
+        logInfo(`✅ Bridge funcionando correctamente`);
+      } else {
+        logError(`❌ Bridge no disponible`);
       }
+
+      return isAvailable;
+    } catch (error: any) {
       logError(`❌ Conexión fallida: ${error.message}`);
       return false;
     }

@@ -33,7 +33,12 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "prebuild": "npm run clean"
+    "prebuild": "npm run clean",
+    "bridge:types": "node ../scripts/analyze-bridge-types.js",
+    "bridge:client": "node ../scripts/generate-bridge-client.js",
+    "bridge:setup": "node ../scripts/setup-bridge-types.js",
+    "bridge:test": "jest bridge-client.test.ts",
+    "bridge:example": "ts-node examples/basic-bridge-usage.ts"
   },
   "dependencies": {
     "axios": "^1.9.0",
