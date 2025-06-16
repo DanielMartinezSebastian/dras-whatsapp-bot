@@ -299,9 +299,10 @@ export class StatsCommand extends Command {
       // Obtener valores por defecto y configuración de respuesta
       const defaultValues = this.getValueByPath("stats.default_values");
       const noRecord = defaultValues?.no_record || "Sin registro disponible";
-      const noRegistry = defaultValues?.no_registry || "Sin conexión al registro";
+      const noRegistry =
+        defaultValues?.no_registry || "Sin conexión al registro";
       const noData = defaultValues?.no_data || "Sin datos";
-      
+
       // Obtener configuración de respuesta
       const responseConfig = this.getValueByPath("stats.response.commands");
 
@@ -319,18 +320,23 @@ export class StatsCommand extends Command {
         basicLevel: noData,
         userLevel: noData,
         adminLevel: noData,
-        systemLevel: noData
+        systemLevel: noData,
       };
 
       // Construir respuesta usando configuración
-      let response = this.replaceVariables(
-        responseConfig?.title || "⚡ ESTADÍSTICAS DE COMANDOS",
-        variables
-      ) + "\n\n";
+      let response =
+        this.replaceVariables(
+          responseConfig?.title || "⚡ ESTADÍSTICAS DE COMANDOS",
+          variables
+        ) + "\n\n";
 
       // Sección de actividad
       if (responseConfig?.sections?.activity) {
-        response += this.replaceVariables(responseConfig.sections.activity.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.activity.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.activity.items) {
           for (const item of responseConfig.sections.activity.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -341,7 +347,11 @@ export class StatsCommand extends Command {
 
       // Sección de registro
       if (responseConfig?.sections?.registry) {
-        response += this.replaceVariables(responseConfig.sections.registry.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.registry.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.registry.items) {
           for (const item of responseConfig.sections.registry.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -352,7 +362,11 @@ export class StatsCommand extends Command {
 
       // Sección por nivel
       if (responseConfig?.sections?.by_level) {
-        response += this.replaceVariables(responseConfig.sections.by_level.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.by_level.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.by_level.items) {
           for (const item of responseConfig.sections.by_level.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -371,7 +385,9 @@ export class StatsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "stats.error_messages.commands_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `Error obteniendo estadísticas de comandos: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `Error obteniendo estadísticas de comandos: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
       throw new Error(errorMessage);
     }
@@ -386,7 +402,7 @@ export class StatsCommand extends Command {
       const defaultValues = this.getValueByPath("stats.default_values");
       const noRecord = defaultValues?.no_record || "Sin registro";
       const noData = defaultValues?.no_data || "Sin datos";
-      
+
       // Obtener configuración de respuesta
       const responseConfig = this.getValueByPath("stats.response.permissions");
 
@@ -399,18 +415,23 @@ export class StatsCommand extends Command {
         definedRoles: noData,
         permissionMappings: noData,
         activeRestrictions: noData,
-        configuredExceptions: noData
+        configuredExceptions: noData,
       };
 
       // Construir respuesta usando configuración
-      let response = this.replaceVariables(
-        responseConfig?.title || "� ESTADÍSTICAS DE PERMISOS",
-        variables
-      ) + "\n\n";
+      let response =
+        this.replaceVariables(
+          responseConfig?.title || "� ESTADÍSTICAS DE PERMISOS",
+          variables
+        ) + "\n\n";
 
       // Sección de actividad
       if (responseConfig?.sections?.activity) {
-        response += this.replaceVariables(responseConfig.sections.activity.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.activity.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.activity.items) {
           for (const item of responseConfig.sections.activity.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -421,7 +442,11 @@ export class StatsCommand extends Command {
 
       // Sección de configuración
       if (responseConfig?.sections?.configuration) {
-        response += this.replaceVariables(responseConfig.sections.configuration.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.configuration.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.configuration.items) {
           for (const item of responseConfig.sections.configuration.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -440,7 +465,9 @@ export class StatsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "stats.error_messages.permissions_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `Error obteniendo estadísticas de permisos: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `Error obteniendo estadísticas de permisos: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
       throw new Error(errorMessage);
     }
@@ -457,7 +484,7 @@ export class StatsCommand extends Command {
       // Obtener valores por defecto y configuración de respuesta
       const defaultValues = this.getValueByPath("stats.default_values");
       const noData = defaultValues?.no_data || "Sin datos";
-      
+
       // Obtener configuración de respuesta
       const responseConfig = this.getValueByPath("stats.response.system");
 
@@ -487,18 +514,23 @@ export class StatsCommand extends Command {
         platform: process.platform,
         architecture: process.arch,
         pid: process.pid,
-        workingDirectory: process.cwd()
+        workingDirectory: process.cwd(),
       };
 
       // Construir respuesta usando configuración
-      let response = this.replaceVariables(
-        responseConfig?.title || "🔧 ESTADÍSTICAS DEL SISTEMA",
-        variables
-      ) + "\n\n";
+      let response =
+        this.replaceVariables(
+          responseConfig?.title || "🔧 ESTADÍSTICAS DEL SISTEMA",
+          variables
+        ) + "\n\n";
 
       // Sección de servicios
       if (responseConfig?.sections?.services) {
-        response += this.replaceVariables(responseConfig.sections.services.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.services.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.services.items) {
           for (const item of responseConfig.sections.services.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -509,7 +541,11 @@ export class StatsCommand extends Command {
 
       // Sección de recursos
       if (responseConfig?.sections?.resources) {
-        response += this.replaceVariables(responseConfig.sections.resources.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.resources.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.resources.items) {
           for (const item of responseConfig.sections.resources.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -520,7 +556,9 @@ export class StatsCommand extends Command {
 
       // Sección de logs
       if (responseConfig?.sections?.logs) {
-        response += this.replaceVariables(responseConfig.sections.logs.title, variables) + "\n";
+        response +=
+          this.replaceVariables(responseConfig.sections.logs.title, variables) +
+          "\n";
         if (responseConfig.sections.logs.items) {
           for (const item of responseConfig.sections.logs.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -539,7 +577,9 @@ export class StatsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "stats.error_messages.system_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `Error obteniendo estadísticas del sistema: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `Error obteniendo estadísticas del sistema: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
       throw new Error(errorMessage);
     }
@@ -601,8 +641,18 @@ export class StatsCommand extends Command {
       let response: string;
 
       // Validar tipo de estadística
-      const validTypes = ["general", "users", "usuarios", "commands", "comandos", "permissions", "permisos", "system", "sistema"];
-      
+      const validTypes = [
+        "general",
+        "users",
+        "usuarios",
+        "commands",
+        "comandos",
+        "permissions",
+        "permisos",
+        "system",
+        "sistema",
+      ];
+
       if (!validTypes.includes(type.toLowerCase())) {
         const errorMessage = this.getConfigMessage(
           "stats.error_messages.invalid_type",
@@ -648,7 +698,9 @@ export class StatsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "stats.error_messages.general_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `❌ Error ejecutando comando stats: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `❌ Error ejecutando comando stats: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
 
       return {

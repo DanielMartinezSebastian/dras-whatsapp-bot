@@ -4,17 +4,29 @@ import {
   CommandResult,
   CommandMetadata,
 } from "../../../types/commands";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 
 /**
  * Comando de panel de administración
  * Muestra estadísticas completas del sistema y opciones administrativas
  */
 export class AdminPanelCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "admin",
       aliases: ["panel", "admin-panel"],
-      description: "Muestra el panel de administración del bot",
+      description: this.getConfigMessage(
+        "admin.description",
+        {},
+        "Muestra el panel de administración del bot"
+      ),
       syntax: "!admin",
       category: "admin",
       permissions: ["admin"],
@@ -39,6 +51,77 @@ export class AdminPanelCommand extends Command {
       text === "admin" ||
       text === "panel"
     );
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
+    if (typeof template !== 'string') {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path.split(".").reduce((current, key) => current?.[key], config as any);
   }
 
   async execute(context: CommandContext): Promise<CommandResult> {

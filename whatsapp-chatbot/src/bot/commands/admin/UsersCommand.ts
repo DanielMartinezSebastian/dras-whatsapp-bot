@@ -7,6 +7,7 @@ import {
 import { UserType, User } from "../../../types/core/user.types";
 import { logError } from "../../../utils/logger";
 import { UserService } from "../../../services/userService";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 
 /**
  * Comando administrativo para gestionar usuarios del sistema
@@ -14,6 +15,12 @@ import { UserService } from "../../../services/userService";
  */
 export class UsersCommand extends Command {
   private userService?: UserService;
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
 
   private async getUserService(): Promise<UserService> {
     if (!this.userService) {
@@ -27,7 +34,11 @@ export class UsersCommand extends Command {
     return {
       name: "users",
       aliases: ["usuarios", "user-admin", "gestionar-usuarios"],
-      description: "Administración completa de usuarios del sistema",
+      description: this.getConfigMessage(
+        "users.description",
+        {},
+        "Administración completa de usuarios del sistema"
+      ),
       syntax: "!users [list|search|info|update|delete] [parámetros]",
       category: "admin",
       permissions: ["admin"],
@@ -52,6 +63,77 @@ export class UsersCommand extends Command {
   }
 
   /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
+    if (typeof template !== 'string') {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path.split(".").reduce((current, key) => current?.[key], config as any);
+  }
+
+  /**
    * Ejecuta el comando de administración de usuarios
    */
   async execute(context: CommandContext): Promise<CommandResult> {
@@ -60,10 +142,14 @@ export class UsersCommand extends Command {
     try {
       // Validación de acceso administrativo
       if (!this.validateAdminAccess(context)) {
+        const errorMessage = this.getConfigMessage(
+          "users.error_messages.permission_denied",
+          {},
+          "❌ Acceso denegado. Solo administradores pueden gestionar usuarios."
+        );
         return {
           success: false,
-          response:
-            "❌ **Acceso Denegado**\n\nEste comando requiere permisos de administrador.",
+          response: errorMessage,
           shouldReply: true,
           data: {
             commandName: this.metadata.name,
@@ -110,17 +196,37 @@ export class UsersCommand extends Command {
           return await this.deleteUser(context);
 
         default:
-          return await this.showUsersHelp(context, startTime);
+          const invalidActionMessage = this.getConfigMessage(
+            "users.error_messages.invalid_action",
+            { action: action || "no especificada" },
+            `❌ Acción no válida: '${action || "no especificada"}'\n\nAcciones disponibles: list, search, info, update, stats`
+          );
+          return {
+            success: false,
+            response: invalidActionMessage,
+            shouldReply: true,
+            data: {
+              commandName: this.metadata.name,
+              executionTime: Date.now() - startTime,
+              timestamp: new Date(),
+              action: action,
+              userId: context.user?.id?.toString(),
+            },
+          };
       }
     } catch (error) {
       logError(
         "Error en UsersCommand: " +
           (error instanceof Error ? error.message : "Unknown error")
       );
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.general_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error ejecutando comando users: Error interno del sistema"
+      );
       return {
         success: false,
-        response:
-          "❌ **Error interno del sistema**\n\nNo se pudo ejecutar el comando de usuarios.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -149,7 +255,11 @@ export class UsersCommand extends Command {
       // Obtener todos los usuarios reales de la base de datos
       const allUsers = await userService.getAllUsers();
 
-      const limit = parseInt(context.args[1]) || 10;
+      const limit = parseInt(context.args[1]) || parseInt(this.getConfigMessage(
+        "users.default_values.page_size",
+        {},
+        "10"
+      )) || 10;
       const page = parseInt(context.args[2]) || 1;
       const start = (page - 1) * limit;
       const end = start + limit;
@@ -158,20 +268,39 @@ export class UsersCommand extends Command {
       const totalUsers = allUsers.length;
       const totalPages = Math.ceil(totalUsers / limit);
 
-      let response = "👥 **Lista de Usuarios del Sistema**\n\n";
-      response += `📊 **Resumen:** ${totalUsers} usuarios total | Página ${page}/${totalPages}\n\n`;
+      let response = this.getConfigMessage(
+        "users.response.sections.list.title",
+        { page, totalPages },
+        `� **Lista de Usuarios del Sistema** (Página ${page}/${totalPages})`
+      ) + "\n\n";
 
       if (paginatedUsers.length === 0) {
-        response += "📭 No se encontraron usuarios en esta página.\n\n";
+        response += this.getConfigMessage(
+          "users.response.sections.list.no_users",
+          {},
+          "📭 No se encontraron usuarios en esta página."
+        ) + "\n\n";
       } else {
         paginatedUsers.forEach((user: User, index: number) => {
           const statusIcon = user.is_active ? "🟢" : "🔴";
           const typeEmoji = this.getUserTypeEmoji(user.user_type);
-          const phone = user.phone_number || "N/A";
-          const name = user.display_name || "Sin nombre";
+          const phone = user.phone_number || this.getConfigMessage(
+            "users.default_values.not_available",
+            {},
+            "N/A"
+          );
+          const name = user.display_name || this.getConfigMessage(
+            "users.default_values.unknown",
+            {},
+            "Sin nombre"
+          );
           const lastSeen = user.updated_at
             ? this.getRelativeTime(new Date(user.updated_at))
-            : "Nunca";
+            : this.getConfigMessage(
+                "users.default_values.never",
+                {},
+                "Nunca"
+              );
 
           response += `${statusIcon} **${
             start + index + 1
@@ -200,6 +329,16 @@ export class UsersCommand extends Command {
       response += `• \`!users search <nombre>\` - Buscar usuario\n`;
       response += `• \`!users stats\` - Estadísticas generales`;
 
+      const footerMessage = this.getConfigMessage(
+        "users.response.sections.list.footer",
+        { totalUsers, page, totalPages },
+        `📊 Total: ${totalUsers} usuarios • Página ${page}/${totalPages}`
+      );
+
+      if (footerMessage && totalUsers > 0) {
+        response += `\n\n${footerMessage}`;
+      }
+
       return {
         success: true,
         response,
@@ -219,10 +358,14 @@ export class UsersCommand extends Command {
       logError(
         `Error en listUsers: ${error instanceof Error ? error.message : error}`
       );
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.database_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error al obtener la lista de usuarios de la base de datos."
+      );
       return {
         success: false,
-        response:
-          "❌ Error al obtener la lista de usuarios de la base de datos.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -244,10 +387,14 @@ export class UsersCommand extends Command {
     const searchTerm = context.args.slice(1).join(" ");
 
     if (!searchTerm) {
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.missing_parameter",
+        { action: "search", parameter: "término de búsqueda" },
+        "❌ **Parámetro requerido**\n\nEspecifica un término de búsqueda.\n\n📖 **Uso:** `!users search <nombre|teléfono>`"
+      );
       return {
         success: false,
-        response:
-          "❌ **Parámetro requerido**\n\nEspecifica un término de búsqueda.\n\n📖 **Uso:** `!users search <nombre|teléfono>`",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -265,23 +412,44 @@ export class UsersCommand extends Command {
       // Buscar usuarios por nombre o teléfono
       const results = await userService.searchUsers(searchTerm);
 
-      let response = `🔍 **Resultados de búsqueda para:** "${searchTerm}"\n\n`;
+      let response = this.getConfigMessage(
+        "users.response.sections.search.title",
+        { searchTerm },
+        `🔍 **Resultados de búsqueda para:** "${searchTerm}"`
+      ) + "\n\n";
 
       if (results.length === 0) {
-        response += "❌ **No se encontraron usuarios**\n\n";
-        response += "Verifica que el nombre o teléfono sea correcto.\n\n";
+        response += this.getConfigMessage(
+          "users.response.sections.search.no_results",
+          { searchTerm },
+          `❌ **No se encontraron usuarios**\n\nVerifica que el nombre o teléfono sea correcto para: "${searchTerm}"`
+        ) + "\n\n";
+        
         response += "💡 **Sugerencias:**\n";
         response += "• Usa solo parte del nombre\n";
         response += "• Verifica que el teléfono esté registrado\n";
         response += "• Usa `!users list` para ver todos los usuarios";
       } else {
-        response += `📊 **${results.length} usuario(s) encontrado(s):**\n\n`;
+        const footerMessage = this.getConfigMessage(
+          "users.response.sections.search.footer",
+          { resultsCount: results.length },
+          `📊 **${results.length} usuario(s) encontrado(s):**`
+        );
+        response += footerMessage + "\n\n";
 
         results.forEach((user: User, index: number) => {
           const statusIcon = user.is_active ? "🟢" : "🔴";
           const typeEmoji = this.getUserTypeEmoji(user.user_type);
-          const name = user.display_name || "Sin nombre";
-          const phone = user.phone_number || "N/A";
+          const name = user.display_name || this.getConfigMessage(
+            "users.default_values.unknown",
+            {},
+            "Sin nombre"
+          );
+          const phone = user.phone_number || this.getConfigMessage(
+            "users.default_values.not_available",
+            {},
+            "N/A"
+          );
 
           response += `${statusIcon} **${index + 1}.** ${typeEmoji} ${name}\n`;
           response += `   📱 ${phone} | 🆔 ${user.id}\n`;
@@ -314,9 +482,14 @@ export class UsersCommand extends Command {
           error instanceof Error ? error.message : error
         }`
       );
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.database_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error al buscar usuarios en la base de datos."
+      );
       return {
         success: false,
-        response: "❌ Error al buscar usuarios en la base de datos.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -338,10 +511,14 @@ export class UsersCommand extends Command {
     const phone = context.args[1];
 
     if (!phone) {
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.missing_parameter",
+        { action: "info", parameter: "teléfono del usuario" },
+        "❌ **Parámetro requerido**\n\nEspecifica el teléfono del usuario.\n\n📖 **Uso:** `!users info <teléfono>`"
+      );
       return {
         success: false,
-        response:
-          "❌ **Parámetro requerido**\n\nEspecifica el teléfono del usuario.\n\n📖 **Uso:** `!users info <teléfono>`",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -360,9 +537,14 @@ export class UsersCommand extends Command {
       const user = await userService.getUserByPhone(phone);
 
       if (!user) {
+        const errorMessage = this.getConfigMessage(
+          "users.error_messages.user_not_found",
+          { identifier: phone },
+          `❌ **Usuario no encontrado**\n\nNo existe un usuario registrado con el teléfono: ${phone}\n\n💡 Usa \`!users search <nombre>\` para buscar usuarios.`
+        );
         return {
           success: false,
-          response: `❌ **Usuario no encontrado**\n\nNo existe un usuario registrado con el teléfono: ${phone}\n\n💡 Usa \`!users search <nombre>\` para buscar usuarios.`,
+          response: errorMessage,
           shouldReply: true,
           data: {
             commandName: this.metadata.name,
@@ -377,34 +559,50 @@ export class UsersCommand extends Command {
 
       const typeEmoji = this.getUserTypeEmoji(user.user_type);
       const statusIcon = user.is_active ? "🟢" : "🔴";
-      const name = user.display_name || "Sin nombre";
+      const name = user.display_name || this.getConfigMessage(
+        "users.default_values.unknown",
+        {},
+        "Sin nombre"
+      );
 
-      let response = `👤 **Información de Usuario**\n\n`;
+      let response = this.getConfigMessage(
+        "users.response.sections.info.title",
+        {},
+        "👤 **Información de Usuario**"
+      ) + "\n\n";
+
       response += `${statusIcon} **${name}** ${typeEmoji}\n\n`;
 
-      response += `📋 **Datos básicos:**\n`;
-      response += `• 📱 Teléfono: ${user.phone_number || "N/A"}\n`;
+      // Sección de datos básicos
+      const basicData = this.getConfigMessage(
+        "users.response.sections.info.sections.basic.title",
+        {},
+        "📋 **Datos básicos:**"
+      );
+      response += `${basicData}\n`;
+      response += `• 📱 Teléfono: ${user.phone_number || this.getConfigMessage("users.default_values.not_available", {}, "N/A")}\n`;
       response += `• 🆔 ID: ${user.id}\n`;
       response += `• 📧 JID: ${user.whatsapp_jid}\n`;
       response += `• 📅 Registro: ${
         user.created_at
           ? new Date(user.created_at).toLocaleDateString("es-ES")
-          : "N/A"
+          : this.getConfigMessage("users.default_values.date_unavailable", {}, "N/A")
       }\n`;
       response += `• 🔄 Actualizado: ${
         user.updated_at
           ? new Date(user.updated_at).toLocaleDateString("es-ES")
-          : "N/A"
+          : this.getConfigMessage("users.default_values.not_available", {}, "N/A")
       }\n`;
       response += `• 👥 Tipo: ${this.getUserTypeName(user.user_type)}\n\n`;
 
+      // Sección de estado
       response += `📊 **Estado:**\n`;
       response += `• ⚡ Estado: ${user.is_active ? "Activo" : "Inactivo"}\n`;
       if (user.metadata?.language) {
         response += `• 🌐 Idioma: ${user.metadata.language}\n`;
       }
       if (user.metadata?.timezone) {
-        response += `• � Zona horaria: ${user.metadata.timezone}\n`;
+        response += `• 🕒 Zona horaria: ${user.metadata.timezone}\n`;
       }
       response += "\n";
 
@@ -441,10 +639,14 @@ export class UsersCommand extends Command {
           error instanceof Error ? error.message : error
         }`
       );
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.database_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error al obtener información del usuario de la base de datos."
+      );
       return {
         success: false,
-        response:
-          "❌ Error al obtener información del usuario de la base de datos.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -468,10 +670,14 @@ export class UsersCommand extends Command {
     const newValue = values.join(" ");
 
     if (!phone || !field || !newValue) {
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.missing_parameter",
+        { action: "update", parameter: "teléfono, campo y nuevo valor" },
+        "❌ **Parámetros requeridos**\n\n📖 **Uso:** `!users update <teléfono> <campo> <nuevo_valor>`\n\n🔧 **Campos disponibles:**\n• `type` - Tipo de usuario\n• `name` - Nombre del usuario\n• `status` - Estado (active/inactive)"
+      );
       return {
         success: false,
-        response:
-          "❌ **Parámetros requeridos**\n\n📖 **Uso:** `!users update <teléfono> <campo> <nuevo_valor>`\n\n🔧 **Campos disponibles:**\n• `type` - Tipo de usuario\n• `name` - Nombre del usuario\n• `status` - Estado (active/inactive)",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -489,9 +695,14 @@ export class UsersCommand extends Command {
       // Buscar usuario por teléfono
       const user = await userService.getUserByPhone(phone);
       if (!user) {
+        const errorMessage = this.getConfigMessage(
+          "users.error_messages.user_not_found",
+          { identifier: phone },
+          `❌ **Usuario no encontrado**\n\nNo existe un usuario registrado con el teléfono: ${phone}`
+        );
         return {
           success: false,
-          response: `❌ **Usuario no encontrado**\n\nNo existe un usuario registrado con el teléfono: ${phone}`,
+          response: errorMessage,
           shouldReply: true,
           data: {
             commandName: this.metadata.name,
@@ -524,14 +735,23 @@ export class UsersCommand extends Command {
             updateData.user_type = newValue.toLowerCase() as UserType;
             await userService.updateUserByPhone(phone, updateData);
 
-            response = `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Tipo cambiado a: **${this.getUserTypeName(
-              newValue.toLowerCase() as UserType
-            )}**\n\n⚠️ Los cambios se aplicarán en el próximo mensaje del usuario.`;
+            response = this.getConfigMessage(
+              "users.response.sections.update.success",
+              { 
+                field: this.getConfigMessage(`users.fields.type`, {}, "tipo"),
+                oldValue: this.getUserTypeName(user.user_type),
+                newValue: this.getUserTypeName(newValue.toLowerCase() as UserType)
+              },
+              `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Tipo cambiado a: **${this.getUserTypeName(newValue.toLowerCase() as UserType)}**`
+            );
+            response += "\n\n⚠️ Los cambios se aplicarán en el próximo mensaje del usuario.";
             success = true;
           } else {
-            response = `❌ **Tipo de usuario inválido**\n\n✅ **Tipos válidos:** ${validTypes.join(
-              ", "
-            )}`;
+            response = this.getConfigMessage(
+              "users.error_messages.invalid_user_type",
+              { userType: newValue },
+              `❌ **Tipo de usuario inválido**\n\n✅ **Tipos válidos:** ${validTypes.join(", ")}`
+            );
           }
           break;
 
@@ -540,7 +760,15 @@ export class UsersCommand extends Command {
           updateData.display_name = newValue;
           await userService.updateUserByPhone(phone, updateData);
 
-          response = `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n📝 Nombre cambiado a: **${newValue}**`;
+          response = this.getConfigMessage(
+            "users.response.sections.update.success",
+            { 
+              field: this.getConfigMessage(`users.fields.name`, {}, "nombre"),
+              oldValue: user.display_name || "Sin nombre",
+              newValue: newValue
+            },
+            `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n📝 Nombre cambiado a: **${newValue}**`
+          );
           success = true;
           break;
 
@@ -557,9 +785,15 @@ export class UsersCommand extends Command {
             updateData.is_active = isActive;
             await userService.updateUserByPhone(phone, updateData);
 
-            response = `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Estado cambiado a: **${
-              isActive ? "Activo" : "Inactivo"
-            }**`;
+            response = this.getConfigMessage(
+              "users.response.sections.update.success",
+              { 
+                field: this.getConfigMessage(`users.fields.status`, {}, "estado"),
+                oldValue: user.is_active ? "Activo" : "Inactivo",
+                newValue: isActive ? "Activo" : "Inactivo"
+              },
+              `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Estado cambiado a: **${isActive ? "Activo" : "Inactivo"}**`
+            );
             success = true;
           } else {
             response = `❌ **Estado inválido**\n\n✅ **Estados válidos:** active, inactive`;
@@ -567,7 +801,11 @@ export class UsersCommand extends Command {
           break;
 
         default:
-          response = `❌ **Campo desconocido:** ${field}\n\n🔧 **Campos disponibles:**\n• \`type\` - Tipo de usuario\n• \`name\` - Nombre del usuario\n• \`status\` - Estado (active/inactive)`;
+          response = this.getConfigMessage(
+            "users.error_messages.invalid_field",
+            { field },
+            `❌ **Campo desconocido:** ${field}\n\n🔧 **Campos disponibles:**\n• \`type\` - Tipo de usuario\n• \`name\` - Nombre del usuario\n• \`status\` - Estado (active/inactive)`
+          );
       }
 
       return {
@@ -589,9 +827,14 @@ export class UsersCommand extends Command {
       logError(
         `Error en updateUser: ${error instanceof Error ? error.message : error}`
       );
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.update_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error al actualizar el usuario en la base de datos."
+      );
       return {
         success: false,
-        response: "❌ Error al actualizar el usuario en la base de datos.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -618,9 +861,19 @@ export class UsersCommand extends Command {
       // Obtener estadísticas reales de la base de datos
       const stats = await userService.getUserStats();
 
-      let response = "📊 **Estadísticas de Usuarios del Sistema**\n\n";
+      let response = this.getConfigMessage(
+        "users.response.sections.stats.title",
+        {},
+        "📊 **Estadísticas de Usuarios del Sistema**"
+      ) + "\n\n";
 
-      response += `👥 **Resumen general:**\n`;
+      // Sección de resumen general
+      const summaryTitle = this.getConfigMessage(
+        "users.response.sections.stats.sections.summary.title",
+        {},
+        "👥 **Resumen general:**"
+      );
+      response += `${summaryTitle}\n`;
       response += `• Total usuarios: **${stats.totalUsers}**\n`;
       response += `• Usuarios activos: **${stats.activeUsers}** (${
         stats.totalUsers > 0
@@ -633,17 +886,26 @@ export class UsersCommand extends Command {
           : 0
       }%)\n\n`;
 
-      response += `📋 **Distribución por tipo:**\n`;
+      // Sección por tipo de usuario
+      const byTypeTitle = this.getConfigMessage(
+        "users.response.sections.stats.sections.by_type.title",
+        {},
+        "📋 **Distribución por tipo:**"
+      );
+      response += `${byTypeTitle}\n`;
       Object.entries(stats.usersByType).forEach(([type, count]) => {
         if (count > 0) {
           const emoji = this.getUserTypeEmoji(type as UserType);
+          const typeName = this.getConfigMessage(
+            `users.user_types.${type}.name`,
+            {},
+            this.getUserTypeName(type as UserType)
+          );
           const percentage =
             stats.totalUsers > 0
               ? ((count / stats.totalUsers) * 100).toFixed(1)
               : 0;
-          response += `• ${emoji} ${this.getUserTypeName(
-            type as UserType
-          )}: **${count}** (${percentage}%)\n`;
+          response += `• ${emoji} ${typeName}: **${count}** (${percentage}%)\n`;
         }
       });
 
@@ -680,9 +942,14 @@ export class UsersCommand extends Command {
           error instanceof Error ? error.message : error
         }`
       );
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.database_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error al obtener estadísticas de la base de datos."
+      );
       return {
         success: false,
-        response: "❌ Error al obtener estadísticas de la base de datos.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -705,10 +972,14 @@ export class UsersCommand extends Command {
     const confirmFlag = context.args[2];
 
     if (!phone) {
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.missing_parameter",
+        { action: "delete", parameter: "teléfono del usuario" },
+        "❌ **Parámetro requerido**\n\nEspecifica el teléfono del usuario a eliminar.\n\n📖 **Uso:** `!users delete <teléfono> confirm`\n\n⚠️ **Advertencia:** Esta acción es irreversible."
+      );
       return {
         success: false,
-        response:
-          "❌ **Parámetro requerido**\n\nEspecifica el teléfono del usuario a eliminar.\n\n📖 **Uso:** `!users delete <teléfono> confirm`\n\n⚠️ **Advertencia:** Esta acción es irreversible.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -742,9 +1013,14 @@ export class UsersCommand extends Command {
       // Buscar usuario por teléfono
       const user = await userService.getUserByPhone(phone);
       if (!user) {
+        const errorMessage = this.getConfigMessage(
+          "users.error_messages.user_not_found",
+          { identifier: phone },
+          `❌ **Usuario no encontrado**\n\nNo existe un usuario registrado con el teléfono: ${phone}`
+        );
         return {
           success: false,
-          response: `❌ **Usuario no encontrado**\n\nNo existe un usuario registrado con el teléfono: ${phone}`,
+          response: errorMessage,
           shouldReply: true,
           data: {
             commandName: this.metadata.name,
@@ -798,9 +1074,14 @@ export class UsersCommand extends Command {
       logError(
         `Error en deleteUser: ${error instanceof Error ? error.message : error}`
       );
+      const errorMessage = this.getConfigMessage(
+        "users.error_messages.database_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error al eliminar el usuario de la base de datos."
+      );
       return {
         success: false,
-        response: "❌ Error al eliminar el usuario de la base de datos.",
+        response: errorMessage,
         shouldReply: true,
         data: {
           commandName: this.metadata.name,
@@ -875,6 +1156,17 @@ export class UsersCommand extends Command {
    * Obtiene el emoji correspondiente al tipo de usuario
    */
   private getUserTypeEmoji(type: UserType): string {
+    const configEmoji = this.getConfigMessage(
+      `users.user_types.${type}.emoji`,
+      {},
+      undefined
+    );
+    
+    if (configEmoji) {
+      return configEmoji;
+    }
+
+    // Fallback map si no se encuentra en la configuración
     const emojiMap: Record<UserType, string> = {
       admin: "👑",
       customer: "👤",
@@ -891,6 +1183,17 @@ export class UsersCommand extends Command {
    * Obtiene el nombre legible del tipo de usuario
    */
   private getUserTypeName(type: UserType): string {
+    const configName = this.getConfigMessage(
+      `users.user_types.${type}.name`,
+      {},
+      undefined
+    );
+    
+    if (configName) {
+      return configName;
+    }
+
+    // Fallback map si no se encuentra en la configuración
     const nameMap: Record<UserType, string> = {
       admin: "Administrador",
       customer: "Cliente",
@@ -900,7 +1203,11 @@ export class UsersCommand extends Command {
       provider: "Proveedor",
       block: "Bloqueado",
     };
-    return nameMap[type] || "Desconocido";
+    return nameMap[type] || this.getConfigMessage(
+      "users.default_values.unknown",
+      {},
+      "Desconocido"
+    );
   }
 
   /**

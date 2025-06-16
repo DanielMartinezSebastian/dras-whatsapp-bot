@@ -650,6 +650,81 @@
       "system_error": "❌ Error obteniendo estadísticas del sistema: {error}"
     }
   },
+  "admin": {
+    "description": "Muestra el panel de administración del bot",
+    "response": {
+      "title": "🔧 **PANEL DE ADMINISTRACIÓN - drasBot**",
+      "subtitle": "Dashboard completo del sistema",
+      "sections": {
+        "system_status": {
+          "title": "📊 **ESTADO DEL SISTEMA:**",
+          "items": [
+            "• **Tiempo activo**: {uptime}",
+            "• **Memoria**: {memoryUsage}",
+            "• **CPU**: {cpuLoad}%",
+            "• **Estado**: {systemStatus}"
+          ]
+        },
+        "statistics": {
+          "title": "👥 **ESTADÍSTICAS:**",
+          "items": [
+            "• **Usuarios totales**: {totalUsers}",
+            "• **Mensajes procesados**: {totalMessages}",
+            "• **Comandos ejecutados**: {totalCommands}",
+            "• **Errores**: {errorCount}"
+          ]
+        },
+        "services": {
+          "title": "🔧 **SERVICIOS:**",
+          "items": [
+            "• **WhatsApp**: {whatsappStatus}",
+            "• **Base de datos**: {databaseStatus}",
+            "• **Logs**: {logsStatus}",
+            "• **Permisos**: {permissionsStatus}"
+          ]
+        },
+        "quick_actions": {
+          "title": "⚡ **ACCIONES RÁPIDAS:**",
+          "items": [
+            "• `!users list` - Gestionar usuarios",
+            "• `!stats system` - Estadísticas detalladas",
+            "• `!logs error` - Ver logs de errores",
+            "• `!diagnostic` - Diagnóstico completo"
+          ]
+        },
+        "admin_info": {
+          "title": "👤 **INFORMACIÓN DE ADMIN:**",
+          "items": [
+            "• **Admin**: {adminName}",
+            "• **Sesión iniciada**: {sessionStart}",
+            "• **Comandos ejecutados**: {adminCommands}",
+            "• **Última actividad**: {lastActivity}"
+          ]
+        },
+        "footer": {
+          "text": "🕒 Panel actualizado: {timestamp}",
+          "help": "💡 Usa `!help admin` para ver todos los comandos disponibles"
+        }
+      }
+    },
+    "system_indicators": {
+      "excellent": "🟢 Excelente",
+      "good": "🟡 Bueno",
+      "warning": "🟠 Advertencia",
+      "critical": "🔴 Crítico",
+      "unknown": "⚪ Desconocido"
+    },
+    "default_values": {
+      "unknown": "Desconocido",
+      "not_available": "No disponible",
+      "calculating": "Calculando..."
+    },
+    "error_messages": {
+      "permission_denied": "❌ **Acceso Denegado**\n\nEste comando es exclusivo para administradores del sistema.",
+      "system_error": "❌ Error obteniendo información del sistema: {error}",
+      "general_error": "❌ Error ejecutando comando admin: {error}"
+    }
+  },
   "users": {
     "description": "Administración completa de usuarios del sistema",
     "response": {

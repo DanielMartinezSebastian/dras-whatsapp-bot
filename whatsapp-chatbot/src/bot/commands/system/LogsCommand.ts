@@ -100,14 +100,17 @@ export class LogsCommand extends Command {
   /**
    * Reemplaza variables en un template de mensaje
    */
-  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
-    if (typeof template !== 'string') {
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
       return String(template);
     }
 
     let result = template;
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{${key}}`, 'g');
+      const regex = new RegExp(`{${key}}`, "g");
       result = result.replace(regex, String(value));
     }
     return result;
@@ -122,7 +125,9 @@ export class LogsCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    return path.split(".").reduce((current, key) => current?.[key], config as any);
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -284,7 +289,9 @@ export class LogsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "logs.error_messages.general_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `❌ Error ejecutando comando logs: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `❌ Error ejecutando comando logs: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
 
       return {
