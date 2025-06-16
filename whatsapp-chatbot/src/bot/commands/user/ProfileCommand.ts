@@ -53,7 +53,7 @@ export class ProfileCommand extends Command {
    */
   private getUserTypeEmoji(userType: UserType): string {
     const userTypes = this.getValueByPath("profile.user_types");
-    
+
     if (userTypes && userTypes[userType]) {
       return userTypes[userType].emoji;
     }
@@ -77,7 +77,7 @@ export class ProfileCommand extends Command {
    */
   private getUserTypeDescription(userType: UserType): string {
     const userTypes = this.getValueByPath("profile.user_types");
-    
+
     if (userTypes && userTypes[userType]) {
       return userTypes[userType].description;
     }
@@ -164,14 +164,17 @@ export class ProfileCommand extends Command {
   /**
    * Reemplaza variables en un template de mensaje
    */
-  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
-    if (typeof template !== 'string') {
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
       return String(template);
     }
 
     let result = template;
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{${key}}`, 'g');
+      const regex = new RegExp(`{${key}}`, "g");
       result = result.replace(regex, String(value));
     }
     return result;
@@ -186,7 +189,9 @@ export class ProfileCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    return path.split(".").reduce((current, key) => current?.[key], config as any);
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -280,43 +285,52 @@ export class ProfileCommand extends Command {
         typeDescription,
         phoneNumber: user.phone_number,
         whatsappJid: user.whatsapp_jid,
-        statusIndicator: user.is_active 
-          ? (statusIndicators?.active || "🟢 Activo")
-          : (statusIndicators?.inactive || "� Inactivo"),
+        statusIndicator: user.is_active
+          ? statusIndicators?.active || "🟢 Activo"
+          : statusIndicators?.inactive || "� Inactivo",
         registeredDate: this.formatDate(user.created_at),
         lastActivity: user.last_message_at
           ? this.formatDate(user.last_message_at)
-          : (defaultValues?.last_activity || "No disponible"),
+          : defaultValues?.last_activity || "No disponible",
         activityTime: this.getActivityTime(user),
         totalInteractions: stats.total_interactions,
         commandsExecuted: stats.commands_executed,
         avgProcessingTime: stats.avg_processing_time,
         confidence,
-        language: user.metadata?.language || (defaultValues?.language || "No detectado"),
-        timezone: user.metadata?.timezone || (defaultValues?.timezone || "No configurada"),
-        preferencesCount: user.metadata?.preferences 
-          ? Object.keys(user.metadata.preferences).length 
+        language:
+          user.metadata?.language || defaultValues?.language || "No detectado",
+        timezone:
+          user.metadata?.timezone ||
+          defaultValues?.timezone ||
+          "No configurada",
+        preferencesCount: user.metadata?.preferences
+          ? Object.keys(user.metadata.preferences).length
           : 0,
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toLocaleString(),
       };
 
       // Construir respuesta usando configuración
-      let response = this.replaceVariables(
-        responseConfig?.title || "{typeEmoji} **TU PERFIL DE USUARIO**",
-        variables
-      ) + "\n\n";
+      let response =
+        this.replaceVariables(
+          responseConfig?.title || "{typeEmoji} **TU PERFIL DE USUARIO**",
+          variables
+        ) + "\n\n";
 
       // Procesar cada sección
       if (responseConfig?.sections) {
         const sections = [
-          'personal', 'dates', 'statistics', 'configuration', 'actions'
+          "personal",
+          "dates",
+          "statistics",
+          "configuration",
+          "actions",
         ];
 
         for (const sectionKey of sections) {
           const section = responseConfig.sections[sectionKey];
           if (section) {
             response += section.title + "\n";
-            
+
             if (section.items) {
               for (const item of section.items) {
                 response += this.replaceVariables(item, variables) + "\n";
@@ -328,7 +342,10 @@ export class ProfileCommand extends Command {
 
         // Footer
         if (responseConfig.sections.footer?.text) {
-          response += this.replaceVariables(responseConfig.sections.footer.text, variables);
+          response += this.replaceVariables(
+            responseConfig.sections.footer.text,
+            variables
+          );
         }
       }
 
@@ -341,7 +358,9 @@ export class ProfileCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "profile.error_messages.general_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `❌ Error obteniendo perfil de usuario: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `❌ Error obteniendo perfil de usuario: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
 
       return {

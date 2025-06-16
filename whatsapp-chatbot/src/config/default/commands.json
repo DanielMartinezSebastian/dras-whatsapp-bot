@@ -650,6 +650,211 @@
       "system_error": "❌ Error obteniendo estadísticas del sistema: {error}"
     }
   },
+  "users": {
+    "description": "Administración completa de usuarios del sistema",
+    "response": {
+      "title": "👥 **ADMINISTRACIÓN DE USUARIOS**",
+      "sections": {
+        "list": {
+          "title": "📋 **LISTA DE USUARIOS** (Página {page}/{totalPages})",
+          "header": "ID | Nombre | Tipo | Estado | Último acceso",
+          "separator": "---",
+          "no_users": "📄 No se encontraron usuarios en el sistema.",
+          "footer": "📊 Total: {totalUsers} usuarios • Página {page} de {totalPages}"
+        },
+        "search": {
+          "title": "🔍 **RESULTADOS DE BÚSQUEDA** - '{searchTerm}'",
+          "header": "ID | Nombre | Tipo | Teléfono | Estado",
+          "no_results": "❌ No se encontraron usuarios que coincidan con: '{searchTerm}'",
+          "footer": "📊 Encontrados: {resultsCount} usuarios"
+        },
+        "info": {
+          "title": "👤 **INFORMACIÓN DETALLADA DE USUARIO**",
+          "sections": {
+            "basic": {
+              "title": "📋 **DATOS BÁSICOS:**",
+              "items": [
+                "• **ID**: {userId}",
+                "• **Nombre**: {displayName}",
+                "• **Teléfono**: {phoneNumber}",
+                "• **Tipo**: {userType} {typeEmoji}",
+                "• **Estado**: {status}"
+              ]
+            },
+            "dates": {
+              "title": "📅 **FECHAS:**",
+              "items": [
+                "• **Registrado**: {createdAt}",
+                "• **Actualizado**: {updatedAt}",
+                "• **Último mensaje**: {lastMessageAt}",
+                "• **Tiempo activo**: {activityTime}"
+              ]
+            },
+            "statistics": {
+              "title": "📊 **ESTADÍSTICAS:**",
+              "items": [
+                "• **Total mensajes**: {totalMessages}",
+                "• **Comandos ejecutados**: {commandsExecuted}",
+                "• **Errores**: {errorCount}",
+                "• **Promedio respuesta**: {avgResponseTime}ms"
+              ]
+            }
+          }
+        },
+        "update": {
+          "success": "✅ Usuario actualizado correctamente:\n• **{field}**: {oldValue} → {newValue}",
+          "no_changes": "ℹ️ No se realizaron cambios. El valor ya era: {currentValue}"
+        },
+        "stats": {
+          "title": "📊 **ESTADÍSTICAS DE USUARIOS**",
+          "sections": {
+            "summary": {
+              "title": "📋 **RESUMEN GENERAL:**",
+              "items": [
+                "• **Total usuarios**: {totalUsers}",
+                "• **Usuarios activos**: {activeUsers}",
+                "• **Nuevos hoy**: {newToday}",
+                "• **Online ahora**: {onlineNow}"
+              ]
+            },
+            "by_type": {
+              "title": "👥 **POR TIPO:**",
+              "items": [
+                "👑 **Admin**: {adminCount}",
+                "💼 **Employee**: {employeeCount}",
+                "👤 **Customer**: {customerCount}",
+                "👫 **Friend**: {friendCount}",
+                "👨‍👩‍👧‍👦 **Familiar**: {familiarCount}",
+                "🏢 **Provider**: {providerCount}",
+                "🚫 **Block**: {blockCount}"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "user_types": {
+      "admin": {
+        "name": "Administrador",
+        "emoji": "👑"
+      },
+      "employee": {
+        "name": "Empleado",
+        "emoji": "💼"
+      },
+      "customer": {
+        "name": "Cliente",
+        "emoji": "👤"
+      },
+      "friend": {
+        "name": "Amigo",
+        "emoji": "👫"
+      },
+      "familiar": {
+        "name": "Familiar",
+        "emoji": "👨‍👩‍👧‍👦"
+      },
+      "provider": {
+        "name": "Proveedor",
+        "emoji": "🏢"
+      },
+      "block": {
+        "name": "Bloqueado",
+        "emoji": "🚫"
+      }
+    },
+    "actions": {
+      "list": "Listar usuarios",
+      "search": "Buscar usuarios",
+      "info": "Información detallada",
+      "update": "Actualizar usuario",
+      "stats": "Estadísticas",
+      "delete": "Eliminar usuario"
+    },
+    "fields": {
+      "type": "tipo de usuario",
+      "name": "nombre",
+      "status": "estado",
+      "phone": "teléfono"
+    },
+    "default_values": {
+      "page_size": 10,
+      "max_search_results": 50,
+      "unknown": "Desconocido",
+      "never": "Nunca",
+      "not_available": "No disponible"
+    },
+    "error_messages": {
+      "permission_denied": "❌ Acceso denegado. Solo administradores pueden gestionar usuarios.",
+      "invalid_action": "❌ Acción no válida: '{action}'\n\nAcciones disponibles: list, search, info, update, stats",
+      "missing_parameter": "❌ Parámetro faltante para '{action}': {parameter}",
+      "user_not_found": "❌ Usuario no encontrado: {identifier}",
+      "invalid_user_type": "❌ Tipo de usuario inválido: '{userType}'\n\nTipos válidos: admin, employee, customer, friend, familiar, provider, block",
+      "invalid_field": "❌ Campo inválido para actualizar: '{field}'\n\nCampos válidos: type, name, status",
+      "update_error": "❌ Error actualizando usuario: {error}",
+      "database_error": "❌ Error de base de datos: {error}",
+      "general_error": "❌ Error ejecutando comando users: {error}"
+    }
+  },
+  "logs": {
+    "description": "Muestra los logs del sistema",
+    "response": {
+      "header": "📋 **LOGS DEL SISTEMA - {logType}**",
+      "no_logs": "📄 No se encontraron logs para mostrar en: {logPath}",
+      "file_not_found": "📂 Archivo de log no encontrado: {logPath}",
+      "empty_logs": "📄 El archivo de logs está vacío: {logPath}",
+      "footer": "📊 Mostrando {linesShown} líneas de {totalLines} • {timestamp}",
+      "sections": {
+        "info": {
+          "title": "ℹ️ **INFORMACIÓN:**",
+          "items": [
+            "• Tipo de log: {logType}",
+            "• Archivo: {fileName}",
+            "• Líneas solicitadas: {requestedLines}",
+            "• Tamaño archivo: {fileSize}"
+          ]
+        },
+        "content": {
+          "title": "📄 **CONTENIDO:**",
+          "separator": "---"
+        }
+      }
+    },
+    "log_types": {
+      "error": {
+        "name": "Error",
+        "file": "error.log",
+        "emoji": "❌"
+      },
+      "info": {
+        "name": "Información",
+        "file": "combined.log",
+        "emoji": "ℹ️"
+      },
+      "combined": {
+        "name": "Combinado",
+        "file": "combined.log",
+        "emoji": "📋"
+      },
+      "security": {
+        "name": "Seguridad",
+        "file": "security.log",
+        "emoji": "🔒"
+      }
+    },
+    "default_values": {
+      "default_lines": 50,
+      "max_lines": 200,
+      "unknown_size": "Desconocido"
+    },
+    "error_messages": {
+      "permission_denied": "❌ Acceso denegado. Solo administradores pueden ver logs del sistema.",
+      "invalid_log_type": "❌ Tipo de log no válido: '{logType}'\n\nTipos disponibles: error, info, combined, security",
+      "invalid_lines": "❌ Número de líneas inválido: {lines}. Debe ser entre 1 y {maxLines}.",
+      "file_access_error": "❌ Error accediendo al archivo de log: {error}",
+      "general_error": "❌ Error ejecutando comando logs: {error}"
+    }
+  },
   "profile": {
     "description": "Muestra tu perfil de usuario con estadísticas",
     "response": {

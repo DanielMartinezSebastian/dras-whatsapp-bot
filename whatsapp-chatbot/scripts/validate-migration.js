@@ -247,6 +247,10 @@ function main() {
       file: path.join("./src/bot/commands/system", "StatsCommand.ts"),
       methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
     },
+    {
+      file: path.join("./src/bot/commands/system", "LogsCommand.ts"),
+      methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
+    },
   ];
 
   for (const validation of commandValidations) {

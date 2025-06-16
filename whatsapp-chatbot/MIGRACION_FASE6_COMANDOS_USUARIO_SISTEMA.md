@@ -28,15 +28,35 @@ Continuar la migración de centralización de strings para los comandos de usuar
      - plantillas de respuesta estructuradas
 
 ### Comandos de Sistema (system/)
-3. **StatsCommand** ✅ (Nuevo en esta fase - migración parcial)
+3. **StatsCommand** ✅ (Migración completa)
    - Constructor actualizado con ConfigurationService
    - Métodos auxiliares implementados (getConfigMessage, replaceVariables, getValueByPath)
-   - Métodos getGeneralStats y getUsersStats migrados para usar plantillas configurables
+   - Todos los métodos migrados: getGeneralStats, getUsersStats, getCommandsStats, getPermissionsStats, getSystemStats
+   - Método execute migrado completamente para usar plantillas configurables
    - Configuración completa agregada a commands.json incluyendo:
      - response sections para general, users, commands, permissions, system
      - default_values para valores de fallback
      - error_messages específicos para cada tipo de estadística
      - plantillas estructuradas para cada sección
+
+4. **LogsCommand** ✅ (Migración completa)
+   - Constructor actualizado con ConfigurationService
+   - Métodos auxiliares implementados (getConfigMessage, replaceVariables, getValueByPath)
+   - Método execute migrado para usar plantillas configurables
+   - Configuración completa agregada a commands.json incluyendo:
+     - response templates para headers, footers, secciones
+     - log_types con configuración de archivos y emojis
+     - default_values para configuraciones por defecto
+     - error_messages específicos para diferentes errores
+
+### Comandos de Admin (admin/)
+5. **UsersCommand** ⏳ (En progreso - configuración agregada)
+   - Configuración completa agregada a commands.json incluyendo:
+     - response sections para list, search, info, update, stats
+     - user_types con nombres y emojis
+     - actions y fields configurables
+     - default_values y error_messages específicos
+   - ⏳ Pendiente: migración del código TypeScript
 
 ## CONFIGURACIÓN EXPANDIDA
 
@@ -93,15 +113,16 @@ Continuar la migración de centralización de strings para los comandos de usuar
 ## VALIDACIÓN
 
 ### Script de Validación Actualizado
-- Agregado PermissionsCommand y StatsCommand al array de validaciones
-- Total de tests: 17
-- Tests pasados: 17/17 (100%)
+- Agregado PermissionsCommand, StatsCommand y LogsCommand al array de validaciones
+- Total de tests: 18
+- Tests pasados: 18/18 (100%)
 
 ### Comandos Validados:
 1. Handlers migrados (4/4)
 2. Comandos básicos (4/4)
 3. Comandos de usuario (2/2)
-4. Comandos de sistema (1/1 parcial)
+4. Comandos de sistema (2/2)
+5. Comandos de admin (0/1 - configuración lista)
 
 ## CAMBIOS REALIZADOS
 
@@ -114,19 +135,30 @@ Continuar la migración de centralización de strings para los comandos de usuar
 - ✅ getUserRestrictions migrado para usar configuración
 - ✅ execute migrado completamente para usar plantillas
 
-### StatsCommand.ts (migración parcial):
+### StatsCommand.ts (migración completa):
 - ✅ Import ConfigurationService agregado
 - ✅ Constructor actualizado
 - ✅ metadata.description migrado a usar getConfigMessage
 - ✅ Métodos auxiliares implementados
 - ✅ getGeneralStats migrado para usar plantillas
 - ✅ getUsersStats migrado para usar plantillas
-- ⏳ Métodos pendientes: getCommandsStats, getPermissionsStats, getSystemStats, execute
+- ✅ getCommandsStats migrado para usar plantillas
+- ✅ getPermissionsStats migrado para usar plantillas
+- ✅ getSystemStats migrado para usar plantillas
+- ✅ execute migrado completamente para usar plantillas
+
+### LogsCommand.ts (migración completa):
+- ✅ Import ConfigurationService agregado
+- ✅ Constructor actualizado
+- ✅ metadata.description migrado a usar getConfigMessage
+- ✅ Métodos auxiliares implementados
+- ✅ execute migrado para usar plantillas configurables
 
 ### scripts/validate-migration.js:
 - ✅ Agregado PermissionsCommand al array de validaciones
 - ✅ Agregado StatsCommand al array de validaciones
-- ✅ Total tests incrementado a 17
+- ✅ Agregado LogsCommand al array de validaciones
+- ✅ Total tests incrementado a 18
 
 ## PENDIENTE
 
@@ -138,9 +170,8 @@ Continuar la migración de centralización de strings para los comandos de usuar
 - Completar validación de migración
 
 ### Próximos Comandos:
-- LogsCommand (system/)
+- **UsersCommand** (admin/) - configuración lista, pendiente migración código
 - AdminPanelCommand (admin/)
-- UsersCommand (admin/)
 - ConfigCommand (admin/)
 - DiagnosticCommand (admin/)
 - AdminSystemCommand (admin/)
@@ -158,8 +189,8 @@ Continuar la migración de centralización de strings para los comandos de usuar
 - **Handlers migrados**: 4/4 (100%)
 - **Comandos básicos**: 4/4 (100%)  
 - **Comandos de usuario**: 2/2 (100%)
-- **Comandos de sistema**: 1/2 (50% - StatsCommand parcial)
-- **Comandos de admin**: 0/6 (0%)
-- **Total migrados**: 11/18 comandos (~61%)
+- **Comandos de sistema**: 2/2 (100%)
+- **Comandos de admin**: 0/6 (0% - UsersCommand configuración lista)
+- **Total migrados**: 12/18 comandos (~67%)
 
-**Tests de validación**: 17/17 pasados (100%)
+**Tests de validación**: 18/18 pasados (100%)

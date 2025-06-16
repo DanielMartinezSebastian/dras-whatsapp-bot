@@ -5,6 +5,7 @@ import {
   CommandMetadata,
 } from "../../../types/commands";
 import { UserType } from "../../../types/core/user.types";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 import * as fs from "fs/promises";
 import * as path from "path";
 
@@ -13,11 +14,22 @@ import * as path from "path";
  * Solo accesible para administradores
  */
 export class LogsCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "logs",
       aliases: ["log", "archivo-log"],
-      description: "Muestra los logs del sistema",
+      description: this.getConfigMessage(
+        "logs.description",
+        {},
+        "Muestra los logs del sistema"
+      ),
       syntax: "!logs [tipo] [líneas]",
       category: "system",
       permissions: ["admin"],
@@ -40,6 +52,77 @@ export class LogsCommand extends Command {
    */
   private validatePermissions(context: CommandContext): boolean {
     return context.user?.user_type === "admin";
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
+    if (typeof template !== 'string') {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path.split(".").reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -163,9 +246,14 @@ export class LogsCommand extends Command {
 
       // Verificar permisos
       if (!this.validatePermissions(context)) {
+        const errorMessage = this.getConfigMessage(
+          "logs.error_messages.permission_denied",
+          {},
+          "❌ Acceso denegado. Solo administradores pueden ver logs del sistema."
+        );
         return {
           success: true,
-          response: "🚫 Acceso denegado. Solo administradores pueden ver logs.",
+          response: errorMessage,
           shouldReply: true,
         };
       }
@@ -193,12 +281,15 @@ export class LogsCommand extends Command {
         shouldReply: true,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      const errorMessage = this.getConfigMessage(
+        "logs.error_messages.general_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `❌ Error ejecutando comando logs: ${error instanceof Error ? error.message : "Error desconocido"}`
+      );
 
       return {
         success: false,
-        response: `❌ Error ejecutando comando logs: ${errorMessage}`,
+        response: errorMessage,
         shouldReply: true,
         error: errorMessage,
       };

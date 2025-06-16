@@ -94,14 +94,17 @@ export class PermissionsCommand extends Command {
   /**
    * Reemplaza variables en un template de mensaje
    */
-  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
-    if (typeof template !== 'string') {
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
       return String(template);
     }
 
     let result = template;
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{${key}}`, 'g');
+      const regex = new RegExp(`{${key}}`, "g");
       result = result.replace(regex, String(value));
     }
     return result;
@@ -116,7 +119,9 @@ export class PermissionsCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    return path.split(".").reduce((current, key) => current?.[key], config as any);
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -136,7 +141,9 @@ export class PermissionsCommand extends Command {
     };
   } {
     // Obtener mapeos desde configuración
-    const userTypeMapping = this.getValueByPath("permissions.user_type_mapping") || {
+    const userTypeMapping = this.getValueByPath(
+      "permissions.user_type_mapping"
+    ) || {
       admin: 4,
       employee: 3,
       provider: 2,
@@ -159,8 +166,12 @@ export class PermissionsCommand extends Command {
     const levelName = levelInfo.name;
 
     // Obtener comandos por nivel desde configuración
-    const commandsByLevelConfig = this.getValueByPath("permissions.commands_by_level") || {};
-    const commandsByLevel: Record<number, Array<{ command: string; description: string }>> = {};
+    const commandsByLevelConfig =
+      this.getValueByPath("permissions.commands_by_level") || {};
+    const commandsByLevel: Record<
+      number,
+      Array<{ command: string; description: string }>
+    > = {};
 
     // Convertir configuración a formato esperado
     for (const [level, commands] of Object.entries(commandsByLevelConfig)) {
@@ -194,12 +205,12 @@ export class PermissionsCommand extends Command {
     timeRestriction?: { start: number; end: number };
   } {
     const restrictionsConfig = this.getValueByPath("permissions.restrictions");
-    
+
     if (restrictionsConfig && restrictionsConfig[userType]) {
       const userRestriction = restrictionsConfig[userType];
       return {
         commandLimit: userRestriction.command_limit,
-        timeRestriction: userRestriction.time_restriction
+        timeRestriction: userRestriction.time_restriction,
       };
     }
 
@@ -304,18 +315,23 @@ export class PermissionsCommand extends Command {
         totalCommandsExecuted: usageStats.totalCommands,
         deniedAttempts: usageStats.deniedAttempts,
         userStatus: user.is_active ? "🟢 Activo" : "🔴 Inactivo",
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toLocaleString(),
       };
 
       // Construir respuesta usando configuración
-      let response = this.replaceVariables(
-        responseConfig?.title || "� **PERMISOS DE USUARIO**",
-        variables
-      ) + "\n\n";
+      let response =
+        this.replaceVariables(
+          responseConfig?.title || "� **PERMISOS DE USUARIO**",
+          variables
+        ) + "\n\n";
 
       // Sección de información del usuario
       if (responseConfig?.sections?.user_info) {
-        response += this.replaceVariables(responseConfig.sections.user_info.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.user_info.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.user_info.items) {
           for (const item of responseConfig.sections.user_info.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -326,7 +342,11 @@ export class PermissionsCommand extends Command {
 
       // Sección de estadísticas de uso
       if (responseConfig?.sections?.usage_stats) {
-        response += this.replaceVariables(responseConfig.sections.usage_stats.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.usage_stats.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.usage_stats.items) {
           for (const item of responseConfig.sections.usage_stats.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -337,7 +357,11 @@ export class PermissionsCommand extends Command {
 
       // Comandos disponibles por nivel
       if (responseConfig?.sections?.commands_section) {
-        response += this.replaceVariables(responseConfig.sections.commands_section.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.commands_section.title,
+            variables
+          ) + "\n";
 
         for (let level = 1; level <= commandsInfo.userLevel; level++) {
           const commands = commandsInfo.commandsByLevel[level] || [];
@@ -360,19 +384,41 @@ export class PermissionsCommand extends Command {
           commandsInfo.restrictions.commandLimit > 0)
       ) {
         if (responseConfig?.sections?.restrictions) {
-          response += this.replaceVariables(responseConfig.sections.restrictions.title, variables) + "\n";
+          response +=
+            this.replaceVariables(
+              responseConfig.sections.restrictions.title,
+              variables
+            ) + "\n";
 
-          if (commandsInfo.restrictions.timeRestriction && responseConfig.sections.restrictions.time_restriction) {
+          if (
+            commandsInfo.restrictions.timeRestriction &&
+            responseConfig.sections.restrictions.time_restriction
+          ) {
             const time = commandsInfo.restrictions.timeRestriction;
             const isAllowedTime = this.isWithinAllowedTime(time);
             const statusEmoji = isAllowedTime ? "🟢" : "🔴";
-            const restrictionVars = { start: time.start, end: time.end, statusEmoji };
-            response += this.replaceVariables(responseConfig.sections.restrictions.time_restriction, restrictionVars) + "\n";
+            const restrictionVars = {
+              start: time.start,
+              end: time.end,
+              statusEmoji,
+            };
+            response +=
+              this.replaceVariables(
+                responseConfig.sections.restrictions.time_restriction,
+                restrictionVars
+              ) + "\n";
           }
 
-          if (typeof commandsInfo.restrictions.commandLimit === "number" && responseConfig.sections.restrictions.command_limit) {
+          if (
+            typeof commandsInfo.restrictions.commandLimit === "number" &&
+            responseConfig.sections.restrictions.command_limit
+          ) {
             const limitVars = { limit: commandsInfo.restrictions.commandLimit };
-            response += this.replaceVariables(responseConfig.sections.restrictions.command_limit, limitVars) + "\n";
+            response +=
+              this.replaceVariables(
+                responseConfig.sections.restrictions.command_limit,
+                limitVars
+              ) + "\n";
           }
           response += "\n";
         }
@@ -380,7 +426,11 @@ export class PermissionsCommand extends Command {
 
       // Estado del sistema
       if (responseConfig?.sections?.system_status) {
-        response += this.replaceVariables(responseConfig.sections.system_status.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.system_status.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.system_status.items) {
           for (const item of responseConfig.sections.system_status.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -391,7 +441,11 @@ export class PermissionsCommand extends Command {
 
       // Información adicional
       if (responseConfig?.sections?.additional_info) {
-        response += this.replaceVariables(responseConfig.sections.additional_info.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.additional_info.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.additional_info.items) {
           for (const item of responseConfig.sections.additional_info.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -402,7 +456,10 @@ export class PermissionsCommand extends Command {
 
       // Footer
       if (responseConfig?.sections?.footer?.text) {
-        response += this.replaceVariables(responseConfig.sections.footer.text, variables);
+        response += this.replaceVariables(
+          responseConfig.sections.footer.text,
+          variables
+        );
       }
 
       return {
@@ -414,7 +471,9 @@ export class PermissionsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "permissions.error_messages.general_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `❌ Error obteniendo información de permisos: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `❌ Error obteniendo información de permisos: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
 
       return {

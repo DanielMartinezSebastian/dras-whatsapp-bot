@@ -98,14 +98,17 @@ export class StatsCommand extends Command {
   /**
    * Reemplaza variables en un template de mensaje
    */
-  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
-    if (typeof template !== 'string') {
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
       return String(template);
     }
 
     let result = template;
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{${key}}`, 'g');
+      const regex = new RegExp(`{${key}}`, "g");
       result = result.replace(regex, String(value));
     }
     return result;
@@ -120,7 +123,9 @@ export class StatsCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    return path.split(".").reduce((current, key) => current?.[key], config as any);
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -144,18 +149,23 @@ export class StatsCommand extends Command {
         platform: process.platform,
         architecture: process.arch,
         pid: process.pid,
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toLocaleString(),
       };
 
       // Construir respuesta usando configuración
-      let response = this.replaceVariables(
-        responseConfig?.title || "📊 ESTADÍSTICAS GENERALES DEL SISTEMA",
-        variables
-      ) + "\n\n";
+      let response =
+        this.replaceVariables(
+          responseConfig?.title || "📊 ESTADÍSTICAS GENERALES DEL SISTEMA",
+          variables
+        ) + "\n\n";
 
       // Sección de rendimiento
       if (responseConfig?.sections?.performance) {
-        response += this.replaceVariables(responseConfig.sections.performance.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.performance.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.performance.items) {
           for (const item of responseConfig.sections.performance.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -166,7 +176,11 @@ export class StatsCommand extends Command {
 
       // Sección de aplicación
       if (responseConfig?.sections?.application) {
-        response += this.replaceVariables(responseConfig.sections.application.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.application.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.application.items) {
           for (const item of responseConfig.sections.application.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -177,7 +191,10 @@ export class StatsCommand extends Command {
 
       // Footer
       if (responseConfig?.sections?.footer) {
-        response += this.replaceVariables(responseConfig.sections.footer, variables);
+        response += this.replaceVariables(
+          responseConfig.sections.footer,
+          variables
+        );
       }
 
       return response;
@@ -185,7 +202,9 @@ export class StatsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "stats.error_messages.general_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `Error obteniendo estadísticas generales: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `Error obteniendo estadísticas generales: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
       throw new Error(errorMessage);
     }
@@ -199,7 +218,7 @@ export class StatsCommand extends Command {
       // Simulación de estadísticas de usuarios (en producción vendría del UserService)
       const defaultValues = this.getValueByPath("stats.default_values");
       const noConnection = defaultValues?.no_connection || "Sin conexión BD";
-      
+
       // Obtener configuración de respuesta
       const responseConfig = this.getValueByPath("stats.response.users");
 
@@ -214,18 +233,23 @@ export class StatsCommand extends Command {
         familiarCount: noConnection,
         employeeCount: noConnection,
         providerCount: noConnection,
-        blockCount: noConnection
+        blockCount: noConnection,
       };
 
       // Construir respuesta usando configuración
-      let response = this.replaceVariables(
-        responseConfig?.title || "� ESTADÍSTICAS DE USUARIOS",
-        variables
-      ) + "\n\n";
+      let response =
+        this.replaceVariables(
+          responseConfig?.title || "� ESTADÍSTICAS DE USUARIOS",
+          variables
+        ) + "\n\n";
 
       // Sección general
       if (responseConfig?.sections?.general) {
-        response += this.replaceVariables(responseConfig.sections.general.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.general.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.general.items) {
           for (const item of responseConfig.sections.general.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -236,7 +260,11 @@ export class StatsCommand extends Command {
 
       // Sección por tipo
       if (responseConfig?.sections?.by_type) {
-        response += this.replaceVariables(responseConfig.sections.by_type.title, variables) + "\n";
+        response +=
+          this.replaceVariables(
+            responseConfig.sections.by_type.title,
+            variables
+          ) + "\n";
         if (responseConfig.sections.by_type.items) {
           for (const item of responseConfig.sections.by_type.items) {
             response += this.replaceVariables(item, variables) + "\n";
@@ -255,7 +283,9 @@ export class StatsCommand extends Command {
       const errorMessage = this.getConfigMessage(
         "stats.error_messages.users_error",
         { error: error instanceof Error ? error.message : "Error desconocido" },
-        `Error obteniendo estadísticas de usuarios: ${error instanceof Error ? error.message : "Error desconocido"}`
+        `Error obteniendo estadísticas de usuarios: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
       throw new Error(errorMessage);
     }
@@ -266,36 +296,84 @@ export class StatsCommand extends Command {
    */
   private async getCommandsStats(): Promise<string> {
     try {
-      let response = `⚡ ESTADÍSTICAS DE COMANDOS\n\n`;
+      // Obtener valores por defecto y configuración de respuesta
+      const defaultValues = this.getValueByPath("stats.default_values");
+      const noRecord = defaultValues?.no_record || "Sin registro disponible";
+      const noRegistry = defaultValues?.no_registry || "Sin conexión al registro";
+      const noData = defaultValues?.no_data || "Sin datos";
+      
+      // Obtener configuración de respuesta
+      const responseConfig = this.getValueByPath("stats.response.commands");
 
-      response += `📊 ACTIVIDAD:\n`;
-      response += `• Comandos última hora: Sin registro disponible\n`;
-      response += `• Total ejecutados: Sin registro disponible\n`;
-      response += `• Intentos denegados: Sin registro disponible\n`;
-      response += `• Usuarios activos: Sin registro disponible\n\n`;
+      // Variables para plantillas (simuladas)
+      const variables = {
+        commandsLastHour: noRecord,
+        totalExecuted: noRecord,
+        deniedAttempts: noRecord,
+        activeUsers: noRecord,
+        totalCommands: noRegistry,
+        totalAliases: noRegistry,
+        categories: noRegistry,
+        publicCommands: noRegistry,
+        sensitiveCommands: noRegistry,
+        basicLevel: noData,
+        userLevel: noData,
+        adminLevel: noData,
+        systemLevel: noData
+      };
 
-      response += `📋 REGISTRO:\n`;
-      response += `• Total comandos: Sin conexión al registro\n`;
-      response += `• Aliases: Sin conexión al registro\n`;
-      response += `• Categorías: Sin conexión al registro\n`;
-      response += `• Comandos públicos: Sin conexión al registro\n`;
-      response += `• Comandos sensibles: Sin conexión al registro\n\n`;
+      // Construir respuesta usando configuración
+      let response = this.replaceVariables(
+        responseConfig?.title || "⚡ ESTADÍSTICAS DE COMANDOS",
+        variables
+      ) + "\n\n";
 
-      response += `🔢 POR NIVEL:\n`;
-      response += `🟢 Básico: Sin datos\n`;
-      response += `🟡 Usuario: Sin datos\n`;
-      response += `🔴 Admin: Sin datos\n`;
-      response += `⚫ Sistema: Sin datos\n\n`;
+      // Sección de actividad
+      if (responseConfig?.sections?.activity) {
+        response += this.replaceVariables(responseConfig.sections.activity.title, variables) + "\n";
+        if (responseConfig.sections.activity.items) {
+          for (const item of responseConfig.sections.activity.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
 
-      response += `📝 NOTA: Para estadísticas reales, conectar registro de comandos`;
+      // Sección de registro
+      if (responseConfig?.sections?.registry) {
+        response += this.replaceVariables(responseConfig.sections.registry.title, variables) + "\n";
+        if (responseConfig.sections.registry.items) {
+          for (const item of responseConfig.sections.registry.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Sección por nivel
+      if (responseConfig?.sections?.by_level) {
+        response += this.replaceVariables(responseConfig.sections.by_level.title, variables) + "\n";
+        if (responseConfig.sections.by_level.items) {
+          for (const item of responseConfig.sections.by_level.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Nota
+      if (responseConfig?.sections?.note) {
+        response += responseConfig.sections.note;
+      }
 
       return response;
     } catch (error) {
-      throw new Error(
-        `Error obteniendo estadísticas de comandos: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        }`
+      const errorMessage = this.getConfigMessage(
+        "stats.error_messages.commands_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `Error obteniendo estadísticas de comandos: ${error instanceof Error ? error.message : "Error desconocido"}`
       );
+      throw new Error(errorMessage);
     }
   }
 
@@ -304,31 +382,67 @@ export class StatsCommand extends Command {
    */
   private async getPermissionsStats(): Promise<string> {
     try {
-      let response = `🔒 ESTADÍSTICAS DE PERMISOS\n\n`;
+      // Obtener valores por defecto y configuración de respuesta
+      const defaultValues = this.getValueByPath("stats.default_values");
+      const noRecord = defaultValues?.no_record || "Sin registro";
+      const noData = defaultValues?.no_data || "Sin datos";
+      
+      // Obtener configuración de respuesta
+      const responseConfig = this.getValueByPath("stats.response.permissions");
 
-      response += `📊 ACTIVIDAD GENERAL:\n`;
-      response += `• Verificaciones última hora: Sin registro\n`;
-      response += `• Total verificaciones: Sin registro\n`;
-      response += `• Accesos concedidos: Sin registro\n`;
-      response += `• Accesos denegados: Sin registro\n\n`;
+      // Variables para plantillas (simuladas)
+      const variables = {
+        verificationsLastHour: noRecord,
+        totalVerifications: noRecord,
+        deniedPermissions: noRecord,
+        escalations: noRecord,
+        definedRoles: noData,
+        permissionMappings: noData,
+        activeRestrictions: noData,
+        configuredExceptions: noData
+      };
 
-      response += `👥 POR TIPO DE USUARIO:\n`;
-      response += `👑 Admin: Sin datos\n`;
-      response += `👤 Customer: Sin datos\n`;
-      response += `👫 Friend: Sin datos\n`;
-      response += `👨‍👩‍👧‍👦 Familiar: Sin datos\n`;
-      response += `💼 Employee: Sin datos\n`;
-      response += `🏢 Provider: Sin datos\n\n`;
+      // Construir respuesta usando configuración
+      let response = this.replaceVariables(
+        responseConfig?.title || "� ESTADÍSTICAS DE PERMISOS",
+        variables
+      ) + "\n\n";
 
-      response += `📝 NOTA: Para estadísticas reales, conectar servicio de permisos`;
+      // Sección de actividad
+      if (responseConfig?.sections?.activity) {
+        response += this.replaceVariables(responseConfig.sections.activity.title, variables) + "\n";
+        if (responseConfig.sections.activity.items) {
+          for (const item of responseConfig.sections.activity.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Sección de configuración
+      if (responseConfig?.sections?.configuration) {
+        response += this.replaceVariables(responseConfig.sections.configuration.title, variables) + "\n";
+        if (responseConfig.sections.configuration.items) {
+          for (const item of responseConfig.sections.configuration.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Nota
+      if (responseConfig?.sections?.note) {
+        response += responseConfig.sections.note;
+      }
 
       return response;
     } catch (error) {
-      throw new Error(
-        `Error obteniendo estadísticas de permisos: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        }`
+      const errorMessage = this.getConfigMessage(
+        "stats.error_messages.permissions_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `Error obteniendo estadísticas de permisos: ${error instanceof Error ? error.message : "Error desconocido"}`
       );
+      throw new Error(errorMessage);
     }
   }
 
@@ -340,42 +454,94 @@ export class StatsCommand extends Command {
       const uptime = process.uptime();
       const memoryUsage = process.memoryUsage();
 
-      let response = `🖥️ ESTADÍSTICAS DEL SISTEMA\n\n`;
+      // Obtener valores por defecto y configuración de respuesta
+      const defaultValues = this.getValueByPath("stats.default_values");
+      const noData = defaultValues?.no_data || "Sin datos";
+      
+      // Obtener configuración de respuesta
+      const responseConfig = this.getValueByPath("stats.response.system");
 
-      response += `💻 RECURSOS:\n`;
-      response += `• CPU Load: ${this.getCpuUsage()}%\n`;
-      response += `• Memoria heap usada: ${this.formatBytes(
-        memoryUsage.heapUsed
-      )}\n`;
-      response += `• Memoria heap total: ${this.formatBytes(
-        memoryUsage.heapTotal
-      )}\n`;
-      response += `• Memoria RSS: ${this.formatBytes(memoryUsage.rss)}\n`;
-      response += `• Memoria externa: ${this.formatBytes(
-        memoryUsage.external
-      )}\n\n`;
+      // Variables para plantillas
+      const variables = {
+        whatsappStatus: "🟢 Activo",
+        databaseStatus: "� Simulado",
+        filesystemStatus: "🟢 Operativo",
+        networkStatus: "🟢 Conectado",
+        diskUsage: noData,
+        activeConnections: noData,
+        childProcesses: noData,
+        activeThreads: noData,
+        errorsLastHour: noData,
+        warnings: noData,
+        totalLogs: noData,
+        logsSize: noData,
+        cpuLoad: this.getCpuUsage(),
+        memoryHeapUsed: this.formatBytes(memoryUsage.heapUsed),
+        memoryHeapTotal: this.formatBytes(memoryUsage.heapTotal),
+        memoryRss: this.formatBytes(memoryUsage.rss),
+        memoryExternal: this.formatBytes(memoryUsage.external),
+        uptime: this.formatUptime(uptime),
+        systemTime: new Date().toLocaleString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        nodeVersion: process.version,
+        platform: process.platform,
+        architecture: process.arch,
+        pid: process.pid,
+        workingDirectory: process.cwd()
+      };
 
-      response += `⏱️ TIEMPO:\n`;
-      response += `• Tiempo activo: ${this.formatUptime(uptime)}\n`;
-      response += `• Hora del sistema: ${new Date().toLocaleString()}\n`;
-      response += `• Zona horaria: ${
-        Intl.DateTimeFormat().resolvedOptions().timeZone
-      }\n\n`;
+      // Construir respuesta usando configuración
+      let response = this.replaceVariables(
+        responseConfig?.title || "🔧 ESTADÍSTICAS DEL SISTEMA",
+        variables
+      ) + "\n\n";
 
-      response += `🔧 CONFIGURACIÓN:\n`;
-      response += `• Node.js: ${process.version}\n`;
-      response += `• Plataforma: ${process.platform}\n`;
-      response += `• Arquitectura: ${process.arch}\n`;
-      response += `• PID: ${process.pid}\n`;
-      response += `• Directorio: ${process.cwd()}\n`;
+      // Sección de servicios
+      if (responseConfig?.sections?.services) {
+        response += this.replaceVariables(responseConfig.sections.services.title, variables) + "\n";
+        if (responseConfig.sections.services.items) {
+          for (const item of responseConfig.sections.services.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Sección de recursos
+      if (responseConfig?.sections?.resources) {
+        response += this.replaceVariables(responseConfig.sections.resources.title, variables) + "\n";
+        if (responseConfig.sections.resources.items) {
+          for (const item of responseConfig.sections.resources.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Sección de logs
+      if (responseConfig?.sections?.logs) {
+        response += this.replaceVariables(responseConfig.sections.logs.title, variables) + "\n";
+        if (responseConfig.sections.logs.items) {
+          for (const item of responseConfig.sections.logs.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Nota
+      if (responseConfig?.sections?.note) {
+        response += responseConfig.sections.note;
+      }
 
       return response;
     } catch (error) {
-      throw new Error(
-        `Error obteniendo estadísticas del sistema: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        }`
+      const errorMessage = this.getConfigMessage(
+        "stats.error_messages.system_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `Error obteniendo estadísticas del sistema: ${error instanceof Error ? error.message : "Error desconocido"}`
       );
+      throw new Error(errorMessage);
     }
   }
 
@@ -419,16 +585,36 @@ export class StatsCommand extends Command {
     try {
       // Verificar permisos
       if (!this.validatePermissions(context)) {
+        const errorMessage = this.getConfigMessage(
+          "stats.error_messages.permission_denied",
+          {},
+          "❌ Acceso denegado. Este comando es solo para administradores."
+        );
         return {
           success: true,
-          response:
-            "🚫 Acceso denegado. Solo administradores pueden ver estadísticas.",
+          response: errorMessage,
           shouldReply: true,
         };
       }
 
       const type = context.args[0] || "general";
       let response: string;
+
+      // Validar tipo de estadística
+      const validTypes = ["general", "users", "usuarios", "commands", "comandos", "permissions", "permisos", "system", "sistema"];
+      
+      if (!validTypes.includes(type.toLowerCase())) {
+        const errorMessage = this.getConfigMessage(
+          "stats.error_messages.invalid_type",
+          { type },
+          `❌ Tipo de estadística no válido: '${type}'\n\nTipos disponibles: general, users, commands, permissions, system`
+        );
+        return {
+          success: false,
+          response: errorMessage,
+          shouldReply: true,
+        };
+      }
 
       switch (type.toLowerCase()) {
         case "users":
@@ -459,12 +645,15 @@ export class StatsCommand extends Command {
         shouldReply: true,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      const errorMessage = this.getConfigMessage(
+        "stats.error_messages.general_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `❌ Error ejecutando comando stats: ${error instanceof Error ? error.message : "Error desconocido"}`
+      );
 
       return {
         success: false,
-        response: `❌ Error ejecutando comando stats: ${errorMessage}`,
+        response: errorMessage,
         shouldReply: true,
         error: errorMessage,
       };
