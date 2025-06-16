@@ -1,0 +1,18 @@
+# Configuración de seguridad para DrasBot
+# Generado automáticamente el vie 13 jun 2025 17:59:30 CEST
+
+# Restricciones de red
+DRASBOT_LOCALHOST_ONLY=true
+DRASBOT_BRIDGE_HOST=127.0.0.1
+DRASBOT_CHATBOT_HOST=127.0.0.1
+
+# Puertos seguros
+DRASBOT_BRIDGE_PORT=8080
+DRASBOT_CHATBOT_PORT=3000
+
+# Configuración de logs
+DRASBOT_LOG_LEVEL=INFO
+DRASBOT_SECURITY_LOGS=true
+
+# Timestamp de configuración
+DRASBOT_SECURITY_SETUP=2025-06-13 17:59:30
