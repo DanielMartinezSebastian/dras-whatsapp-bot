@@ -4,17 +4,35 @@ import {
   CommandResult,
   CommandMetadata,
 } from "../../../types/commands";
+import { UserType } from "../../../types/core/user.types";
+import { ConfigurationService } from "../../../services/ConfigurationService";
+import { logError } from "../../../utils/logger";
 
 /**
  * Comando administrativo para gestionar el sistema de comandos
  */
 export class AdminSystemCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "admin-system",
       aliases: ["sys", "sistema"],
-      description: "Gestiona el sistema de comandos del bot",
-      syntax: "!admin-system [stats|reload|toggle|help]",
+      description: this.getConfigMessage(
+        "admin_system.description",
+        {},
+        "Gestiona el sistema de comandos del bot"
+      ),
+      syntax: this.getConfigMessage(
+        "admin_system.syntax",
+        {},
+        "!admin-system [stats|reload|toggle|help]"
+      ),
       category: "admin",
       permissions: ["admin"],
       cooldown: 3,
@@ -26,8 +44,83 @@ export class AdminSystemCommand extends Command {
       ],
       isAdmin: true,
       isSensitive: true,
-      requiredRole: "admin",
+      requiredRole: "admin" as UserType,
     };
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage<T = any>(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: T
+  ): T {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || ("Configuración no disponible" as any);
+      }
+
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      if (!message) {
+        return fallback || (`Mensaje no configurado: ${path}` as any);
+      }
+
+      if (Array.isArray(message)) {
+        if (typeof fallback === "object" && Array.isArray(fallback)) {
+          return (message.length > 0 ? message : fallback) as T;
+        }
+        return message as T;
+      }
+
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables) as T;
+      }
+
+      return message as T;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || ("Error en configuración" as any);
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, "g");
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -54,7 +147,11 @@ export class AdminSystemCommand extends Command {
       if (!context.isFromAdmin) {
         return {
           success: false,
-          response: "❌ Este comando requiere permisos de administrador.",
+          response: this.getConfigMessage(
+            "admin_system.errors.permission_denied",
+            {},
+            "❌ Este comando requiere permisos de administrador."
+          ),
           shouldReply: true,
           error: "Insufficient permissions",
           data: {
@@ -86,7 +183,11 @@ export class AdminSystemCommand extends Command {
         default:
           return {
             success: false,
-            response: `❌ Acción desconocida: ${action}. Usa \`!admin-system help\` para ver las opciones.`,
+            response: this.getConfigMessage(
+              "admin_system.errors.unknown_action",
+              { action },
+              `❌ Acción desconocida: ${action}. Usa \`!admin-system help\` para ver las opciones.`
+            ),
             shouldReply: true,
             error: `Unknown action: ${action}`,
             data: {
@@ -100,20 +201,40 @@ export class AdminSystemCommand extends Command {
           };
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      logError(
+        `Error ejecutando AdminSystemCommand: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+
+      const errorMessage = this.getConfigMessage(
+        "admin_system.errors.execution_error",
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : this.getConfigMessage(
+                  "admin_system.errors.general_error",
+                  {},
+                  "Error desconocido"
+                ),
+        },
+        `❌ Error en admin-system: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
+      );
 
       return {
         success: false,
-        response: `❌ Error en admin-system: ${errorMessage}`,
+        response: errorMessage,
         shouldReply: true,
-        error: errorMessage,
+        error: error instanceof Error ? error.message : "Error desconocido",
         data: {
           commandName: this.metadata.name,
           executionTime: Date.now() - startTime,
           timestamp: new Date(),
           userId: context.user?.id?.toString(),
-          error: errorMessage,
+          error: error instanceof Error ? error.message : "Error desconocido",
         },
       };
     }
@@ -128,43 +249,148 @@ export class AdminSystemCommand extends Command {
   ): Promise<CommandResult> {
     const registryStats = this.getRegistryStats();
     const handlerStats = this.getHandlerStats();
+    const categoryStats = this.getCategoryStats();
 
-    let statsText = `*🔧 Estadísticas del Sistema*\n\n`;
+    const response: string[] = [];
 
-    // Estadísticas del registro de comandos
-    statsText += `*📊 Registry de Comandos:*\n`;
-    statsText += `• Comandos cargados: ${registryStats.totalCommands}\n`;
-    statsText += `• Aliases registrados: ${registryStats.totalAliases}\n`;
-    statsText += `• Categorías: ${registryStats.categories}\n`;
-    statsText += `• Sistema cargado: ${
-      registryStats.isLoaded ? "✅" : "❌"
-    }\n\n`;
+    // Título principal
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.stats.title",
+        {},
+        "🔧 Estadísticas del Sistema"
+      )
+    );
+    response.push("");
 
-    // Estadísticas del manejador
-    statsText += `*⚡ Manejador de Comandos:*\n`;
-    statsText += `• Ejecuciones totales: ${handlerStats.totalExecutions}\n`;
-    statsText += `• Comandos exitosos: ${handlerStats.totalSuccesses}\n`;
-    statsText += `• Errores: ${handlerStats.totalErrors}\n`;
-    statsText += `• Tasa de éxito: ${handlerStats.successRate}%\n`;
-    statsText += `• Cooldowns activos: ${handlerStats.activeCooldowns}\n\n`;
+    // Estadísticas del registro
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.stats.sections.registry.title",
+        {},
+        "📊 Registry de Comandos:"
+      )
+    );
 
-    // Estado del sistema TypeScript
-    statsText += `*🆕 Sistema TypeScript:*\n`;
-    statsText += `• Estado: 🟢 Habilitado\n`;
-    statsText += `• Migración: ✅ En progreso\n`;
-    statsText += `• Tests: 286/287 pasando\n`;
-    statsText += `• Prefijo: ! (configurable)\n\n`;
+    const registryItems = this.getConfigMessage<Record<string, string>>(
+      "admin_system.actions.stats.sections.registry.items",
+      {},
+      {
+        total_commands: "• Comandos cargados: {totalCommands}",
+        total_aliases: "• Aliases registrados: {totalAliases}",
+        categories: "• Categorías: {categories}",
+        is_loaded: "• Sistema cargado: {loadedStatus}",
+      }
+    );
+
+    const registryVariables = {
+      totalCommands: registryStats.totalCommands,
+      totalAliases: registryStats.totalAliases,
+      categories: registryStats.categories,
+      loadedStatus: registryStats.isLoaded
+        ? this.getConfigMessage(
+            "admin_system.status_indicators.loaded",
+            {},
+            "✅"
+          )
+        : this.getConfigMessage(
+            "admin_system.status_indicators.not_loaded",
+            {},
+            "❌"
+          ),
+    };
+
+    Object.entries(registryItems).forEach(([key, template]) => {
+      response.push(this.replaceVariables(template, registryVariables));
+    });
+
+    response.push("");
+
+    // Estadísticas del handler
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.stats.sections.handler.title",
+        {},
+        "⚡ Manejador de Comandos:"
+      )
+    );
+
+    const handlerItems = this.getConfigMessage<Record<string, string>>(
+      "admin_system.actions.stats.sections.handler.items",
+      {},
+      {
+        total_executions: "• Ejecuciones totales: {totalExecutions}",
+        total_successes: "• Comandos exitosos: {totalSuccesses}",
+        total_errors: "• Errores: {totalErrors}",
+        success_rate: "• Tasa de éxito: {successRate}%",
+        active_cooldowns: "• Cooldowns activos: {activeCooldowns}",
+      }
+    );
+
+    Object.entries(handlerItems).forEach(([key, template]) => {
+      response.push(this.replaceVariables(template, handlerStats));
+    });
+
+    response.push("");
+
+    // Sistema TypeScript
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.stats.sections.typescript_system.title",
+        {},
+        "🆕 Sistema TypeScript:"
+      )
+    );
+
+    const typescriptItems = this.getConfigMessage<Record<string, string>>(
+      "admin_system.actions.stats.sections.typescript_system.items",
+      {},
+      {
+        status: "• Estado: 🟢 Habilitado",
+        migration: "• Migración: ✅ En progreso",
+        tests: "• Tests: {testsStatus}",
+        prefix: "• Prefijo: ! (configurable)",
+      }
+    );
+
+    const typescriptVariables = {
+      testsStatus: this.getConfigMessage(
+        "admin_system.simulated_data.tests_status",
+        {},
+        "286/287 pasando"
+      ),
+    };
+
+    Object.entries(typescriptItems).forEach(([key, template]) => {
+      response.push(this.replaceVariables(template, typescriptVariables));
+    });
+
+    response.push("");
 
     // Comandos por categoría
-    const categoryStats = this.getCategoryStats();
-    statsText += `*📁 Comandos por Categoría:*\n`;
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.stats.sections.categories.title",
+        {},
+        "📁 Comandos por Categoría:"
+      )
+    );
+
+    const categoryTemplate = this.getConfigMessage(
+      "admin_system.actions.stats.sections.categories.template",
+      {},
+      "• {category}: {count} comandos"
+    );
+
     for (const [category, count] of Object.entries(categoryStats)) {
-      statsText += `• ${category}: ${count} comandos\n`;
+      response.push(
+        this.replaceVariables(categoryTemplate, { category, count })
+      );
     }
 
     return {
       success: true,
-      response: statsText,
+      response: response.join("\n"),
       shouldReply: true,
       data: {
         commandName: this.metadata.name,
@@ -192,7 +418,11 @@ export class AdminSystemCommand extends Command {
     const previousCount = 14; // Comandos actualmente migrados
     const newCount = 14; // Simular recarga exitosa
 
-    const response = `✅ Comandos recargados. Antes: ${previousCount}, Ahora: ${newCount}`;
+    const response = this.getConfigMessage(
+      "admin_system.actions.reload.success",
+      { previousCount, newCount },
+      `✅ Comandos recargados. Antes: ${previousCount}, Ahora: ${newCount}`
+    );
 
     return {
       success: true,
@@ -219,7 +449,11 @@ export class AdminSystemCommand extends Command {
     startTime: number
   ): Promise<CommandResult> {
     // En la implementación TypeScript, el sistema está siempre habilitado
-    const response = `⚠️ El sistema TypeScript está permanentemente habilitado. No se puede alternar desde este comando.`;
+    const response = this.getConfigMessage(
+      "admin_system.actions.toggle.typescript_permanent",
+      {},
+      "⚠️ El sistema TypeScript está permanentemente habilitado. No se puede alternar desde este comando."
+    );
 
     return {
       success: true,
@@ -244,20 +478,62 @@ export class AdminSystemCommand extends Command {
     context: CommandContext,
     startTime: number
   ): Promise<CommandResult> {
-    let helpText = `*🔧 Ayuda: Admin System*\n\n`;
-    helpText += `*Comandos disponibles:*\n`;
-    helpText += `• \`stats\` - Muestra estadísticas del sistema\n`;
-    helpText += `• \`reload\` - Recarga todos los comandos\n`;
-    helpText += `• \`toggle\` - Estado del sistema TypeScript\n`;
-    helpText += `• \`help\` - Muestra esta ayuda\n\n`;
-    helpText += `*Ejemplos:*\n`;
-    helpText += `• !admin-system stats\n`;
-    helpText += `• !sys reload\n`;
-    helpText += `• !sistema toggle`;
+    const response: string[] = [];
+
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.help.title",
+        {},
+        "🔧 Ayuda: Admin System"
+      )
+    );
+    response.push("");
+
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.help.sections.commands.title",
+        {},
+        "Comandos disponibles:"
+      )
+    );
+
+    const commandItems = this.getConfigMessage<string[]>(
+      "admin_system.actions.help.sections.commands.items",
+      {},
+      [
+        "• `stats` - Muestra estadísticas del sistema",
+        "• `reload` - Recarga todos los comandos",
+        "• `toggle` - Estado del sistema TypeScript",
+        "• `help` - Muestra esta ayuda",
+      ]
+    );
+
+    commandItems.forEach((item: string) => {
+      response.push(item);
+    });
+
+    response.push("");
+    response.push(
+      this.getConfigMessage(
+        "admin_system.actions.help.sections.examples.title",
+        {},
+        "Ejemplos:"
+      )
+    );
+
+    const exampleItems = this.getConfigMessage<string[]>(
+      "admin_system.actions.help.sections.examples.items",
+      {},
+      ["• !admin-system stats", "• !sys reload", "• !sistema toggle"]
+    );
+
+    exampleItems.forEach((example: string) => {
+      response.push(example);
+    });
 
     return {
       success: true,
-      response: helpText,
+      response: response.join("\n"),
       shouldReply: true,
       data: {
         commandName: this.metadata.name,
@@ -299,12 +575,18 @@ export class AdminSystemCommand extends Command {
    * Obtiene estadísticas de comandos por categoría
    */
   private getCategoryStats() {
-    return {
-      basic: 4,
-      system: 2,
-      admin: 3,
-      user: 2,
-      contextual: 4,
-    };
+    const defaultStats = this.getConfigMessage<Record<string, number>>(
+      "admin_system.simulated_data.categories_default",
+      {},
+      {
+        basic: 4,
+        system: 2,
+        admin: 3,
+        user: 2,
+        contextual: 4,
+      }
+    );
+
+    return defaultStats;
   }
 }

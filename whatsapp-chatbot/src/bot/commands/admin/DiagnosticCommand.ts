@@ -5,18 +5,35 @@ import {
   CommandMetadata,
 } from "../../../types/commands";
 import { UserType } from "../../../types/core/user.types";
+import { ConfigurationService } from "../../../services/ConfigurationService";
+import { logError } from "../../../utils/logger";
 
 /**
  * Comando de diagnóstico del sistema
  * Proporciona información detallada sobre el estado del sistema de comandos
  */
 export class DiagnosticCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "diagnostic",
       aliases: ["diagnostico", "diag", "status-system"],
-      description: "Diagnóstico del sistema de comandos y configuración",
-      syntax: "!diagnostic [contextual|stats|test|all]",
+      description: this.getConfigMessage(
+        "diagnostic.description",
+        {},
+        "Diagnóstico del sistema de comandos y configuración"
+      ),
+      syntax: this.getConfigMessage(
+        "diagnostic.syntax",
+        {},
+        "!diagnostic [contextual|stats|test|all]"
+      ),
       category: "admin",
       permissions: ["admin"],
       cooldown: 5,
@@ -31,6 +48,81 @@ export class DiagnosticCommand extends Command {
       isAdmin: true,
       isSensitive: false,
     };
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage<T = any>(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: T
+  ): T {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || ("Configuración no disponible" as any);
+      }
+
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      if (!message) {
+        return fallback || (`Mensaje no configurado: ${path}` as any);
+      }
+
+      if (Array.isArray(message)) {
+        if (typeof fallback === "object" && Array.isArray(fallback)) {
+          return (message.length > 0 ? message : fallback) as T;
+        }
+        return message as T;
+      }
+
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables) as T;
+      }
+
+      return message as T;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || ("Error en configuración" as any);
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, "g");
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -50,21 +142,69 @@ export class DiagnosticCommand extends Command {
     const useNewSystem = process.env.USE_NEW_COMMANDS === "true";
     const enableNewSystem = process.env.ENABLE_NEW_COMMANDS === "true";
 
-    response.push("📊 CONFIGURACIÓN:");
-    response.push(`• USE_NEW_COMMANDS: ${useNewSystem ? "SÍ" : "NO"}`);
-    response.push(`• ENABLE_NEW_COMMANDS: ${enableNewSystem ? "SÍ" : "NO"}`);
-    response.push(`• NODE_ENV: ${process.env.NODE_ENV || "no definido"}`);
-    response.push(`• Version Node.js: ${process.version}`);
+    const variables = {
+      useNewCommands: useNewSystem ? "SÍ" : "NO",
+      enableNewCommands: enableNewSystem ? "SÍ" : "NO",
+      nodeEnv: process.env.NODE_ENV || "no definido",
+      nodeVersion: process.version,
+    };
+
+    response.push(
+      this.getConfigMessage(
+        "diagnostic.response.sections.system_stats.title",
+        {},
+        "📊 CONFIGURACIÓN:"
+      )
+    );
+
+    const configItems = this.getConfigMessage(
+      "diagnostic.response.sections.system_stats.items",
+      {},
+      {
+        use_new_commands: "• USE_NEW_COMMANDS: {useNewCommands}",
+        enable_new_commands: "• ENABLE_NEW_COMMANDS: {enableNewCommands}",
+        node_env: "• NODE_ENV: {nodeEnv}",
+        node_version: "• Version Node.js: {nodeVersion}",
+      }
+    ) as Record<string, string>;
+
+    Object.entries(configItems).forEach(([key, template]) => {
+      response.push(this.replaceVariables(template as string, variables));
+    });
 
     // Información del proceso
+    const processVariables = {
+      pid: process.pid.toString(),
+      uptime: this.formatUptime(process.uptime()),
+      memory: this.formatBytes(process.memoryUsage().heapUsed),
+      workingDir: process.cwd(),
+    };
+
     response.push("");
-    response.push("⚙️ PROCESO:");
-    response.push(`• PID: ${process.pid}`);
-    response.push(`• Tiempo activo: ${this.formatUptime(process.uptime())}`);
     response.push(
-      `• Memoria heap: ${this.formatBytes(process.memoryUsage().heapUsed)}`
+      this.getConfigMessage(
+        "diagnostic.response.sections.process_info.title",
+        {},
+        "⚙️ PROCESO:"
+      )
     );
-    response.push(`• Directorio de trabajo: ${process.cwd()}`);
+
+    const processItems = this.getConfigMessage<Record<string, string>>(
+      "diagnostic.response.sections.process_info.items",
+      {},
+      {
+        pid: "• PID: {pid}",
+        uptime: "• Tiempo activo: {uptime}",
+        memory: "• Memoria heap: {memory}",
+        working_dir: "• Directorio de trabajo: {workingDir}",
+      }
+    );
+
+    Object.entries(processItems).forEach(([key, template]) => {
+      response.push(
+        this.replaceVariables(template as string, processVariables)
+      );
+    });
 
     return response;
   }
@@ -75,26 +215,67 @@ export class DiagnosticCommand extends Command {
   private getContextualInfo(): string[] {
     const response: string[] = [];
 
-    response.push("🎯 COMANDOS CONTEXTUALES:");
+    response.push(
+      this.getConfigMessage(
+        "diagnostic.response.sections.contextual_info.title",
+        {},
+        "🎯 COMANDOS CONTEXTUALES:"
+      )
+    );
 
     try {
-      // En un sistema real, aquí se consultaría el CommandRegistry
-      // Por ahora, proporcionamos información simulada
-      response.push(
-        "• Total comandos contextuales: No disponible en migración TS"
+      const variables = {
+        totalContextualCommands: this.getConfigMessage(
+          "diagnostic.response.sections.contextual_info.unavailable",
+          {},
+          "No disponible en migración TS"
+        ),
+        registryStatus: this.getConfigMessage(
+          "diagnostic.response.sections.contextual_info.migration_in_progress",
+          {},
+          "Migración en progreso"
+        ),
+        activeDetectors: this.getConfigMessage(
+          "diagnostic.response.sections.contextual_info.verification_pending",
+          {},
+          "Verificación pendiente"
+        ),
+      };
+
+      const contextualItems = this.getConfigMessage<Record<string, string>>(
+        "diagnostic.response.sections.contextual_info.items",
+        {},
+        {
+          total_commands:
+            "• Total comandos contextuales: {totalContextualCommands}",
+          registry_status: "• Estado del registro: {registryStatus}",
+          active_detectors: "• Detectores activos: {activeDetectors}",
+          migration_note: "📝 NOTA: Sistema en migración a TypeScript",
+          migration_description:
+            "   Los comandos contextuales serán migrados en fases posteriores",
+        }
       );
-      response.push("• Estado del registro: Migración en progreso");
-      response.push("• Detectores activos: Verificación pendiente");
-      response.push("");
-      response.push("📝 NOTA: Sistema en migración a TypeScript");
-      response.push(
-        "   Los comandos contextuales serán migrados en fases posteriores"
-      );
+
+      Object.entries(contextualItems).forEach(([key, template]) => {
+        if (typeof template === "string") {
+          if (key.includes("note") || key.includes("description")) {
+            response.push(template);
+          } else {
+            response.push(this.replaceVariables(template, variables));
+          }
+        }
+      });
     } catch (error) {
       response.push(
-        `❌ Error cargando información contextual: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        }`
+        this.getConfigMessage(
+          "diagnostic.errors.contextual_error",
+          {
+            error: error instanceof Error ? error.message : "Error desconocido",
+          },
+          `❌ Error cargando información contextual: ${
+            error instanceof Error ? error.message : "Error desconocido"
+          }`
+        )
       );
     }
 
@@ -107,31 +288,66 @@ export class DiagnosticCommand extends Command {
   private runDetectionTests(): string[] {
     const response: string[] = [];
 
-    response.push("🧪 TESTS DE DETECCIÓN:");
+    response.push(
+      this.getConfigMessage(
+        "diagnostic.response.sections.detection_tests.title",
+        {},
+        "🧪 TESTS DE DETECCIÓN:"
+      )
+    );
 
-    const testMessages = [
-      "estoy aburrido",
-      "estoy triste",
-      "no sé qué hacer",
-      "cuéntame un chiste",
-      "qué hora es",
-      "hola chatbot",
-    ];
+    const testMessages = this.getConfigMessage<string[]>(
+      "diagnostic.response.sections.detection_tests.test_messages",
+      {},
+      [
+        "estoy aburrido",
+        "estoy triste",
+        "no sé qué hacer",
+        "cuéntame un chiste",
+        "qué hora es",
+        "hola chatbot",
+      ]
+    );
 
     response.push("");
-    response.push("Mensajes de prueba:");
+    response.push(
+      this.getConfigMessage(
+        "diagnostic.response.sections.detection_tests.subtitle",
+        {},
+        "Mensajes de prueba:"
+      )
+    );
 
-    testMessages.forEach((testMsg) => {
-      // Simulación de detección - en producción usaría el sistema real
+    testMessages.forEach((testMsg: string) => {
       const detected = this.simulateDetection(testMsg);
-      const status = detected.isDetected
-        ? `✅ Detectado por: ${detected.detectedBy}`
-        : "❌ No detectado";
-      response.push(`• "${testMsg}": ${status}`);
+      const template = detected.isDetected
+        ? this.getConfigMessage(
+            "diagnostic.response.sections.detection_tests.detected_template",
+            {},
+            '• "{message}": ✅ Detectado por: {detectedBy}'
+          )
+        : this.getConfigMessage(
+            "diagnostic.response.sections.detection_tests.not_detected_template",
+            {},
+            '• "{message}": ❌ No detectado'
+          );
+
+      response.push(
+        this.replaceVariables(template, {
+          message: testMsg,
+          detectedBy: detected.detectedBy,
+        })
+      );
     });
 
     response.push("");
-    response.push("📝 NOTA: Tests usando lógica simulada durante migración TS");
+    response.push(
+      this.getConfigMessage(
+        "diagnostic.response.sections.detection_tests.simulation_note",
+        {},
+        "📝 NOTA: Tests usando lógica simulada durante migración TS"
+      )
+    );
 
     return response;
   }
@@ -143,17 +359,20 @@ export class DiagnosticCommand extends Command {
     isDetected: boolean;
     detectedBy: string;
   } {
-    const patterns = [
-      { pattern: /aburrido|aburrida/i, command: "ActivitySuggestionCommand" },
-      { pattern: /triste|sad/i, command: "MotivationCommand" },
-      { pattern: /no sé|que hacer/i, command: "HelpCommand" },
-      { pattern: /chiste|joke/i, command: "JokeCommand" },
-      { pattern: /hora|time/i, command: "TimeCommand" },
-      { pattern: /hola|hi|hello/i, command: "GreetingCommand" },
-    ];
+    const patterns = this.getConfigMessage<
+      Array<{ pattern: string; command: string }>
+    >("diagnostic.response.sections.detection_tests.patterns", {}, [
+      { pattern: "aburrido|aburrida", command: "ActivitySuggestionCommand" },
+      { pattern: "triste|sad", command: "MotivationCommand" },
+      { pattern: "no sé|que hacer", command: "HelpCommand" },
+      { pattern: "chiste|joke", command: "JokeCommand" },
+      { pattern: "hora|time", command: "TimeCommand" },
+      { pattern: "hola|hi|hello", command: "GreetingCommand" },
+    ]);
 
     for (const { pattern, command } of patterns) {
-      if (pattern.test(message)) {
+      const regex = new RegExp(pattern, "i");
+      if (regex.test(message)) {
         return { isDetected: true, detectedBy: command };
       }
     }
@@ -197,8 +416,11 @@ export class DiagnosticCommand extends Command {
       if (!this.validatePermissions(context)) {
         return {
           success: false,
-          response:
-            "🚫 Acceso denegado. Solo administradores pueden ejecutar diagnósticos.",
+          response: this.getConfigMessage(
+            "diagnostic.errors.permission_denied",
+            {},
+            "🚫 Acceso denegado. Solo administradores pueden ejecutar diagnósticos."
+          ),
           shouldReply: true,
           data: {
             commandName: this.metadata.name,
@@ -214,8 +436,20 @@ export class DiagnosticCommand extends Command {
       const response: string[] = [];
 
       // Encabezado
-      response.push("🔍 DIAGNÓSTICO DEL SISTEMA");
-      response.push("═══════════════════════════");
+      response.push(
+        this.getConfigMessage(
+          "diagnostic.response.header",
+          {},
+          "🔍 DIAGNÓSTICO DEL SISTEMA"
+        )
+      );
+      response.push(
+        this.getConfigMessage(
+          "diagnostic.response.separator",
+          {},
+          "═══════════════════════════"
+        )
+      );
       response.push("");
 
       // Seleccionar secciones según la opción
@@ -235,23 +469,54 @@ export class DiagnosticCommand extends Command {
       }
 
       // Información de la consulta
+      const queryVariables = {
+        timestamp: new Date().toLocaleString(),
+        userName: context.user?.display_name || "Desconocido",
+        chatName: context.message.chatName || "Chat sin nombre",
+      };
+
       response.push("");
-      response.push(`🕒 Consultado: ${new Date().toLocaleString()}`);
-      response.push(
-        `👤 Usuario: ${context.user?.display_name || "Desconocido"}`
+      const queryInfo = this.getConfigMessage<Record<string, string>>(
+        "diagnostic.response.sections.query_info",
+        {},
+        {
+          timestamp: "🕒 Consultado: {timestamp}",
+          user: "👤 Usuario: {userName}",
+          chat: "📱 Desde: {chatName}",
+        }
       );
-      response.push(
-        `📱 Desde: ${context.message.chatName || "Chat sin nombre"}`
-      );
+
+      Object.entries(queryInfo).forEach(([key, template]) => {
+        response.push(
+          this.replaceVariables(template as string, queryVariables)
+        );
+      });
 
       // Si no se reconoce la opción, mostrar ayuda
       if (!["stats", "contextual", "test", "all"].includes(option)) {
         response.push("");
-        response.push("❓ Opción no reconocida. Opciones disponibles:");
-        response.push("• stats - Estadísticas del sistema");
-        response.push("• contextual - Información de comandos contextuales");
-        response.push("• test - Tests de detección");
-        response.push("• all - Diagnóstico completo (por defecto)");
+        response.push(
+          this.getConfigMessage(
+            "diagnostic.response.options.invalid_option",
+            {},
+            "❓ Opción no reconocida. Opciones disponibles:"
+          )
+        );
+
+        const availableOptions = this.getConfigMessage<string[]>(
+          "diagnostic.response.options.available_options",
+          {},
+          [
+            "• stats - Estadísticas del sistema",
+            "• contextual - Información de comandos contextuales",
+            "• test - Tests de detección",
+            "• all - Diagnóstico completo (por defecto)",
+          ]
+        );
+
+        availableOptions.forEach((option: string) => {
+          response.push(option);
+        });
       }
 
       return {
@@ -267,20 +532,40 @@ export class DiagnosticCommand extends Command {
         },
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      logError(
+        `Error ejecutando DiagnosticCommand: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+
+      const errorMessage = this.getConfigMessage(
+        "diagnostic.errors.execution_error",
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : this.getConfigMessage(
+                  "diagnostic.errors.general_error",
+                  {},
+                  "Error desconocido"
+                ),
+        },
+        `❌ Error ejecutando diagnóstico: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
+      );
 
       return {
         success: false,
-        response: `❌ Error ejecutando diagnóstico: ${errorMessage}`,
+        response: errorMessage,
         shouldReply: true,
-        error: errorMessage,
+        error: error instanceof Error ? error.message : "Error desconocido",
         data: {
           commandName: this.metadata.name,
           executionTime: Date.now() - startTime,
           timestamp: new Date(),
           userId: context.user?.id?.toString(),
-          error: errorMessage,
+          error: error instanceof Error ? error.message : "Error desconocido",
         },
       };
     }

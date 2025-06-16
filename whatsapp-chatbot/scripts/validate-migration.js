@@ -263,6 +263,14 @@ function main() {
       file: path.join("./src/bot/commands/admin", "ConfigCommand.ts"),
       methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
     },
+    {
+      file: path.join("./src/bot/commands/admin", "DiagnosticCommand.ts"),
+      methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
+    },
+    {
+      file: path.join("./src/bot/commands/admin", "AdminSystemCommand.ts"),
+      methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
+    },
   ];
 
   for (const validation of commandValidations) {

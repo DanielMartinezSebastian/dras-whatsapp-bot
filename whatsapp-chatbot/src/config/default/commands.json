@@ -1158,5 +1158,220 @@
       "not_registered": "❌ Perfil no disponible - usuario no registrado.\n\nDebes estar registrado para ver tu perfil.",
       "general_error": "❌ Error obteniendo perfil de usuario: {error}"
     }
+  },
+  "diagnostic": {
+    "description": "Diagnóstico del sistema de comandos y configuración",
+    "syntax": "!diagnostic [contextual|stats|test|all]",
+    "examples": [
+      "!diagnostic - Diagnóstico completo del sistema",
+      "!diagnostic stats - Solo estadísticas del registro de comandos",
+      "!diagnostic contextual - Solo comandos contextuales",
+      "!diagnostic test - Solo pruebas de detección",
+      "!diagnostic all - Diagnóstico completo (igual que sin argumentos)"
+    ],
+    "response": {
+      "header": "🔍 DIAGNÓSTICO DEL SISTEMA",
+      "separator": "═══════════════════════════",
+      "sections": {
+        "system_stats": {
+          "title": "📊 CONFIGURACIÓN:",
+          "items": {
+            "use_new_commands": "• USE_NEW_COMMANDS: {useNewCommands}",
+            "enable_new_commands": "• ENABLE_NEW_COMMANDS: {enableNewCommands}",
+            "node_env": "• NODE_ENV: {nodeEnv}",
+            "node_version": "• Version Node.js: {nodeVersion}"
+          }
+        },
+        "process_info": {
+          "title": "⚙️ PROCESO:",
+          "items": {
+            "pid": "• PID: {pid}",
+            "uptime": "• Tiempo activo: {uptime}",
+            "memory": "• Memoria heap: {memory}",
+            "working_dir": "• Directorio de trabajo: {workingDir}"
+          }
+        },
+        "contextual_info": {
+          "title": "🎯 COMANDOS CONTEXTUALES:",
+          "items": {
+            "total_commands": "• Total comandos contextuales: {totalContextualCommands}",
+            "registry_status": "• Estado del registro: {registryStatus}",
+            "active_detectors": "• Detectores activos: {activeDetectors}",
+            "migration_note": "📝 NOTA: Sistema en migración a TypeScript",
+            "migration_description": "   Los comandos contextuales serán migrados en fases posteriores"
+          },
+          "unavailable": "No disponible en migración TS",
+          "migration_in_progress": "Migración en progreso",
+          "verification_pending": "Verificación pendiente"
+        },
+        "detection_tests": {
+          "title": "🧪 TESTS DE DETECCIÓN:",
+          "subtitle": "Mensajes de prueba:",
+          "test_messages": [
+            "estoy aburrido",
+            "estoy triste",
+            "no sé qué hacer",
+            "cuéntame un chiste",
+            "qué hora es",
+            "hola chatbot"
+          ],
+          "patterns": [
+            {
+              "pattern": "aburrido|aburrida",
+              "command": "ActivitySuggestionCommand"
+            },
+            {
+              "pattern": "triste|sad",
+              "command": "MotivationCommand"
+            },
+            {
+              "pattern": "no sé|que hacer",
+              "command": "HelpCommand"
+            },
+            {
+              "pattern": "chiste|joke",
+              "command": "JokeCommand"
+            },
+            {
+              "pattern": "hora|time",
+              "command": "TimeCommand"
+            },
+            {
+              "pattern": "hola|hi|hello",
+              "command": "GreetingCommand"
+            }
+          ],
+          "detected_template": "• \"{message}\": ✅ Detectado por: {detectedBy}",
+          "not_detected_template": "• \"{message}\": ❌ No detectado",
+          "simulation_note": "📝 NOTA: Tests usando lógica simulada durante migración TS"
+        },
+        "query_info": {
+          "timestamp": "🕒 Consultado: {timestamp}",
+          "user": "👤 Usuario: {userName}",
+          "chat": "📱 Desde: {chatName}"
+        }
+      },
+      "options": {
+        "invalid_option": "❓ Opción no reconocida. Opciones disponibles:",
+        "available_options": [
+          "• stats - Estadísticas del sistema",
+          "• contextual - Información de comandos contextuales",
+          "• test - Tests de detección",
+          "• all - Diagnóstico completo (por defecto)"
+        ]
+      }
+    },
+    "errors": {
+      "permission_denied": "🚫 Acceso denegado. Solo administradores pueden ejecutar diagnósticos.",
+      "contextual_error": "❌ Error cargando información contextual: {error}",
+      "execution_error": "❌ Error ejecutando diagnóstico: {error}",
+      "general_error": "Error desconocido"
+    },
+    "notices": {
+      "migration_note": "Sistema en migración a TypeScript",
+      "simulation_active": "Tests usando lógica simulada durante migración TS"
+    }
+  },
+  "admin_system": {
+    "description": "Gestiona el sistema de comandos del bot",
+    "syntax": "!admin-system [stats|reload|toggle|help]",
+    "examples": [
+      "!admin-system stats",
+      "!sys reload", 
+      "!sistema toggle",
+      "!admin-system help"
+    ],
+    "actions": {
+      "stats": {
+        "title": "🔧 Estadísticas del Sistema",
+        "sections": {
+          "registry": {
+            "title": "📊 Registry de Comandos:",
+            "items": {
+              "total_commands": "• Comandos cargados: {totalCommands}",
+              "total_aliases": "• Aliases registrados: {totalAliases}",
+              "categories": "• Categorías: {categories}",
+              "is_loaded": "• Sistema cargado: {loadedStatus}"
+            }
+          },
+          "handler": {
+            "title": "⚡ Manejador de Comandos:",
+            "items": {
+              "total_executions": "• Ejecuciones totales: {totalExecutions}",
+              "total_successes": "• Comandos exitosos: {totalSuccesses}",
+              "total_errors": "• Errores: {totalErrors}",
+              "success_rate": "• Tasa de éxito: {successRate}%",
+              "active_cooldowns": "• Cooldowns activos: {activeCooldowns}"
+            }
+          },
+          "typescript_system": {
+            "title": "🆕 Sistema TypeScript:",
+            "items": {
+              "status": "• Estado: 🟢 Habilitado",
+              "migration": "• Migración: ✅ En progreso",
+              "tests": "• Tests: {testsStatus}",
+              "prefix": "• Prefijo: ! (configurable)"
+            }
+          },
+          "categories": {
+            "title": "📁 Comandos por Categoría:",
+            "template": "• {category}: {count} comandos"
+          }
+        }
+      },
+      "reload": {
+        "success": "✅ Comandos recargados. Antes: {previousCount}, Ahora: {newCount}",
+        "error": "❌ Error recargando comandos: {error}"
+      },
+      "toggle": {
+        "typescript_permanent": "⚠️ El sistema TypeScript está permanentemente habilitado. No se puede alternar desde este comando.",
+        "system_enabled": "✅ Sistema habilitado",
+        "system_disabled": "❌ Sistema deshabilitado"
+      },
+      "help": {
+        "title": "🔧 Ayuda: Admin System",
+        "sections": {
+          "commands": {
+            "title": "Comandos disponibles:",
+            "items": [
+              "• `stats` - Muestra estadísticas del sistema",
+              "• `reload` - Recarga todos los comandos", 
+              "• `toggle` - Estado del sistema TypeScript",
+              "• `help` - Muestra esta ayuda"
+            ]
+          },
+          "examples": {
+            "title": "Ejemplos:",
+            "items": [
+              "• !admin-system stats",
+              "• !sys reload",
+              "• !sistema toggle"
+            ]
+          }
+        }
+      }
+    },
+    "errors": {
+      "permission_denied": "❌ Este comando requiere permisos de administrador.",
+      "unknown_action": "❌ Acción desconocida: {action}. Usa `!admin-system help` para ver las opciones.",
+      "execution_error": "❌ Error en admin-system: {error}",
+      "general_error": "Error desconocido"
+    },
+    "status_indicators": {
+      "loaded": "✅",
+      "not_loaded": "❌",
+      "enabled": "🟢",
+      "disabled": "🔴"
+    },
+    "simulated_data": {
+      "tests_status": "286/287 pasando",
+      "categories_default": {
+        "basic": 4,
+        "system": 2,
+        "admin": 3,
+        "user": 2,
+        "contextual": 4
+      }
+    }
   }
 }
