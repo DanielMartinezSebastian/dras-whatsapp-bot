@@ -5,17 +5,29 @@ import {
   CommandMetadata,
 } from "../../../types/commands";
 import { UserType } from "../../../types/core/user.types";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 
 /**
  * Comando para mostrar el perfil del usuario
  * Accesible para todos los usuarios registrados
  */
 export class ProfileCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "profile",
       aliases: ["perfil", "mi-perfil", "info-personal"],
-      description: "Muestra tu perfil de usuario con estadísticas",
+      description: this.getConfigMessage(
+        "profile.description",
+        {},
+        "Muestra tu perfil de usuario con estadísticas"
+      ),
       syntax: "!profile",
       category: "user",
       permissions: ["user"],
@@ -40,6 +52,13 @@ export class ProfileCommand extends Command {
    * Obtiene el emoji correspondiente al tipo de usuario
    */
   private getUserTypeEmoji(userType: UserType): string {
+    const userTypes = this.getValueByPath("profile.user_types");
+    
+    if (userTypes && userTypes[userType]) {
+      return userTypes[userType].emoji;
+    }
+
+    // Fallback hardcodeado
     const emojiMap: Record<UserType, string> = {
       admin: "👑",
       customer: "👤",
@@ -57,6 +76,13 @@ export class ProfileCommand extends Command {
    * Obtiene la descripción del tipo de usuario
    */
   private getUserTypeDescription(userType: UserType): string {
+    const userTypes = this.getValueByPath("profile.user_types");
+    
+    if (userTypes && userTypes[userType]) {
+      return userTypes[userType].description;
+    }
+
+    // Fallback hardcodeado
     const descriptionMap: Record<UserType, string> = {
       admin: "Administrador del sistema",
       customer: "Cliente registrado",
@@ -84,8 +110,83 @@ export class ProfileCommand extends Command {
         minute: "2-digit",
       });
     } catch (error) {
-      return "Fecha no disponible";
+      return this.getConfigMessage(
+        "profile.default_values.date_unavailable",
+        {},
+        "Fecha no disponible"
+      );
     }
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
+    if (typeof template !== 'string') {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path.split(".").reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -140,10 +241,14 @@ export class ProfileCommand extends Command {
     try {
       // Verificar si el usuario está registrado
       if (!this.validateUser(context)) {
+        const errorMessage = this.getConfigMessage(
+          "profile.error_messages.not_registered",
+          {},
+          "❌ Perfil no disponible - usuario no registrado.\n\nDebes estar registrado para ver tu perfil."
+        );
         return {
           success: true,
-          response:
-            "❌ Perfil no disponible - usuario no registrado.\n\nDebes estar registrado para ver tu perfil.",
+          response: errorMessage,
           shouldReply: true,
         };
       }
@@ -162,57 +267,70 @@ export class ProfileCommand extends Command {
         (user.metadata as any)?.classification_confidence ||
         Math.round(Math.random() * 30 + 70);
 
-      // Construir respuesta del perfil
-      let response = `${typeEmoji} **TU PERFIL DE USUARIO**\n\n`;
+      // Obtener configuración de respuesta
+      const responseConfig = this.getValueByPath("profile.response");
+      const statusIndicators = this.getValueByPath("profile.status_indicators");
+      const defaultValues = this.getValueByPath("profile.default_values");
 
-      // Información básica
-      response += `👤 **INFORMACIÓN PERSONAL:**\n`;
-      response += `• Nombre: ${user.display_name}\n`;
-      response += `• Tipo: ${user.user_type} (${typeDescription})\n`;
-      response += `• Teléfono: ${user.phone_number}\n`;
-      response += `• WhatsApp JID: ${user.whatsapp_jid}\n`;
-      response += `• Estado: ${
-        user.is_active ? "🟢 Activo" : "🔴 Inactivo"
-      }\n\n`;
-
-      // Fechas importantes
-      response += `📅 **FECHAS:**\n`;
-      response += `• Registrado: ${this.formatDate(user.created_at)}\n`;
-      response += `• Última actividad: ${
-        user.last_message_at
+      // Variables para plantillas
+      const variables = {
+        typeEmoji,
+        displayName: user.display_name,
+        userType: user.user_type,
+        typeDescription,
+        phoneNumber: user.phone_number,
+        whatsappJid: user.whatsapp_jid,
+        statusIndicator: user.is_active 
+          ? (statusIndicators?.active || "🟢 Activo")
+          : (statusIndicators?.inactive || "� Inactivo"),
+        registeredDate: this.formatDate(user.created_at),
+        lastActivity: user.last_message_at
           ? this.formatDate(user.last_message_at)
-          : "No disponible"
-      }\n`;
-      response += `• Tiempo activo: ${this.getActivityTime(user)}\n\n`;
+          : (defaultValues?.last_activity || "No disponible"),
+        activityTime: this.getActivityTime(user),
+        totalInteractions: stats.total_interactions,
+        commandsExecuted: stats.commands_executed,
+        avgProcessingTime: stats.avg_processing_time,
+        confidence,
+        language: user.metadata?.language || (defaultValues?.language || "No detectado"),
+        timezone: user.metadata?.timezone || (defaultValues?.timezone || "No configurada"),
+        preferencesCount: user.metadata?.preferences 
+          ? Object.keys(user.metadata.preferences).length 
+          : 0,
+        timestamp: new Date().toLocaleString()
+      };
 
-      // Estadísticas de uso
-      response += `📊 **ESTADÍSTICAS:**\n`;
-      response += `• Interacciones totales: ${stats.total_interactions}\n`;
-      response += `• Comandos ejecutados: ${stats.commands_executed}\n`;
-      response += `• Tiempo promedio: ${stats.avg_processing_time}ms\n`;
-      response += `• Confianza clasificación: ${confidence}%\n\n`;
+      // Construir respuesta usando configuración
+      let response = this.replaceVariables(
+        responseConfig?.title || "{typeEmoji} **TU PERFIL DE USUARIO**",
+        variables
+      ) + "\n\n";
 
-      // Configuración y metadata
-      if (user.metadata) {
-        response += `⚙️ **CONFIGURACIÓN:**\n`;
-        response += `• Idioma: ${user.metadata.language || "No detectado"}\n`;
-        response += `• Zona horaria: ${
-          user.metadata.timezone || "No configurada"
-        }\n`;
-        if (user.metadata.preferences) {
-          const prefCount = Object.keys(user.metadata.preferences).length;
-          response += `• Preferencias: ${prefCount} configuradas\n`;
+      // Procesar cada sección
+      if (responseConfig?.sections) {
+        const sections = [
+          'personal', 'dates', 'statistics', 'configuration', 'actions'
+        ];
+
+        for (const sectionKey of sections) {
+          const section = responseConfig.sections[sectionKey];
+          if (section) {
+            response += section.title + "\n";
+            
+            if (section.items) {
+              for (const item of section.items) {
+                response += this.replaceVariables(item, variables) + "\n";
+              }
+            }
+            response += "\n";
+          }
         }
-        response += `\n`;
+
+        // Footer
+        if (responseConfig.sections.footer?.text) {
+          response += this.replaceVariables(responseConfig.sections.footer.text, variables);
+        }
       }
-
-      // Información adicional y ayuda
-      response += `💡 **ACCIONES DISPONIBLES:**\n`;
-      response += `• Usa !usertype para cambiar tu tipo de usuario\n`;
-      response += `• Usa !permissions para ver tus permisos\n`;
-      response += `• Usa !help para ver comandos disponibles\n\n`;
-
-      response += `🕒 Consultado: ${new Date().toLocaleString()}`;
 
       return {
         success: true,
@@ -220,12 +338,15 @@ export class ProfileCommand extends Command {
         shouldReply: true,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      const errorMessage = this.getConfigMessage(
+        "profile.error_messages.general_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `❌ Error obteniendo perfil de usuario: ${error instanceof Error ? error.message : "Error desconocido"}`
+      );
 
       return {
         success: false,
-        response: `❌ Error obteniendo perfil de usuario: ${errorMessage}`,
+        response: errorMessage,
         shouldReply: true,
         error: errorMessage,
       };

@@ -5,17 +5,29 @@ import {
   CommandMetadata,
 } from "../../../types/commands";
 import { UserType } from "../../../types/core/user.types";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 
 /**
  * Comando para visualizar estadísticas del sistema
  * Solo accesible para administradores
  */
 export class StatsCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "stats",
       aliases: ["estadisticas", "estadisticas-sistema"],
-      description: "Muestra estadísticas del sistema",
+      description: this.getConfigMessage(
+        "stats.description",
+        {},
+        "Muestra estadísticas del sistema"
+      ),
       syntax: "!stats [tipo]",
       category: "system",
       permissions: ["admin"],
@@ -41,6 +53,77 @@ export class StatsCommand extends Command {
   }
 
   /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
+    if (typeof template !== 'string') {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path.split(".").reduce((current, key) => current?.[key], config as any);
+  }
+
+  /**
    * Obtiene estadísticas generales del sistema
    */
   private async getGeneralStats(): Promise<string> {
@@ -48,35 +131,63 @@ export class StatsCommand extends Command {
       const uptime = process.uptime();
       const memoryUsage = process.memoryUsage();
 
-      let response = `📊 ESTADÍSTICAS GENERALES DEL SISTEMA\n\n`;
+      // Obtener configuración de respuesta
+      const responseConfig = this.getValueByPath("stats.response.general");
 
-      // Información del sistema
-      response += `⚡ RENDIMIENTO:\n`;
-      response += `• Tiempo activo: ${this.formatUptime(uptime)}\n`;
-      response += `• Memoria usada: ${this.formatBytes(
-        memoryUsage.heapUsed
-      )}\n`;
-      response += `• Memoria total: ${this.formatBytes(
-        memoryUsage.heapTotal
-      )}\n`;
-      response += `• CPU Load: ${this.getCpuUsage()}%\n\n`;
+      // Variables para plantillas
+      const variables = {
+        uptime: this.formatUptime(uptime),
+        memoryUsed: this.formatBytes(memoryUsage.heapUsed),
+        memoryTotal: this.formatBytes(memoryUsage.heapTotal),
+        cpuLoad: this.getCpuUsage(),
+        nodeVersion: process.version,
+        platform: process.platform,
+        architecture: process.arch,
+        pid: process.pid,
+        timestamp: new Date().toLocaleString()
+      };
 
-      // Información de la aplicación
-      response += `🤖 APLICACIÓN:\n`;
-      response += `• Versión Node.js: ${process.version}\n`;
-      response += `• Plataforma: ${process.platform}\n`;
-      response += `• Arquitectura: ${process.arch}\n`;
-      response += `• PID: ${process.pid}\n\n`;
+      // Construir respuesta usando configuración
+      let response = this.replaceVariables(
+        responseConfig?.title || "📊 ESTADÍSTICAS GENERALES DEL SISTEMA",
+        variables
+      ) + "\n\n";
 
-      response += `🕒 Consultado: ${new Date().toLocaleString()}`;
+      // Sección de rendimiento
+      if (responseConfig?.sections?.performance) {
+        response += this.replaceVariables(responseConfig.sections.performance.title, variables) + "\n";
+        if (responseConfig.sections.performance.items) {
+          for (const item of responseConfig.sections.performance.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Sección de aplicación
+      if (responseConfig?.sections?.application) {
+        response += this.replaceVariables(responseConfig.sections.application.title, variables) + "\n";
+        if (responseConfig.sections.application.items) {
+          for (const item of responseConfig.sections.application.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Footer
+      if (responseConfig?.sections?.footer) {
+        response += this.replaceVariables(responseConfig.sections.footer, variables);
+      }
 
       return response;
     } catch (error) {
-      throw new Error(
-        `Error obteniendo estadísticas generales: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        }`
+      const errorMessage = this.getConfigMessage(
+        "stats.error_messages.general_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `Error obteniendo estadísticas generales: ${error instanceof Error ? error.message : "Error desconocido"}`
       );
+      throw new Error(errorMessage);
     }
   }
 
@@ -86,31 +197,67 @@ export class StatsCommand extends Command {
   private async getUsersStats(): Promise<string> {
     try {
       // Simulación de estadísticas de usuarios (en producción vendría del UserService)
-      let response = `👥 ESTADÍSTICAS DE USUARIOS\n\n`;
+      const defaultValues = this.getValueByPath("stats.default_values");
+      const noConnection = defaultValues?.no_connection || "Sin conexión BD";
+      
+      // Obtener configuración de respuesta
+      const responseConfig = this.getValueByPath("stats.response.users");
 
-      response += `📊 GENERAL:\n`;
-      response += `• Total usuarios: Sin conexión BD\n`;
-      response += `• Interacciones totales: Sin conexión BD\n`;
-      response += `• Promedio por usuario: Sin conexión BD\n\n`;
+      // Variables para plantillas (simuladas)
+      const variables = {
+        totalUsers: noConnection,
+        totalInteractions: noConnection,
+        avgPerUser: noConnection,
+        adminCount: noConnection,
+        customerCount: noConnection,
+        friendCount: noConnection,
+        familiarCount: noConnection,
+        employeeCount: noConnection,
+        providerCount: noConnection,
+        blockCount: noConnection
+      };
 
-      response += `📋 POR TIPO:\n`;
-      response += `👑 admin: Sin conexión BD\n`;
-      response += `👤 customer: Sin conexión BD\n`;
-      response += `👫 friend: Sin conexión BD\n`;
-      response += `👨‍👩‍👧‍👦 familiar: Sin conexión BD\n`;
-      response += `💼 employee: Sin conexión BD\n`;
-      response += `🏢 provider: Sin conexión BD\n`;
-      response += `🚫 block: Sin conexión BD\n\n`;
+      // Construir respuesta usando configuración
+      let response = this.replaceVariables(
+        responseConfig?.title || "� ESTADÍSTICAS DE USUARIOS",
+        variables
+      ) + "\n\n";
 
-      response += `📝 NOTA: Para estadísticas reales, conectar servicio de usuarios`;
+      // Sección general
+      if (responseConfig?.sections?.general) {
+        response += this.replaceVariables(responseConfig.sections.general.title, variables) + "\n";
+        if (responseConfig.sections.general.items) {
+          for (const item of responseConfig.sections.general.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Sección por tipo
+      if (responseConfig?.sections?.by_type) {
+        response += this.replaceVariables(responseConfig.sections.by_type.title, variables) + "\n";
+        if (responseConfig.sections.by_type.items) {
+          for (const item of responseConfig.sections.by_type.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Nota
+      if (responseConfig?.sections?.note) {
+        response += responseConfig.sections.note;
+      }
 
       return response;
     } catch (error) {
-      throw new Error(
-        `Error obteniendo estadísticas de usuarios: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        }`
+      const errorMessage = this.getConfigMessage(
+        "stats.error_messages.users_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `Error obteniendo estadísticas de usuarios: ${error instanceof Error ? error.message : "Error desconocido"}`
       );
+      throw new Error(errorMessage);
     }
   }
 

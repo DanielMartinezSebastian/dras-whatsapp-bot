@@ -1,0 +1,61 @@
+{
+  "general": {
+    "unknown": "❌ Ha ocurrido un error desconocido",
+    "general_processing": "Lo siento, he tenido un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?",
+    "invalid_command": "❌ Comando no reconocido: {command}",
+    "permission_denied": "❌ No tienes permisos para ejecutar este comando",
+    "user_not_found": "❌ Usuario no encontrado",
+    "invalid_syntax": "❌ Sintaxis incorrecta. Usa: {syntax}",
+    "missing_parameters": "❌ Faltan parámetros requeridos",
+    "too_many_parameters": "❌ Demasiados parámetros proporcionados",
+    "operation_failed": "❌ La operación falló: {error}",
+    "not_implemented": "❌ Esta funcionalidad aún no está implementada",
+    "deprecated_command": "⚠️ Este comando está obsoleto. Usa {newCommand} en su lugar"
+  },
+  "validation": {
+    "required_field": "❌ Campo requerido: {field}",
+    "invalid_format": "❌ Formato inválido para: {field}",
+    "value_too_long": "❌ Valor demasiado largo para: {field} (máximo {max} caracteres)",
+    "value_too_short": "❌ Valor demasiado corto para: {field} (mínimo {min} caracteres)",
+    "invalid_email": "❌ Formato de email inválido",
+    "invalid_phone": "❌ Formato de teléfono inválido",
+    "invalid_date": "❌ Formato de fecha inválido",
+    "out_of_range": "❌ Valor fuera de rango para {field}: {min} - {max}",
+    "already_exists": "❌ {field} ya existe en el sistema",
+    "not_found": "❌ {field} no encontrado en el sistema"
+  },
+  "system": {
+    "service_unavailable": "❌ Servicio temporalmente no disponible. Intenta más tarde.",
+    "database_error": "❌ Error de base de datos. Contacta al administrador.",
+    "network_error": "❌ Error de conexión. Verifica tu conectividad.",
+    "timeout": "⏱️ Tiempo de espera agotado. La operación tomó demasiado tiempo.",
+    "memory_limit": "❌ Límite de memoria alcanzado",
+    "rate_limit": "⏱️ Has excedido el límite de solicitudes. Espera {seconds} segundos.",
+    "maintenance_mode": "🔧 El sistema está en mantenimiento. Intenta más tarde.",
+    "upgrade_required": "🔄 Se requiere actualización del sistema",
+    "feature_disabled": "❌ Esta característica está temporalmente deshabilitada",
+    "quota_exceeded": "❌ Has excedido tu cuota de {resource}"
+  },
+  "commands": {
+    "command_not_found": "❌ Comando '{command}' no encontrado",
+    "command_disabled": "❌ El comando '{command}' está deshabilitado",
+    "cooldown_active": "⏱️ Debes esperar {seconds} segundos antes de usar este comando nuevamente",
+    "execution_failed": "❌ Error al ejecutar el comando: {error}",
+    "missing_arguments": "❌ Argumentos faltantes. Uso: {syntax}",
+    "invalid_arguments": "❌ Argumentos inválidos. Uso: {syntax}",
+    "command_timeout": "⏱️ El comando tardó demasiado en ejecutarse",
+    "concurrent_limit": "❌ Ya tienes el máximo de comandos ejecutándose simultáneamente"
+  },
+  "permissions": {
+    "access_denied": "🚫 Acceso denegado. Permisos insuficientes.",
+    "login_required": "🔑 Debes iniciar sesión para usar este comando",
+    "admin_required": "👑 Se requieren permisos de administrador",
+    "owner_only": "🔒 Solo el propietario puede ejecutar este comando",
+    "banned_user": "🚫 Usuario bloqueado del sistema",
+    "suspended_user": "⏸️ Tu cuenta está suspendida temporalmente",
+    "role_required": "👤 Se requiere el rol: {role}",
+    "permission_required": "🔑 Se requiere el permiso: {permission}",
+    "ip_blocked": "🚫 Tu dirección IP está bloqueada",
+    "region_blocked": "🌍 Esta función no está disponible en tu región"
+  }
+}

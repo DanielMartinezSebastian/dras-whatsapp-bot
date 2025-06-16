@@ -9,6 +9,7 @@ import {
 } from "../commands/core/CommandRegistry";
 import { UnifiedCommandHandler } from "../commands/core/UnifiedCommandHandler";
 import { CommandContext } from "../../types/commands/command-system.types";
+import { ConfigurationService } from "../../services/ConfigurationService";
 
 /**
  * Handler para procesar comandos del bot
@@ -16,11 +17,13 @@ import { CommandContext } from "../../types/commands/command-system.types";
 export class CommandMessageHandler extends BaseMessageHandler {
   private commandRegistry: CommandRegistry;
   private commandHandler: UnifiedCommandHandler;
+  private configService: ConfigurationService;
 
-  constructor() {
+  constructor(configService: ConfigurationService) {
     super("command", 1); // Alta prioridad para comandos
     this.commandRegistry = commandRegistry; // Usar la instancia singleton
     this.commandHandler = new UnifiedCommandHandler();
+    this.configService = configService;
 
     // Cargar comandos al inicializar
     try {
@@ -29,7 +32,14 @@ export class CommandMessageHandler extends BaseMessageHandler {
         `🔍 DEBUG CommandHandler: Cargados ${loadedCount} comandos básicos manualmente`
       );
     } catch (error) {
-      console.error("🔍 DEBUG CommandHandler: Error cargando comandos:", error);
+      console.error(
+        this.getConfigMessage(
+          "commands.loading_error",
+          {},
+          "🔍 DEBUG CommandHandler: Error cargando comandos:"
+        ),
+        error
+      );
     }
   }
 
@@ -90,7 +100,11 @@ export class CommandMessageHandler extends BaseMessageHandler {
           loadedCount++;
         } catch (error) {
           console.warn(
-            `⚠️ Error registrando comando ${command.metadata?.name}:`,
+            this.getConfigMessage(
+              "command_registration_error",
+              { commandName: command.metadata?.name },
+              `⚠️ Error registrando comando ${command.metadata?.name}:`
+            ),
             error
           );
         }
@@ -98,7 +112,14 @@ export class CommandMessageHandler extends BaseMessageHandler {
 
       return loadedCount;
     } catch (error) {
-      console.error("Error importing commands:", error);
+      console.error(
+        this.getConfigMessage(
+          "commands_import_error",
+          {},
+          "Error importing commands:"
+        ),
+        error
+      );
       return 0;
     }
   }
@@ -163,7 +184,11 @@ export class CommandMessageHandler extends BaseMessageHandler {
         return {
           handled: false,
           success: false,
-          error: "No se pudo extraer el nombre del comando",
+          error: this.getConfigMessage(
+            "command_extraction_error",
+            {},
+            "No se pudo extraer el nombre del comando"
+          ),
         };
       }
 
@@ -223,7 +248,11 @@ export class CommandMessageHandler extends BaseMessageHandler {
         }
       } else {
         return this.createErrorResult(
-          result.error || "Error ejecutando comando",
+          this.getConfigMessage(
+            "execution_error",
+            { error: result.error },
+            result.error || "Error ejecutando comando"
+          ),
           {
             commandName: commandName,
             commandResult: result,
@@ -232,10 +261,16 @@ export class CommandMessageHandler extends BaseMessageHandler {
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+        error instanceof Error
+          ? error.message
+          : this.getConfigMessage("unknown_error", {}, "Error desconocido");
       console.error("Error procesando comando:", error);
       return this.createErrorResult(
-        `Error procesando comando: ${errorMessage}`
+        this.getConfigMessage(
+          "processing_error",
+          { error: errorMessage },
+          `Error procesando comando: ${errorMessage}`
+        )
       );
     }
   }
@@ -260,5 +295,78 @@ export class CommandMessageHandler extends BaseMessageHandler {
       commandList: commands.map((cmd) => cmd.metadata.name),
       stats: this.getStats(),
     };
+  }
+
+  /**
+   * Obtiene un mensaje de la configuración con soporte para plantillas y variables
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands, messages o errors
+      let message =
+        this.getValueByPath(config, `commands.${path}`) ||
+        this.getValueByPath(config, `messages.${path}`) ||
+        this.getValueByPath(config, `errors.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}:`,
+        error
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en una plantilla
+   */
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any>
+  ): string {
+    let result = template;
+
+    // Reemplazar variables básicas
+    for (const [key, value] of Object.entries(variables)) {
+      const placeholder = `{${key}}`;
+      result = result.replace(
+        new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
+        String(value || "")
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Obtiene un valor de un objeto usando una ruta de punto
+   */
+  private getValueByPath(obj: any, path: string): any {
+    return path.split(".").reduce((current, key) => current?.[key], obj);
   }
 }

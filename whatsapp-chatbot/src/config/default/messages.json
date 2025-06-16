@@ -1,0 +1,179 @@
+{
+  "greetings": {
+    "new": [
+      "¡Hola {userName}! 👋 Es un placer conocerte. Soy tu asistente virtual.",
+      "¡{timeOfDayGreeting} {userName}! 🌟 Bienvenido/a.",
+      "¡Hola! 😊 Soy tu asistente y estoy aquí para ayudarte."
+    ],
+    "returning": [
+      "¡Hola de nuevo {userName}! 👋 Me alegra verte por aquí.",
+      "¡{timeOfDayGreeting} de nuevo {userName}! ¿En qué puedo ayudarte hoy?",
+      "¡Es bueno verte otra vez {userName}! 😊 ¿Cómo va todo?"
+    ],
+    "timeBasedGreetings": {
+      "morning": "Buenos días",
+      "afternoon": "Buenas tardes",
+      "evening": "Buenas tardes",
+      "night": "Buenas noches"
+    }
+  },
+  "farewells": {
+    "general": [
+      "¡Hasta luego, {userName}! Que tengas un gran día.",
+      "Adiós, {userName}. ¡Vuelve pronto!",
+      "¡Hasta la próxima, {userName}! Cuídate."
+    ],
+    "frequent": [
+      "¡Hasta luego, {userName}! Siempre es un placer ayudarte.",
+      "Adiós, {userName}. ¡Gracias por ser un usuario frecuente!",
+      "¡Hasta la próxima, {userName}! Espero verte pronto."
+    ],
+    "night": [
+      "Buenas noches, {userName}. Que descanses bien.",
+      "Hasta mañana, {userName}. ¡Dulces sueños!",
+      "Adiós, {userName}. Que tengas una noche tranquila."
+    ],
+    "timeBasedFarewells": {
+      "morning": "Que tengas un buen día",
+      "afternoon": "Que tengas una buena tarde",
+      "evening": "Que tengas una buena tarde",
+      "night": "Que tengas buenas noches"
+    }
+  },
+  "questions": {
+    "what": [
+      "🤔 Para ayudarte mejor, ¿podrías ser más específico sobre qué quieres saber?",
+      "🤔 Esa es una buena pregunta. ¿Podrías darme más contexto para ayudarte mejor?"
+    ],
+    "how": [
+      "🛠 Para darte instrucciones específicas, necesito saber exactamente qué quieres hacer. ¿Puedes ser más específico?",
+      "⚙️ Te puedo explicar cómo funcionan mis características. Usa /info para conocer más sobre mí."
+    ],
+    "when": [
+      "⏰ Las preguntas sobre tiempo requieren contexto específico. ¿A qué te refieres exactamente?"
+    ],
+    "where": [
+      "📍 Para preguntas sobre ubicación, necesito más detalles sobre qué buscas."
+    ],
+    "why": [
+      "🤔 Esa es una pregunta interesante. ¿Podrías darme más contexto para darte una respuesta útil?"
+    ],
+    "who": [
+      "👤 Para preguntas sobre personas específicas, necesito más información.",
+      "🤖 Si preguntas sobre mí, soy tu asistente virtual. Usa /info para conocer más."
+    ],
+    "default": [
+      "Buena pregunta. Déjame buscar esa información para ti.",
+      "Estoy procesando tu consulta. Dame un momento para encontrar la mejor respuesta.",
+      "Interesante pregunta. Te responderé en breve."
+    ]
+  },
+  "help": {
+    "general": [
+      "Estoy aquí para ayudarte. Puedes usar /help para ver todos los comandos disponibles.",
+      "Claro, estos son los comandos que puedes usar: /help, /info, /status. ¿Necesitas más información?",
+      "Puedo asistirte con varias tareas. Escribe /help para ver todas las opciones disponibles."
+    ],
+    "commandSpecific": {
+      "help": "Usa /help [comando] para obtener ayuda específica sobre un comando",
+      "info": "El comando /info muestra información general sobre el bot y estadísticas del sistema",
+      "status": "El comando /status muestra el estado actual de los servicios del bot"
+    },
+    "noPermission": [
+      "❌ No tienes permisos suficientes para acceder a la ayuda de este comando.",
+      "❌ Este comando requiere permisos especiales que no posees."
+    ],
+    "commandNotFound": [
+      "❓ No hay ayuda disponible para ese comando.",
+      "❓ Comando no encontrado. Usa /help para ver los comandos disponibles."
+    ]
+  },
+  "responses": {
+    "default": [
+      "Estoy aquí para ayudarte. ¿Hay algo específico en lo que pueda asistirte?",
+      "¿Necesitas ayuda con algo en particular?",
+      "¿En qué más puedo ayudarte hoy?"
+    ],
+    "thinking": [
+      "🤔 Déjame pensar en eso...",
+      "⏳ Procesando tu mensaje...",
+      "🔍 Buscando la mejor respuesta..."
+    ],
+    "acknowledgment": [
+      "Entendido 👍",
+      "Perfecto, procedo con eso.",
+      "De acuerdo, trabajando en ello."
+    ],
+    "clarification": [
+      "¿Podrías ser más específico?",
+      "No estoy seguro de entender. ¿Puedes explicarme mejor?",
+      "¿Te refieres a...?"
+    ]
+  },
+  "registration": {
+    "welcome": {
+      "new_user": [
+        "¡Hola! Para poder ayudarte mejor, por favor compárteme tu nombre.\n\nSolo escribe tu nombre y presiona enviar. 😊",
+        "¡Bienvenido/a! 👋 Necesito conocer tu nombre para brindarte un servicio personalizado.\n\nEscribe tu nombre completo, por favor.",
+        "¡Hola! 🌟 Para comenzar, me gustaría saber cómo te llamas.\n\nEscribe tu nombre y listo."
+      ],
+      "returning_user": [
+        "¡Hola de nuevo! Para completar tu registro, por favor compárteme tu nombre.\n\nSolo escribe tu nombre y presiona enviar. 😊"
+      ]
+    },
+    "completion": {
+      "success": [
+        "¡Perfecto, {userName}! 🎉\n\nTu nombre ha sido registrado correctamente. Ahora puedes usar todos mis comandos.\n\nEscribe \"ayuda\" para ver qué puedo hacer por ti.",
+        "¡Excelente, {userName}! ✅\n\nTu registro se ha completado exitosamente. Ya tienes acceso completo a todas mis funciones.\n\nUsa /help para conocer todos los comandos disponibles."
+      ],
+      "welcome_back": [
+        "¡Bienvenido de vuelta, {userName}! 👋\n\nTu registro se ha actualizado correctamente.",
+        "¡Hola {userName}! Tu información ha sido actualizada exitosamente. 🔄"
+      ]
+    },
+    "errors": {
+      "name_invalid": [
+        "❌ El nombre que proporcionaste no es válido. Por favor, ingresa un nombre que contenga solo letras y espacios.",
+        "❌ Por favor, proporciona un nombre válido (solo letras y espacios, sin números ni símbolos especiales)."
+      ],
+      "name_too_short": [
+        "❌ El nombre es demasiado corto. Por favor, ingresa al menos 2 caracteres.",
+        "❌ Necesito un nombre más largo. Debe tener al menos 2 letras."
+      ],
+      "name_too_long": [
+        "❌ El nombre es demasiado largo. Por favor, usa máximo 50 caracteres.",
+        "❌ El nombre debe tener máximo 50 caracteres. Intenta con uno más corto."
+      ],
+      "processing_error": [
+        "❌ Hubo un problema procesando tu respuesta. Por favor intenta de nuevo.",
+        "❌ Ocurrió un error al procesar tu nombre. Inténtalo nuevamente."
+      ],
+      "start_error": [
+        "❌ Hubo un problema al iniciar el registro. Por favor intenta de nuevo.",
+        "❌ No pude iniciar el proceso de registro. Intenta más tarde."
+      ],
+      "general": [
+        "❌ Error en el proceso de registro: {errorMessage}",
+        "❌ Algo salió mal durante el registro. Error: {errorMessage}"
+      ]
+    },
+    "prompts": {
+      "name_request": [
+        "Por favor, escribe tu nombre:",
+        "¿Cómo te llamas?",
+        "Compárteme tu nombre, por favor:"
+      ],
+      "name_retry": [
+        "Inténtalo de nuevo. ¿Cuál es tu nombre?",
+        "Por favor, escribe tu nombre nuevamente:",
+        "Vuelve a escribir tu nombre:"
+      ]
+    },
+    "status": {
+      "started": "Registro iniciado",
+      "in_progress": "Registro en progreso",
+      "completed": "Registro completado",
+      "failed": "Registro fallido"
+    }
+  }
+}

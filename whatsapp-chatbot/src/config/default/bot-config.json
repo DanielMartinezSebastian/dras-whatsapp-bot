@@ -1,0 +1,83 @@
+{
+  "bot": {
+    "name": "drasBot",
+    "prefix": "🤖",
+    "autoReply": true,
+    "commandPrefix": "!",
+    "useNewCommandSystem": true,
+    "maxDailyResponses": 1000,
+    "minResponseInterval": 1000,
+    "version": "2.0.0",
+    "environment": "production"
+  },
+  "behavior": {
+    "cooldowns": {
+      "help": 5,
+      "info": 10,
+      "status": 15,
+      "stats": 30,
+      "logs": 60,
+      "config": 30,
+      "users": 10,
+      "admin": 5
+    },
+    "permissions": {
+      "strictMode": true,
+      "defaultRole": "guest",
+      "adminOverride": true,
+      "commandPermissions": {
+        "help": ["guest", "user", "friend", "employee", "admin"],
+        "info": ["guest", "user", "friend", "employee", "admin"],
+        "ping": ["guest", "user", "friend", "employee", "admin"],
+        "status": ["user", "friend", "employee", "admin"],
+        "profile": ["user", "friend", "employee", "admin"],
+        "usertype": ["user", "friend", "employee", "admin"],
+        "permissions": ["user", "friend", "employee", "admin"],
+        "users": ["admin"],
+        "config": ["admin"],
+        "stats": ["employee", "admin"],
+        "logs": ["admin"],
+        "admin": ["admin"],
+        "reload": ["admin"]
+      }
+    },
+    "rateLimits": {
+      "maxMessagesPerMinute": 30,
+      "maxCommandsPerHour": 100,
+      "cooldownViolationPenalty": 5000,
+      "blacklistDuration": 3600000
+    },
+    "features": {
+      "contextualResponses": true,
+      "helpAutoPrompt": true,
+      "nameRegistration": true,
+      "debugMode": false,
+      "analyticsTracking": true
+    }
+  },
+  "system": {
+    "logging": {
+      "level": "info",
+      "enableFileLogging": true,
+      "enableConsoleLogging": true,
+      "maxLogFiles": 10,
+      "maxLogSize": "10MB"
+    },
+    "database": {
+      "path": "./src/database/users.db",
+      "backupInterval": 3600000,
+      "maxBackups": 7,
+      "autoVacuum": true
+    },
+    "monitoring": {
+      "healthCheckInterval": 30000,
+      "metricsCollection": true,
+      "alertThresholds": {
+        "maxMemoryUsage": 85,
+        "maxCpuUsage": 80,
+        "maxErrorRate": 5,
+        "maxResponseTime": 5000
+      }
+    }
+  }
+}

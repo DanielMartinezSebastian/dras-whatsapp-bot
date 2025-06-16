@@ -21,6 +21,7 @@ import {
 } from "../../types/handlers/contextual-handler.types";
 import { WhatsAppMessage } from "../../types/core/message.types";
 import { logInfo, logError, logWarn } from "../../utils/logger";
+import { ConfigurationService } from "../../services/ConfigurationService";
 
 /**
  * Handler especializado para mensajes contextuales y conversaciones naturales
@@ -41,15 +42,17 @@ export class ContextualMessageHandler
   private contextualStats: IContextualHandlerStats;
   private botProcessor: any;
   private whatsappClient: any;
+  private configService: ConfigurationService;
 
   // Sistema para manejar solicitud de nombres
   private awaitingNameUsers: Set<string>;
 
-  constructor(botProcessor: any) {
+  constructor(botProcessor: any, configService: ConfigurationService) {
     super("ContextualHandler", 8); // Priority 8 for contextual handling
 
     this.botProcessor = botProcessor;
     this.whatsappClient = botProcessor.whatsappClient;
+    this.configService = configService;
 
     // Ruta del archivo de contexto
     this.contextFilePath = path.join(
@@ -73,8 +76,8 @@ export class ContextualMessageHandler
     // Cargar contexto si existe
     this.loadConversationContext();
 
-    // Respuestas configurables
-    this.responses = this.loadResponses();
+    // Respuestas configurables - se obtienen via ConfigurationService
+    this.responses = {}; // Se mantendrá por compatibilidad pero no se usará
 
     // Estadísticas específicas del handler contextual
     this.contextualStats = {
@@ -333,8 +336,11 @@ export class ContextualMessageHandler
       !this.awaitingNameUsers.has(phoneJid)
     ) {
       setTimeout(async () => {
-        const helpPrompt =
-          "¿En qué puedo ayudarte hoy? Puedes usar /help para ver todos los comandos disponibles.";
+        const helpPrompt = this.getConfigMessage(
+          "contextual.help_prompt",
+          {},
+          "¿En qué puedo ayudarte hoy? Puedes usar /help para ver todos los comandos disponibles."
+        );
         await this.whatsappClient.sendMessage(phoneJid, helpPrompt);
       }, 2000);
     }
@@ -676,10 +682,12 @@ Los comandos principales son:
 
       // Validar que el nombre no esté vacío y sea razonable
       if (name.length < 1 || name.length > 50) {
-        await this.whatsappClient.sendMessage(
-          phoneJid,
+        const invalidMessage = this.getConfigMessage(
+          "registration.name_invalid",
+          {},
           "Por favor, proporciona un nombre válido (entre 1 y 50 caracteres)."
         );
+        await this.whatsappClient.sendMessage(phoneJid, invalidMessage);
         return this.createSuccessResult("Nombre inválido, solicitud repetida");
       }
 
@@ -717,10 +725,12 @@ Los comandos principales son:
 
       // En caso de error, remover de la lista y notificar
       this.awaitingNameUsers.delete(message.chatJid);
-      await this.whatsappClient.sendMessage(
-        message.chatJid,
+      const errorMessage = this.getConfigMessage(
+        "registration.name_error",
+        {},
         "Hubo un problema guardando tu nombre. Por favor, inténtalo más tarde."
       );
+      await this.whatsappClient.sendMessage(message.chatJid, errorMessage);
 
       return this.createErrorResult("Error guardando nombre");
     }
@@ -734,14 +744,11 @@ Los comandos principales son:
       // Agregar a la lista de usuarios esperando respuesta
       this.awaitingNameUsers.add(phoneJid);
 
-      const requests = [
-        "¡Hola! 👋 Me encantaría conocerte mejor. ¿Podrías decirme tu nombre para personalizar nuestras conversaciones?",
-        "¡Saludos! 😊 Para brindarte una mejor experiencia, ¿me podrías decir cómo te llamas?",
-        "¡Hola! 🌟 Sería genial poder llamarte por tu nombre. ¿Cómo te gusta que te llamen?",
-      ];
-
-      const randomRequest =
-        requests[Math.floor(Math.random() * requests.length)];
+      const randomRequest = this.getConfigMessage(
+        "registration.name_request",
+        {},
+        "¡Hola! 👋 Me encantaría conocerte mejor. ¿Podrías decirme tu nombre para personalizar nuestras conversaciones?"
+      );
       await this.whatsappClient.sendMessage(phoneJid, randomRequest);
 
       logInfo(`📝 Solicitando nombre a usuario: ${phoneJid}`);
@@ -792,89 +799,19 @@ Los comandos principales son:
   }
 
   /**
-   * Carga las respuestas configurables
-   */
-  private loadResponses(): IResponses {
-    return {
-      greeting_new: [
-        `¡Hola {userName}! 👋 Es un placer conocerte. Soy tu asistente virtual.`,
-        `¡{timeOfDayGreeting} {userName}! 🌟 Bienvenido/a.`,
-        "¡Hola! 😊 Soy tu asistente y estoy aquí para ayudarte.",
-      ],
-      greeting_returning: [
-        `¡Hola de nuevo {userName}! 👋 Me alegra verte por aquí.`,
-        `¡{timeOfDayGreeting} de nuevo {userName}! ¿En qué puedo ayudarte hoy?`,
-        `¡Es bueno verte otra vez {userName}! 😊 ¿Cómo va todo?`,
-      ],
-      help_request: [
-        "Estoy aquí para ayudarte. Puedes usar /help para ver todos los comandos disponibles.",
-        "Claro, estos son los comandos que puedes usar: /help, /info, /status. ¿Necesitas más información?",
-        "Puedo asistirte con varias tareas. Escribe /help para ver todas las opciones disponibles.",
-      ],
-      question_general: [
-        "Buena pregunta. Déjame buscar esa información para ti.",
-        "Estoy procesando tu consulta. Dame un momento para encontrar la mejor respuesta.",
-        "Interesante pregunta. Te responderé en breve.",
-      ],
-      default: [
-        "Estoy aquí para ayudarte. ¿Hay algo específico en lo que pueda asistirte?",
-        "¿Necesitas ayuda con algo en particular?",
-        "¿En qué más puedo ayudarte hoy?",
-      ],
-      farewell_general: [
-        "¡Hasta luego, {userName}! Que tengas un gran día.",
-        "Adiós, {userName}. ¡Vuelve pronto!",
-        "¡Hasta la próxima, {userName}! Cuídate.",
-      ],
-      farewell_frequent: [
-        "¡Hasta luego, {userName}! Siempre es un placer ayudarte.",
-        "Adiós, {userName}. ¡Gracias por ser un usuario frecuente!",
-        "¡Hasta la próxima, {userName}! Espero verte pronto.",
-      ],
-      farewell_night: [
-        "Buenas noches, {userName}. Que descanses bien.",
-        "Hasta mañana, {userName}. ¡Dulces sueños!",
-        "Adiós, {userName}. Que tengas una noche tranquila.",
-      ],
-    };
-  }
-
-  /**
-   * Obtiene una respuesta aleatoria de una categoría
+   * Obtiene una respuesta aleatoria de una categoría usando ConfigurationService
    */
   public getRandomResponse(
     category: ResponseCategory | string,
     replacements: IResponseReplacements = {}
   ): string {
     try {
-      const responses = this.responses[category] || this.responses.default;
-      if (!responses || responses.length === 0) {
-        return "Estoy aquí para ayudarte.";
-      }
-
-      // Seleccionar una respuesta aleatoria
-      const randomIndex = Math.floor(Math.random() * responses.length);
-      let response = responses[randomIndex];
-
-      // Reemplazar marcadores de posición con valores reales
-      Object.keys(replacements).forEach((key) => {
-        const value = replacements[key];
-        response = response.replace(new RegExp(`{${key}}`, "g"), value || "");
-      });
-
-      // Agregar reemplazo especial para timeOfDayGreeting basado en timeOfDay
-      if (replacements.timeOfDay && response.includes("{timeOfDayGreeting}")) {
-        const timeOfDayMap: Record<string, string> = {
-          morning: "Buenos días",
-          afternoon: "Buenas tardes",
-          evening: "Buenas tardes",
-          night: "Buenas noches",
-        };
-
-        const greeting =
-          timeOfDayMap[replacements.timeOfDay as string] || "Hola";
-        response = response.replace(/{timeOfDayGreeting}/g, greeting);
-      }
+      // Obtener respuesta desde la configuración
+      const response = this.getConfigMessage(
+        `contextual.${category}`,
+        replacements,
+        "Estoy aquí para ayudarte."
+      );
 
       return response;
     } catch (error) {
@@ -1023,8 +960,11 @@ Soy un bot de WhatsApp que:
       `Error en ContextualHandler para ${message.senderPhone}: ${error.message}`
     );
 
-    const errorResponse =
-      "Lo siento, he tenido un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?";
+    const errorResponse = this.getConfigMessage(
+      "errors.general_processing",
+      {},
+      "Lo siento, he tenido un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?"
+    );
 
     try {
       await this.whatsappClient.sendMessage(message.senderPhone, errorResponse);
@@ -1376,5 +1316,91 @@ Soy un bot de WhatsApp que:
    */
   private isOnlyNumbers(text: string): boolean {
     return /^\d+$/.test(text.trim());
+  }
+
+  /**
+   * Obtiene un mensaje de la configuración con soporte para plantillas y variables
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde responses o messages
+      let message =
+        this.getValueByPath(config, `responses.${path}`) ||
+        this.getValueByPath(config, `messages.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      logError(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en una plantilla
+   */
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any>
+  ): string {
+    let result = template;
+
+    // Reemplazar variables básicas
+    for (const [key, value] of Object.entries(variables)) {
+      const placeholder = `{${key}}`;
+      result = result.replace(
+        new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
+        String(value || "")
+      );
+    }
+
+    // Agregar reemplazo especial para timeOfDayGreeting basado en timeOfDay
+    if (variables.timeOfDay && result.includes("{timeOfDayGreeting}")) {
+      const timeOfDayMap: Record<string, string> = {
+        morning: "Buenos días",
+        afternoon: "Buenas tardes",
+        evening: "Buenas tardes",
+        night: "Buenas noches",
+      };
+
+      const greeting = timeOfDayMap[variables.timeOfDay as string] || "Hola";
+      result = result.replace(/{timeOfDayGreeting}/g, greeting);
+    }
+
+    return result;
+  }
+
+  /**
+   * Obtiene un valor de un objeto usando una ruta de punto
+   */
+  private getValueByPath(obj: any, path: string): any {
+    return path.split(".").reduce((current, key) => current?.[key], obj);
   }
 }

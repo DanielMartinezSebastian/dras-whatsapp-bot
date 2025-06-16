@@ -1,0 +1,752 @@
+{
+  "help": {
+    "description": "Muestra ayuda del sistema y comandos disponibles",
+    "general": {
+      "title": "🤖 **Sistema de Ayuda - drasBot**",
+      "subtitle": "Comandos disponibles según tu nivel de acceso:",
+      "footer": {
+        "usage": "💡 **Uso:** Usa `!help <comando>` para información detallada",
+        "support": "📞 **Soporte:** Contacta al administrador si necesitas ayuda"
+      }
+    },
+    "categories": {
+      "basic": {
+        "title": "� **Comandos Básicos:**",
+        "role_required": 1,
+        "commands": {
+          "help": "Muestra esta ayuda",
+          "info": "Información del bot",
+          "ping": "Test de conexión",
+          "status": "Estado del sistema"
+        }
+      },
+      "user": {
+        "title": "👤 **Comandos de Usuario:**",
+        "role_required": 2,
+        "commands": {
+          "profile": "Ver tu perfil",
+          "usertype": "Ver tu tipo de usuario",
+          "permissions": "Ver tus permisos"
+        }
+      },
+      "system": {
+        "title": "⚙️ **Comandos de Sistema:**",
+        "role_required": 3,
+        "commands": {
+          "stats": "Estadísticas del bot",
+          "export": "Exportar datos",
+          "logs": "Ver logs del sistema"
+        }
+      },
+      "admin": {
+        "title": "🔧 **Comandos Administrativos:**",
+        "role_required": 4,
+        "commands": {
+          "admin": "Panel administrativo",
+          "users": "Gestionar usuarios",
+          "block": "Bloquear usuarios",
+          "unblock": "Desbloquear usuarios",
+          "migration": "Dashboard de migración"
+        }
+      }
+    },
+    "command_details": {
+      "help": {
+        "name": "help",
+        "description": "Sistema de ayuda del bot",
+        "syntax": "!help [comando]",
+        "examples": ["!help", "!help info", "!help admin"],
+        "notes": "Muestra comandos disponibles según tu nivel de permisos"
+      },
+      "info": {
+        "name": "info",
+        "description": "Información general del bot",
+        "syntax": "!info",
+        "examples": ["!info"],
+        "notes": "Muestra versión, estado y estadísticas básicas"
+      },
+      "ping": {
+        "name": "ping",
+        "description": "Test de conexión y latencia",
+        "syntax": "!ping",
+        "examples": ["!ping"],
+        "notes": "Útil para verificar si el bot responde correctamente"
+      },
+      "status": {
+        "name": "status",
+        "description": "Estado actual del sistema",
+        "syntax": "!status",
+        "examples": ["!status"],
+        "notes": "Muestra estado de servicios y tiempo de actividad"
+      },
+      "profile": {
+        "name": "profile",
+        "description": "Ver información de tu perfil",
+        "syntax": "!profile",
+        "examples": ["!profile"],
+        "notes": "Requiere estar registrado en el sistema"
+      },
+      "admin": {
+        "name": "admin",
+        "description": "Panel de administración",
+        "syntax": "!admin [acción]",
+        "examples": ["!admin", "!admin users", "!admin stats"],
+        "notes": "Solo disponible para administradores"
+      }
+    },
+    "role_levels": {
+      "block": 0,
+      "customer": 1,
+      "friend": 2,
+      "familiar": 2,
+      "employee": 3,
+      "provider": 3,
+      "admin": 4
+    },
+    "error_messages": {
+      "command_not_found": "❌ **Comando no encontrado:** `{commandName}`\n\n💡 Usa `!help` para ver todos los comandos disponibles.",
+      "general_error": "❌ Error mostrando ayuda: {error}"
+    },
+    "command_help_template": {
+      "title": "🔧 **Ayuda: !{commandName}**",
+      "description": "📝 **Descripción:** {description}",
+      "syntax": "⌨️ **Sintaxis:** `{syntax}`",
+      "examples_title": "💡 **Ejemplos:**",
+      "notes": "📋 **Notas:** {notes}"
+    }
+  },
+  "descriptions": {
+    "help": "Muestra información sobre los comandos disponibles",
+    "info": "Información general del bot y estadísticas del sistema",
+    "ping": "Test de conexión y latencia del bot",
+    "status": "Estado actual del sistema y servicios",
+    "profile": "Muestra tu perfil de usuario",
+    "usertype": "Muestra o cambia tu tipo de usuario",
+    "permissions": "Muestra tus permisos actuales en el sistema",
+    "admin": "Acceso al panel de administración",
+    "users": "Comandos para gestión de usuarios",
+    "config": "Gestiona la configuración del bot",
+    "reload": "Recarga configuraciones y servicios",
+    "stats": "Estadísticas detalladas del sistema",
+    "logs": "Visualiza logs del sistema",
+    "export": "Exporta datos del sistema",
+    "backup": "Realiza respaldos del sistema"
+  },
+  "syntaxExamples": {
+    "help": ["!help", "!help <comando>"],
+    "info": ["!info"],
+    "ping": ["!ping"],
+    "status": ["!status"],
+    "profile": ["!profile"],
+    "usertype": ["!usertype", "!usertype <nuevo_tipo>"],
+    "permissions": ["!permissions"],
+    "users": ["!users list", "!users search <término>", "!users info <teléfono>"],
+    "config": ["!config show", "!config set <clave> <valor>"],
+    "stats": ["!stats", "!stats <tipo>"],
+    "logs": ["!logs", "!logs <tipo>"]
+  },
+  "permissionMessages": {
+    "guest": "Este comando requiere estar registrado en el sistema.",
+    "user": "Este comando requiere permisos de usuario registrado.",
+    "friend": "Este comando requiere permisos de amigo o superior.",
+    "employee": "Este comando requiere permisos de empleado o superior.",
+    "admin": "Este comando requiere permisos de administrador.",
+    "system": "Este comando es solo para uso del sistema."
+  },
+  "errors": {
+    "loading_error": "🔍 DEBUG CommandHandler: Error cargando comandos:",
+    "command_extraction_error": "No se pudo extraer el nombre del comando",
+    "execution_error": "Error ejecutando comando: {error}",
+    "processing_error": "Error procesando comando: {error}",
+    "unknown_error": "Error desconocido",
+    "command_registration_error": "⚠️ Error registrando comando {commandName}:",
+    "commands_import_error": "Error importing commands:"
+  },
+  "ping": {
+    "description": "Test de conexión y medición de latencia del bot",
+    "response_template": "🏓 **Pong!**\n\n📊 **Medición de Latencia:**\n• Tiempo de respuesta: {responseTime}ms\n{processingDelayText}• Estado del bot: {connectionStatus}\n• Timestamp: {timestamp}\n\n{performanceMessage}",
+    "error_message": "❌ **Error en el test de conexión**\n\nEl bot está experimentando problemas. Contacta al administrador.",
+    "status_messages": {
+      "excellent": "🟢 Excelente",
+      "good": "🟡 Bueno",
+      "regular": "🟠 Regular", 
+      "slow": "🔴 Lento"
+    },
+    "performance_messages": {
+      "excellent": "⚡ **Rendimiento óptimo** - El bot responde muy rápidamente",
+      "good": "✅ **Buen rendimiento** - Tiempo de respuesta normal",
+      "regular": "⚠️ **Rendimiento regular** - Puede haber algo de congestión",
+      "slow": "🚨 **Rendimiento bajo** - Se recomienda verificar la conexión"
+    }
+  },
+  "info": {
+    "description": "Información del bot y estadísticas del sistema",
+    "response": {
+      "title": "🤖 **drasBot - Información del Sistema**",
+      "sections": {
+        "statistics": {
+          "title": "📊 **Estadísticas Generales:**",
+          "items": [
+            "• Tiempo activo: {uptime}",
+            "• Versión: {version}",
+            "• Estado: {status}"
+          ]
+        },
+        "architecture": {
+          "title": "🏗️ **Arquitectura:**",
+          "items": [
+            "• Sistema de comandos: {commandSystem}",
+            "• Base de datos: {database}",
+            "• Procesamiento: {processing}"
+          ]
+        },
+        "features": {
+          "title": "🔧 **Funcionalidades:**",
+          "items": [
+            "• ✅ Gestión de usuarios y permisos",
+            "• ✅ Sistema de comandos dinámico",
+            "• ✅ Registro y autenticación",
+            "• ✅ Logs y monitoreo",
+            "• ✅ Panel administrativo",
+            "• ✅ Migración a TypeScript"
+          ]
+        },
+        "footer": {
+          "items": [
+            "💡 **Comandos disponibles:** Usa `!help` para ver la lista completa",
+            "📞 **Soporte:** Contacta al administrador del sistema"
+          ]
+        }
+      }
+    },
+    "system_info": {
+      "version": "2.0.0 (Sistema TypeScript)",
+      "status_active": "🟢 Operativo",
+      "status_maintenance": "🟡 Mantenimiento",
+      "status_error": "🔴 Error",
+      "command_system": "Modular TypeScript",
+      "database": "SQLite",
+      "processing": "Node.js + TypeScript"
+    },
+    "error_message": "❌ Error obteniendo información del sistema: {error}"
+  },
+  "status": {
+    "description": "Muestra el estado del sistema y estadísticas operativas",
+    "response": {
+      "title": "📊 **ESTADO DEL SISTEMA**",
+      "sections": {
+        "services": {
+          "title": "🚦 **Servicios:**",
+          "items": [
+            "• Bot Principal: {botStatus}",
+            "• Base de Datos: {dbStatus}",
+            "• Sistema de Comandos: {commandSystemStatus}",
+            "• Permisos: {permissionsStatus}",
+            "• Logs: {logsStatus}"
+          ]
+        },
+        "activity": {
+          "title": "📈 **Actividad:**",
+          "items": [
+            "• Mensajes procesados: {processedMessages}",
+            "• Comandos ejecutados: {commandsExecuted}",
+            "• Usuarios registrados: {totalUsers}",
+            "• Sesión actual: {sessionUptime}"
+          ]
+        },
+        "performance": {
+          "title": "⚡ **Rendimiento:**",
+          "items": [
+            "• Memoria usada: {memoryUsage}MB",
+            "• CPU tiempo: {cpuTime}ms",
+            "• Uptime: {uptime}",
+            "• Node.js: {nodeVersion}",
+            "• Plataforma: {platform}"
+          ]
+        },
+        "typescript": {
+          "title": "🔧 **Sistema TypeScript:**",
+          "items": [
+            "• Estado: {migrationStatus}",
+            "• Comandos migrados: {migratedCommands}",
+            "• Tests: {testsStatus}",
+            "• Cobertura: {coverage}"
+          ]
+        },
+        "footer": {
+          "text": "💡 **Uso:** Usa `!help` para ver comandos disponibles"
+        }
+      }
+    },
+    "status_indicators": {
+      "active": "✅ Funcionando",
+      "inactive": "❌ Inactivo",
+      "error": "⚠️ Error",
+      "connected": "✅ Conectada",
+      "disconnected": "❌ Desconectada",
+      "migration_in_progress": "✅ Migración en progreso",
+      "tests_passing": "✅ Todos pasando",
+      "high_coverage": "Alta"
+    },
+    "system_defaults": {
+      "command_system": "✅ TypeScript Activo",
+      "permissions": "✅ Activo",
+      "logs": "✅ Activo",
+      "migrated_commands": "PingCommand, InfoCommand, StatusCommand",
+      "coverage": "Alta"
+    },
+    "error_message": "❌ Error obteniendo estado del sistema: {error}"
+  },
+  "permissions": {
+    "description": "Muestra tus permisos y comandos disponibles",
+    "response": {
+      "title": "📋 **PERMISOS DE USUARIO**",
+      "sections": {
+        "user_info": {
+          "title": "👤 **INFORMACIÓN:**",
+          "items": [
+            "• Usuario: {displayName}",
+            "• Tipo: {userType}",
+            "• Nivel: {levelName} ({userLevel})",
+            "• Comandos disponibles: {totalCommands}"
+          ]
+        },
+        "usage_stats": {
+          "title": "🕒 **USO ACTUAL:**",
+          "items": [
+            "• Comandos última hora: {commandsLastHour}{commandLimitText}",
+            "• Total comandos ejecutados: {totalCommands}",
+            "• Intentos denegados: {deniedAttempts}"
+          ]
+        },
+        "commands_section": {
+          "title": "📋 **COMANDOS DISPONIBLES:**"
+        },
+        "restrictions": {
+          "title": "⏰ **RESTRICCIONES:**",
+          "time_restriction": "• Horario: {start}:00 - {end}:00 {statusEmoji}",
+          "command_limit": "• Límite diario: {limit} comandos"
+        },
+        "system_status": {
+          "title": "🔧 **ESTADO DEL SISTEMA:**",
+          "items": [
+            "• Sistema de permisos: 🟢 Activo",
+            "• Servicios: 🟢 Operativos",
+            "• Tu estado: {userStatus}"
+          ]
+        },
+        "additional_info": {
+          "title": "💡 **INFORMACIÓN ADICIONAL:**",
+          "items": [
+            "• Usa !help para ver comandos específicos",
+            "• Usa !usertype para cambiar tu tipo de usuario",
+            "• Usa !profile para ver tu perfil completo"
+          ]
+        },
+        "footer": {
+          "text": "🕒 Consultado: {timestamp}"
+        }
+      }
+    },
+    "user_levels": {
+      "0": {
+        "name": "Bloqueado",
+        "emoji": "🚫"
+      },
+      "1": {
+        "name": "Básico",
+        "emoji": "📚"
+      },
+      "2": {
+        "name": "Estándar",
+        "emoji": "⭐"
+      },
+      "3": {
+        "name": "Avanzado",
+        "emoji": "🏆"
+      },
+      "4": {
+        "name": "Administrador",
+        "emoji": "👑"
+      }
+    },
+    "commands_by_level": {
+      "1": [
+        {
+          "command": "ping",
+          "description": "Verificar si el bot está funcionando"
+        },
+        {
+          "command": "help",
+          "description": "Mostrar ayuda general"
+        },
+        {
+          "command": "info",
+          "description": "Información sobre el bot"
+        },
+        {
+          "command": "profile",
+          "description": "Ver tu perfil de usuario"
+        },
+        {
+          "command": "permissions",
+          "description": "Ver tus permisos actuales"
+        }
+      ],
+      "2": [
+        {
+          "command": "status",
+          "description": "Estado del sistema"
+        },
+        {
+          "command": "usertype",
+          "description": "Cambiar tipo de usuario"
+        }
+      ],
+      "3": [
+        {
+          "command": "export",
+          "description": "Exportar datos del sistema"
+        },
+        {
+          "command": "backup",
+          "description": "Crear respaldos"
+        }
+      ],
+      "4": [
+        {
+          "command": "logs",
+          "description": "Ver logs del sistema"
+        },
+        {
+          "command": "stats",
+          "description": "Estadísticas del sistema"
+        },
+        {
+          "command": "diagnostic",
+          "description": "Diagnóstico del sistema"
+        },
+        {
+          "command": "admin",
+          "description": "Panel de administración"
+        },
+        {
+          "command": "users",
+          "description": "Gestión de usuarios"
+        }
+      ]
+    },
+    "user_type_mapping": {
+      "admin": 4,
+      "employee": 3,
+      "provider": 2,
+      "friend": 2,
+      "familiar": 2,
+      "customer": 1,
+      "block": 0
+    },
+    "restrictions": {
+      "admin": {
+        "command_limit": "Sin límite"
+      },
+      "employee": {
+        "command_limit": 100
+      },
+      "provider": {
+        "command_limit": 50,
+        "time_restriction": {
+          "start": 8,
+          "end": 22
+        }
+      },
+      "friend": {
+        "command_limit": 50,
+        "time_restriction": {
+          "start": 8,
+          "end": 22
+        }
+      },
+      "familiar": {
+        "command_limit": 50,
+        "time_restriction": {
+          "start": 8,
+          "end": 22
+        }
+      },
+      "customer": {
+        "command_limit": 20,
+        "time_restriction": {
+          "start": 9,
+          "end": 20
+        }
+      },
+      "block": {
+        "command_limit": 0
+      }
+    },
+    "error_messages": {
+      "not_registered": "⚠️ Usuario no registrado. No se pueden mostrar permisos.\n\nDebes estar registrado para ver tus permisos.",
+      "general_error": "❌ Error obteniendo información de permisos: {error}"
+    }
+  },
+  "stats": {
+    "description": "Muestra estadísticas del sistema",
+    "response": {
+      "general": {
+        "title": "📊 ESTADÍSTICAS GENERALES DEL SISTEMA",
+        "sections": {
+          "performance": {
+            "title": "⚡ RENDIMIENTO:",
+            "items": [
+              "• Tiempo activo: {uptime}",
+              "• Memoria usada: {memoryUsed}",
+              "• Memoria total: {memoryTotal}",
+              "• CPU Load: {cpuLoad}%"
+            ]
+          },
+          "application": {
+            "title": "🤖 APLICACIÓN:",
+            "items": [
+              "• Versión Node.js: {nodeVersion}",
+              "• Plataforma: {platform}",
+              "• Arquitectura: {architecture}",
+              "• PID: {pid}"
+            ]
+          },
+          "footer": "🕒 Consultado: {timestamp}"
+        }
+      },
+      "users": {
+        "title": "👥 ESTADÍSTICAS DE USUARIOS",
+        "sections": {
+          "general": {
+            "title": "📊 GENERAL:",
+            "items": [
+              "• Total usuarios: {totalUsers}",
+              "• Interacciones totales: {totalInteractions}",
+              "• Promedio por usuario: {avgPerUser}"
+            ]
+          },
+          "by_type": {
+            "title": "📋 POR TIPO:",
+            "items": [
+              "👑 admin: {adminCount}",
+              "👤 customer: {customerCount}",
+              "👫 friend: {friendCount}",
+              "👨‍👩‍👧‍👦 familiar: {familiarCount}",
+              "💼 employee: {employeeCount}",
+              "🏢 provider: {providerCount}",
+              "🚫 block: {blockCount}"
+            ]
+          },
+          "note": "📝 NOTA: Para estadísticas reales, conectar servicio de usuarios"
+        }
+      },
+      "commands": {
+        "title": "⚡ ESTADÍSTICAS DE COMANDOS",
+        "sections": {
+          "activity": {
+            "title": "📊 ACTIVIDAD:",
+            "items": [
+              "• Comandos última hora: {commandsLastHour}",
+              "• Total ejecutados: {totalExecuted}",
+              "• Intentos denegados: {deniedAttempts}",
+              "• Usuarios activos: {activeUsers}"
+            ]
+          },
+          "registry": {
+            "title": "📋 REGISTRO:",
+            "items": [
+              "• Total comandos: {totalCommands}",
+              "• Aliases: {totalAliases}",
+              "• Categorías: {categories}",
+              "• Comandos públicos: {publicCommands}",
+              "• Comandos sensibles: {sensitiveCommands}"
+            ]
+          },
+          "by_level": {
+            "title": "🔢 POR NIVEL:",
+            "items": [
+              "🟢 Básico: {basicLevel}",
+              "🟡 Usuario: {userLevel}",
+              "🔴 Admin: {adminLevel}",
+              "⚫ Sistema: {systemLevel}"
+            ]
+          },
+          "note": "📝 NOTA: Para estadísticas reales, conectar registro de comandos"
+        }
+      },
+      "permissions": {
+        "title": "🔐 ESTADÍSTICAS DE PERMISOS",
+        "sections": {
+          "activity": {
+            "title": "📊 ACTIVIDAD:",
+            "items": [
+              "• Verificaciones última hora: {verificationsLastHour}",
+              "• Total verificaciones: {totalVerifications}",
+              "• Permisos denegados: {deniedPermissions}",
+              "• Escaladas de permisos: {escalations}"
+            ]
+          },
+          "configuration": {
+            "title": "⚙️ CONFIGURACIÓN:",
+            "items": [
+              "• Roles definidos: {definedRoles}",
+              "• Permisos por comando: {permissionMappings}",
+              "• Restricciones activas: {activeRestrictions}",
+              "• Excepciones configuradas: {configuredExceptions}"
+            ]
+          },
+          "note": "📝 NOTA: Para estadísticas reales, conectar servicio de permisos"
+        }
+      },
+      "system": {
+        "title": "🔧 ESTADÍSTICAS DEL SISTEMA",
+        "sections": {
+          "services": {
+            "title": "📊 SERVICIOS:",
+            "items": [
+              "• WhatsApp: {whatsappStatus}",
+              "• Base de datos: {databaseStatus}",
+              "• Archivos: {filesystemStatus}",
+              "• Red: {networkStatus}"
+            ]
+          },
+          "resources": {
+            "title": "💾 RECURSOS:",
+            "items": [
+              "• Uso de disco: {diskUsage}",
+              "• Conexiones activas: {activeConnections}",
+              "• Procesos hijo: {childProcesses}",
+              "• Hilos activos: {activeThreads}"
+            ]
+          },
+          "logs": {
+            "title": "📝 LOGS:",
+            "items": [
+              "• Errores última hora: {errorsLastHour}",
+              "• Advertencias: {warnings}",
+              "• Total logs: {totalLogs}",
+              "• Tamaño logs: {logsSize}"
+            ]
+          },
+          "note": "📝 NOTA: Para estadísticas reales, conectar monitores del sistema"
+        }
+      }
+    },
+    "default_values": {
+      "no_connection": "Sin conexión BD",
+      "no_data": "Sin datos",
+      "no_registry": "Sin conexión al registro",
+      "no_record": "Sin registro disponible"
+    },
+    "error_messages": {
+      "permission_denied": "❌ Acceso denegado. Este comando es solo para administradores.",
+      "invalid_type": "❌ Tipo de estadística no válido: '{type}'\n\nTipos disponibles: general, users, commands, permissions, system",
+      "general_error": "❌ Error obteniendo estadísticas generales: {error}",
+      "users_error": "❌ Error obteniendo estadísticas de usuarios: {error}",
+      "commands_error": "❌ Error obteniendo estadísticas de comandos: {error}",
+      "permissions_error": "❌ Error obteniendo estadísticas de permisos: {error}",
+      "system_error": "❌ Error obteniendo estadísticas del sistema: {error}"
+    }
+  },
+  "profile": {
+    "description": "Muestra tu perfil de usuario con estadísticas",
+    "response": {
+      "title": "{typeEmoji} **TU PERFIL DE USUARIO**",
+      "sections": {
+        "personal": {
+          "title": "👤 **INFORMACIÓN PERSONAL:**",
+          "items": [
+            "• Nombre: {displayName}",
+            "• Tipo: {userType} ({typeDescription})",
+            "• Teléfono: {phoneNumber}",
+            "• WhatsApp JID: {whatsappJid}",
+            "• Estado: {statusIndicator}"
+          ]
+        },
+        "dates": {
+          "title": "📅 **FECHAS:**",
+          "items": [
+            "• Registrado: {registeredDate}",
+            "• Última actividad: {lastActivity}",
+            "• Tiempo activo: {activityTime}"
+          ]
+        },
+        "statistics": {
+          "title": "📊 **ESTADÍSTICAS:**",
+          "items": [
+            "• Interacciones totales: {totalInteractions}",
+            "• Comandos ejecutados: {commandsExecuted}",
+            "• Tiempo promedio: {avgProcessingTime}ms",
+            "• Confianza clasificación: {confidence}%"
+          ]
+        },
+        "configuration": {
+          "title": "⚙️ **CONFIGURACIÓN:**",
+          "items": [
+            "• Idioma: {language}",
+            "• Zona horaria: {timezone}",
+            "• Preferencias: {preferencesCount} configuradas"
+          ]
+        },
+        "actions": {
+          "title": "💡 **ACCIONES DISPONIBLES:**",
+          "items": [
+            "• Usa !usertype para cambiar tu tipo de usuario",
+            "• Usa !permissions para ver tus permisos",
+            "• Usa !help para ver comandos disponibles"
+          ]
+        },
+        "footer": {
+          "text": "🕒 Consultado: {timestamp}"
+        }
+      }
+    },
+    "user_types": {
+      "admin": {
+        "emoji": "👑",
+        "description": "Administrador del sistema"
+      },
+      "customer": {
+        "emoji": "👤",
+        "description": "Cliente registrado"
+      },
+      "employee": {
+        "emoji": "💼",
+        "description": "Empleado de la empresa"
+      },
+      "provider": {
+        "emoji": "🏢",
+        "description": "Proveedor de servicios"
+      },
+      "friend": {
+        "emoji": "👫",
+        "description": "Amigo personal"
+      },
+      "familiar": {
+        "emoji": "👨‍👩‍👧‍👦",
+        "description": "Miembro de la familia"
+      },
+      "block": {
+        "emoji": "🚫",
+        "description": "Usuario bloqueado"
+      }
+    },
+    "status_indicators": {
+      "active": "🟢 Activo",
+      "inactive": "🔴 Inactivo"
+    },
+    "default_values": {
+      "language": "No detectado",
+      "timezone": "No configurada",
+      "last_activity": "No disponible",
+      "activity_time": "No disponible",
+      "date_unavailable": "Fecha no disponible"
+    },
+    "error_messages": {
+      "not_registered": "❌ Perfil no disponible - usuario no registrado.\n\nDebes estar registrado para ver tu perfil.",
+      "general_error": "❌ Error obteniendo perfil de usuario: {error}"
+    }
+  }
+}

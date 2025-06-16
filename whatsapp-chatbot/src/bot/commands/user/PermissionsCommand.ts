@@ -5,17 +5,29 @@ import {
   CommandMetadata,
 } from "../../../types/commands";
 import { UserType } from "../../../types/core/user.types";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 
 /**
  * Comando para mostrar permisos y comandos disponibles del usuario
  * Accesible para todos los usuarios registrados
  */
 export class PermissionsCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "permissions",
       aliases: ["permisos", "comandos", "accesos"],
-      description: "Muestra tus permisos y comandos disponibles",
+      description: this.getConfigMessage(
+        "permissions.description",
+        {},
+        "Muestra tus permisos y comandos disponibles"
+      ),
       syntax: "!permissions",
       category: "user",
       permissions: ["user"],
@@ -37,6 +49,77 @@ export class PermissionsCommand extends Command {
   }
 
   /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
+    if (typeof template !== 'string') {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, 'g');
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path.split(".").reduce((current, key) => current?.[key], config as any);
+  }
+
+  /**
    * Obtiene información de comandos según el tipo de usuario
    */
   private getUserCommands(userType: UserType): {
@@ -52,8 +135,8 @@ export class PermissionsCommand extends Command {
       timeRestriction?: { start: number; end: number };
     };
   } {
-    // Mapeo de tipos de usuario a niveles
-    const userLevelMap: Record<UserType, number> = {
+    // Obtener mapeos desde configuración
+    const userTypeMapping = this.getValueByPath("permissions.user_type_mapping") || {
       admin: 4,
       employee: 3,
       provider: 2,
@@ -63,48 +146,27 @@ export class PermissionsCommand extends Command {
       block: 0,
     };
 
-    const levelNameMap: Record<number, string> = {
-      0: "Bloqueado",
-      1: "Básico",
-      2: "Estándar",
-      3: "Avanzado",
-      4: "Administrador",
+    const userLevels = this.getValueByPath("permissions.user_levels") || {
+      0: { name: "Bloqueado", emoji: "🚫" },
+      1: { name: "Básico", emoji: "📚" },
+      2: { name: "Estándar", emoji: "⭐" },
+      3: { name: "Avanzado", emoji: "🏆" },
+      4: { name: "Administrador", emoji: "👑" },
     };
 
-    const userLevel = userLevelMap[userType] || 1;
-    const levelName = levelNameMap[userLevel] || "Básico";
+    const userLevel = userTypeMapping[userType] || 1;
+    const levelInfo = userLevels[userLevel] || { name: "Básico", emoji: "📚" };
+    const levelName = levelInfo.name;
 
-    // Definir comandos por nivel
-    const commandsByLevel: Record<
-      number,
-      Array<{ command: string; description: string }>
-    > = {
-      1: [
-        {
-          command: "ping",
-          description: "Verificar si el bot está funcionando",
-        },
-        { command: "help", description: "Mostrar ayuda general" },
-        { command: "info", description: "Información sobre el bot" },
-        { command: "profile", description: "Ver tu perfil de usuario" },
-        { command: "permissions", description: "Ver tus permisos actuales" },
-      ],
-      2: [
-        { command: "status", description: "Estado del sistema" },
-        { command: "usertype", description: "Cambiar tipo de usuario" },
-      ],
-      3: [
-        { command: "export", description: "Exportar datos del sistema" },
-        { command: "backup", description: "Crear respaldos" },
-      ],
-      4: [
-        { command: "logs", description: "Ver logs del sistema" },
-        { command: "stats", description: "Estadísticas del sistema" },
-        { command: "diagnostic", description: "Diagnóstico del sistema" },
-        { command: "admin", description: "Panel de administración" },
-        { command: "users", description: "Gestión de usuarios" },
-      ],
-    };
+    // Obtener comandos por nivel desde configuración
+    const commandsByLevelConfig = this.getValueByPath("permissions.commands_by_level") || {};
+    const commandsByLevel: Record<number, Array<{ command: string; description: string }>> = {};
+
+    // Convertir configuración a formato esperado
+    for (const [level, commands] of Object.entries(commandsByLevelConfig)) {
+      const levelNum = parseInt(level);
+      commandsByLevel[levelNum] = Array.isArray(commands) ? commands : [];
+    }
 
     // Calcular total de comandos disponibles
     let totalCommands = 0;
@@ -112,7 +174,7 @@ export class PermissionsCommand extends Command {
       totalCommands += commandsByLevel[level]?.length || 0;
     }
 
-    // Definir restricciones según el tipo de usuario
+    // Obtener restricciones desde configuración
     const restrictions = this.getUserRestrictions(userType);
 
     return {
@@ -131,6 +193,17 @@ export class PermissionsCommand extends Command {
     commandLimit: string | number;
     timeRestriction?: { start: number; end: number };
   } {
+    const restrictionsConfig = this.getValueByPath("permissions.restrictions");
+    
+    if (restrictionsConfig && restrictionsConfig[userType]) {
+      const userRestriction = restrictionsConfig[userType];
+      return {
+        commandLimit: userRestriction.command_limit,
+        timeRestriction: userRestriction.time_restriction
+      };
+    }
+
+    // Fallback hardcodeado
     switch (userType) {
       case "admin":
         return { commandLimit: "Sin límite" };
@@ -191,10 +264,14 @@ export class PermissionsCommand extends Command {
     try {
       // Verificar si el usuario está registrado
       if (!this.validateUser(context)) {
+        const errorMessage = this.getConfigMessage(
+          "permissions.error_messages.not_registered",
+          {},
+          "⚠️ Usuario no registrado. No se pueden mostrar permisos.\n\nDebes estar registrado para ver tus permisos."
+        );
         return {
           success: true,
-          response:
-            "⚠️ Usuario no registrado. No se pueden mostrar permisos.\n\nDebes estar registrado para ver tus permisos.",
+          response: errorMessage,
           shouldReply: true,
         };
       }
@@ -205,43 +282,75 @@ export class PermissionsCommand extends Command {
       const commandsInfo = this.getUserCommands(user.user_type);
       const usageStats = this.getUserUsageStats(user.whatsapp_jid);
 
-      // Construir respuesta
-      let response = `📋 **PERMISOS DE USUARIO**\n\n`;
+      // Obtener configuración de respuesta
+      const responseConfig = this.getValueByPath("permissions.response");
+      const userLevels = this.getValueByPath("permissions.user_levels");
 
-      // Información básica del usuario
-      response += `👤 **INFORMACIÓN:**\n`;
-      response += `• Usuario: ${user.display_name || "Sin nombre"}\n`;
-      response += `• Tipo: ${user.user_type}\n`;
-      response += `• Nivel: ${commandsInfo.levelName} (${commandsInfo.userLevel})\n`;
-      response += `• Comandos disponibles: ${commandsInfo.totalCommands}\n\n`;
-
-      // Estadísticas de uso
-      response += `🕒 **USO ACTUAL:**\n`;
-      response += `• Comandos última hora: ${usageStats.commandsLastHour}`;
+      // Construir texto límite de comandos
+      let commandLimitText = "";
       if (typeof commandsInfo.restrictions.commandLimit === "number") {
-        response += `/${commandsInfo.restrictions.commandLimit}`;
+        commandLimitText = `/${commandsInfo.restrictions.commandLimit}`;
       }
-      response += `\n• Total comandos ejecutados: ${usageStats.totalCommands}\n`;
-      response += `• Intentos denegados: ${usageStats.deniedAttempts}\n\n`;
 
-      // Comandos disponibles por nivel
-      response += `📋 **COMANDOS DISPONIBLES:**\n`;
-
-      const levelNames: Record<number, string> = {
-        1: "Básico",
-        2: "Estándar",
-        3: "Avanzado",
-        4: "Administrador",
+      // Variables para plantillas
+      const variables = {
+        displayName: user.display_name || "Sin nombre",
+        userType: user.user_type,
+        levelName: commandsInfo.levelName,
+        userLevel: commandsInfo.userLevel,
+        totalCommands: commandsInfo.totalCommands,
+        commandsLastHour: usageStats.commandsLastHour,
+        commandLimitText,
+        totalCommandsExecuted: usageStats.totalCommands,
+        deniedAttempts: usageStats.deniedAttempts,
+        userStatus: user.is_active ? "🟢 Activo" : "🔴 Inactivo",
+        timestamp: new Date().toLocaleString()
       };
 
-      for (let level = 1; level <= commandsInfo.userLevel; level++) {
-        const commands = commandsInfo.commandsByLevel[level] || [];
-        if (commands.length > 0) {
-          response += `\n**${levelNames[level]}:**\n`;
-          commands.forEach((cmd) => {
-            response += `• !${cmd.command} - ${cmd.description}\n`;
-          });
+      // Construir respuesta usando configuración
+      let response = this.replaceVariables(
+        responseConfig?.title || "� **PERMISOS DE USUARIO**",
+        variables
+      ) + "\n\n";
+
+      // Sección de información del usuario
+      if (responseConfig?.sections?.user_info) {
+        response += this.replaceVariables(responseConfig.sections.user_info.title, variables) + "\n";
+        if (responseConfig.sections.user_info.items) {
+          for (const item of responseConfig.sections.user_info.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
         }
+        response += "\n";
+      }
+
+      // Sección de estadísticas de uso
+      if (responseConfig?.sections?.usage_stats) {
+        response += this.replaceVariables(responseConfig.sections.usage_stats.title, variables) + "\n";
+        if (responseConfig.sections.usage_stats.items) {
+          for (const item of responseConfig.sections.usage_stats.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
+
+      // Comandos disponibles por nivel
+      if (responseConfig?.sections?.commands_section) {
+        response += this.replaceVariables(responseConfig.sections.commands_section.title, variables) + "\n";
+
+        for (let level = 1; level <= commandsInfo.userLevel; level++) {
+          const commands = commandsInfo.commandsByLevel[level] || [];
+          if (commands.length > 0) {
+            const levelInfo = userLevels?.[level];
+            const levelName = levelInfo?.name || `Nivel ${level}`;
+            response += `\n**${levelName}:**\n`;
+            commands.forEach((cmd) => {
+              response += `• !${cmd.command} - ${cmd.description}\n`;
+            });
+          }
+        }
+        response += "\n";
       }
 
       // Restricciones
@@ -250,35 +359,51 @@ export class PermissionsCommand extends Command {
         (typeof commandsInfo.restrictions.commandLimit === "number" &&
           commandsInfo.restrictions.commandLimit > 0)
       ) {
-        response += `\n⏰ **RESTRICCIONES:**\n`;
+        if (responseConfig?.sections?.restrictions) {
+          response += this.replaceVariables(responseConfig.sections.restrictions.title, variables) + "\n";
 
-        if (commandsInfo.restrictions.timeRestriction) {
-          const time = commandsInfo.restrictions.timeRestriction;
-          const isAllowedTime = this.isWithinAllowedTime(time);
-          const statusEmoji = isAllowedTime ? "🟢" : "🔴";
-          response += `• Horario: ${time.start}:00 - ${time.end}:00 ${statusEmoji}\n`;
-        }
+          if (commandsInfo.restrictions.timeRestriction && responseConfig.sections.restrictions.time_restriction) {
+            const time = commandsInfo.restrictions.timeRestriction;
+            const isAllowedTime = this.isWithinAllowedTime(time);
+            const statusEmoji = isAllowedTime ? "🟢" : "🔴";
+            const restrictionVars = { start: time.start, end: time.end, statusEmoji };
+            response += this.replaceVariables(responseConfig.sections.restrictions.time_restriction, restrictionVars) + "\n";
+          }
 
-        if (typeof commandsInfo.restrictions.commandLimit === "number") {
-          response += `• Límite diario: ${commandsInfo.restrictions.commandLimit} comandos\n`;
+          if (typeof commandsInfo.restrictions.commandLimit === "number" && responseConfig.sections.restrictions.command_limit) {
+            const limitVars = { limit: commandsInfo.restrictions.commandLimit };
+            response += this.replaceVariables(responseConfig.sections.restrictions.command_limit, limitVars) + "\n";
+          }
+          response += "\n";
         }
       }
 
-      // Estado actual del sistema
-      response += `\n🔧 **ESTADO DEL SISTEMA:**\n`;
-      response += `• Sistema de permisos: 🟢 Activo\n`;
-      response += `• Servicios: 🟢 Operativos\n`;
-      response += `• Tu estado: ${
-        user.is_active ? "🟢 Activo" : "🔴 Inactivo"
-      }\n\n`;
+      // Estado del sistema
+      if (responseConfig?.sections?.system_status) {
+        response += this.replaceVariables(responseConfig.sections.system_status.title, variables) + "\n";
+        if (responseConfig.sections.system_status.items) {
+          for (const item of responseConfig.sections.system_status.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
 
       // Información adicional
-      response += `💡 **INFORMACIÓN ADICIONAL:**\n`;
-      response += `• Usa !help para ver comandos específicos\n`;
-      response += `• Usa !usertype para cambiar tu tipo de usuario\n`;
-      response += `• Usa !profile para ver tu perfil completo\n\n`;
+      if (responseConfig?.sections?.additional_info) {
+        response += this.replaceVariables(responseConfig.sections.additional_info.title, variables) + "\n";
+        if (responseConfig.sections.additional_info.items) {
+          for (const item of responseConfig.sections.additional_info.items) {
+            response += this.replaceVariables(item, variables) + "\n";
+          }
+        }
+        response += "\n";
+      }
 
-      response += `🕒 Consultado: ${new Date().toLocaleString()}`;
+      // Footer
+      if (responseConfig?.sections?.footer?.text) {
+        response += this.replaceVariables(responseConfig.sections.footer.text, variables);
+      }
 
       return {
         success: true,
@@ -286,12 +411,15 @@ export class PermissionsCommand extends Command {
         shouldReply: true,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      const errorMessage = this.getConfigMessage(
+        "permissions.error_messages.general_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        `❌ Error obteniendo información de permisos: ${error instanceof Error ? error.message : "Error desconocido"}`
+      );
 
       return {
         success: false,
-        response: `❌ Error obteniendo información de permisos: ${errorMessage}`,
+        response: errorMessage,
         shouldReply: true,
         error: errorMessage,
       };

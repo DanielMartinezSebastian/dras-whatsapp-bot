@@ -5,17 +5,29 @@ import {
   CommandResult,
   CommandCategory,
 } from "../../../types/commands";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 
 /**
  * Comando status - Estado del sistema y estadísticas
  * Muestra información detallada sobre el estado de los servicios y rendimiento
  */
 export class StatusCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "status",
       aliases: ["estado", "st"],
-      description: "Muestra el estado del sistema y estadísticas operativas",
+      description: this.getConfigMessage(
+        "status.description",
+        {},
+        "Muestra el estado del sistema y estadísticas operativas"
+      ),
       syntax: "!status",
       category: "basic" as CommandCategory,
       permissions: ["user"],
@@ -29,9 +41,12 @@ export class StatusCommand extends Command {
       const statusText = await this.generateSystemStatus(context);
       return this.createSuccessResult(statusText);
     } catch (error) {
-      return this.createErrorResult(
+      const errorMessage = this.getConfigMessage(
+        "status.error_message",
+        { error: error instanceof Error ? error.message : String(error) },
         `Error obteniendo estado del sistema: ${error}`
       );
+      return this.createErrorResult(errorMessage);
     }
   }
 
@@ -40,43 +55,184 @@ export class StatusCommand extends Command {
     const systemStats = this.getSystemStats();
     const performanceStats = this.getPerformanceStats();
 
-    let statusText = `📊 **ESTADO DEL SISTEMA**\n\n`;
+    // Obtener configuración de respuesta
+    const responseConfig = this.getValueByPath("status.response");
+    const statusIndicators = this.getValueByPath("status.status_indicators");
+    const systemDefaults = this.getValueByPath("status.system_defaults");
 
-    // Estado de servicios principales
-    statusText += `🚦 **Servicios:**\n`;
-    statusText += `• Bot Principal: ✅ Funcionando\n`;
-    statusText += `• Base de Datos: ${dbStatus.isConnected ? "✅" : "❌"} ${
-      dbStatus.status
-    }\n`;
-    statusText += `• Sistema de Comandos: ✅ TypeScript Activo\n`;
-    statusText += `• Permisos: ✅ Activo\n`;
-    statusText += `• Logs: ✅ Activo\n\n`;
+    let statusText =
+      this.getConfigMessage(
+        "status.response.title",
+        {},
+        "📊 **ESTADO DEL SISTEMA**"
+      ) + "\n\n";
 
-    // Estadísticas de actividad
-    statusText += `📈 **Actividad:**\n`;
-    statusText += `• Mensajes procesados: ${systemStats.processedMessages}\n`;
-    statusText += `• Comandos ejecutados: ${systemStats.commandsExecuted}\n`;
-    statusText += `• Usuarios registrados: ${systemStats.totalUsers}\n`;
-    statusText += `• Sesión actual: ${systemStats.sessionUptime}\n\n`;
+    // Sección de servicios
+    const servicesSection = this.getValueByPath(
+      "status.response.sections.services"
+    );
+    if (servicesSection) {
+      statusText += servicesSection.title + "\n";
+      for (const item of servicesSection.items) {
+        statusText +=
+          this.replaceVariables(item, {
+            botStatus: statusIndicators?.active || "✅ Funcionando",
+            dbStatus: `${dbStatus.isConnected ? "✅" : "❌"} ${
+              dbStatus.status
+            }`,
+            commandSystemStatus:
+              systemDefaults?.command_system || "✅ TypeScript Activo",
+            permissionsStatus: systemDefaults?.permissions || "✅ Activo",
+            logsStatus: systemDefaults?.logs || "✅ Activo",
+          }) + "\n";
+      }
+      statusText += "\n";
+    }
 
-    // Estadísticas de rendimiento
-    statusText += `⚡ **Rendimiento:**\n`;
-    statusText += `• Memoria usada: ${performanceStats.memoryUsage}MB\n`;
-    statusText += `• CPU tiempo: ${performanceStats.cpuTime}ms\n`;
-    statusText += `• Uptime: ${performanceStats.uptime}\n`;
-    statusText += `• Node.js: ${process.version}\n`;
-    statusText += `• Plataforma: ${process.platform}\n\n`;
+    // Sección de actividad
+    const activitySection = this.getValueByPath(
+      "status.response.sections.activity"
+    );
+    if (activitySection) {
+      statusText += activitySection.title + "\n";
+      for (const item of activitySection.items) {
+        statusText +=
+          this.replaceVariables(item, {
+            processedMessages: systemStats.processedMessages,
+            commandsExecuted: systemStats.commandsExecuted,
+            totalUsers: systemStats.totalUsers,
+            sessionUptime: systemStats.sessionUptime,
+          }) + "\n";
+      }
+      statusText += "\n";
+    }
 
-    // Estado de TypeScript
-    statusText += `🔧 **Sistema TypeScript:**\n`;
-    statusText += `• Estado: ✅ Migración en progreso\n`;
-    statusText += `• Comandos migrados: PingCommand, HelpCommand, InfoCommand, StatusCommand\n`;
-    statusText += `• Tests: ✅ Todos pasando\n`;
-    statusText += `• Cobertura: Alta\n\n`;
+    // Sección de rendimiento
+    const performanceSection = this.getValueByPath(
+      "status.response.sections.performance"
+    );
+    if (performanceSection) {
+      statusText += performanceSection.title + "\n";
+      for (const item of performanceSection.items) {
+        statusText +=
+          this.replaceVariables(item, {
+            memoryUsage: performanceStats.memoryUsage,
+            cpuTime: performanceStats.cpuTime,
+            uptime: performanceStats.uptime,
+            nodeVersion: process.version,
+            platform: process.platform,
+          }) + "\n";
+      }
+      statusText += "\n";
+    }
 
-    statusText += `💡 **Uso:** Usa \`!help\` para ver comandos disponibles`;
+    // Sección de TypeScript
+    const typescriptSection = this.getValueByPath(
+      "status.response.sections.typescript"
+    );
+    if (typescriptSection) {
+      statusText += typescriptSection.title + "\n";
+      for (const item of typescriptSection.items) {
+        statusText +=
+          this.replaceVariables(item, {
+            migrationStatus:
+              statusIndicators?.migration_in_progress ||
+              "✅ Migración en progreso",
+            migratedCommands:
+              systemDefaults?.migrated_commands ||
+              "PingCommand, InfoCommand, StatusCommand",
+            testsStatus: statusIndicators?.tests_passing || "✅ Todos pasando",
+            coverage: systemDefaults?.coverage || "Alta",
+          }) + "\n";
+      }
+      statusText += "\n";
+    }
+
+    // Footer
+    const footerSection = this.getValueByPath(
+      "status.response.sections.footer"
+    );
+    if (footerSection?.text) {
+      statusText += footerSection.text;
+    }
 
     return statusText;
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, "g");
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   private async getDatabaseStatus(): Promise<{

@@ -5,17 +5,29 @@ import {
   CommandResult,
   CommandCategory,
 } from "../../../types/commands";
+import { ConfigurationService } from "../../../services/ConfigurationService";
 
 /**
  * Comando help - Sistema de ayuda del bot
  * Muestra comandos disponibles según el nivel de permisos del usuario
  */
 export class HelpCommand extends Command {
+  private configService: ConfigurationService;
+
+  constructor(configService: ConfigurationService) {
+    super();
+    this.configService = configService;
+  }
+
   get metadata(): CommandMetadata {
     return {
       name: "help",
       aliases: ["ayuda", "h"],
-      description: "Muestra ayuda del sistema y comandos disponibles",
+      description: this.getConfigMessage(
+        "help.description",
+        {},
+        "Muestra ayuda del sistema y comandos disponibles"
+      ),
       syntax: "!help [comando]",
       category: "basic" as CommandCategory,
       permissions: ["user"],
@@ -37,7 +49,12 @@ export class HelpCommand extends Command {
       const response = await this.showGeneralHelp(context);
       return this.createSuccessResult(response);
     } catch (error) {
-      return this.createErrorResult(`Error mostrando ayuda: ${error}`);
+      const errorMessage = this.getConfigMessage(
+        "help.error_messages.general_error",
+        { error: error instanceof Error ? error.message : String(error) },
+        `Error mostrando ayuda: ${error}`
+      );
+      return this.createErrorResult(errorMessage);
     }
   }
 
@@ -45,49 +62,58 @@ export class HelpCommand extends Command {
     const user = context.user;
     const userRole = this.getUserRoleLevel(user?.user_type);
 
-    let response = "🤖 **Sistema de Ayuda - drasBot**\n\n";
+    // Obtener configuración de ayuda
+    const generalConfig = this.getValueByPath("help.general");
+    const categories = this.getValueByPath("help.categories");
 
-    // Comandos básicos (disponibles para todos)
-    response += "📋 **Comandos Básicos:**\n";
-    response += "• `!help` - Muestra esta ayuda\n";
-    response += "• `!info` - Información del bot\n";
-    response += "• `!ping` - Test de conexión\n";
-    response += "• `!status` - Estado del sistema\n\n";
+    let response =
+      this.getConfigMessage(
+        "help.general.title",
+        {},
+        "🤖 **Sistema de Ayuda - drasBot**"
+      ) + "\n\n";
 
-    // Comandos de usuario (role >= 2)
-    if (userRole >= 2) {
-      response += "👤 **Comandos de Usuario:**\n";
-      response += "• `!profile` - Ver tu perfil\n";
-      response += "• `!usertype` - Ver tu tipo de usuario\n";
-      response += "• `!permissions` - Ver tus permisos\n\n";
+    // Procesar categorías según el nivel de usuario
+    if (categories) {
+      for (const [categoryKey, categoryData] of Object.entries(
+        categories as any
+      )) {
+        const category = categoryData as any;
+
+        if (category.role_required && userRole >= category.role_required) {
+          response += category.title + "\n";
+
+          if (category.commands) {
+            for (const [cmdName, cmdDesc] of Object.entries(
+              category.commands as any
+            )) {
+              response += `• \`!${cmdName}\` - ${cmdDesc}\n`;
+            }
+          }
+          response += "\n";
+        }
+      }
     }
 
-    // Comandos de sistema (role >= 3)
-    if (userRole >= 3) {
-      response += "⚙️ **Comandos de Sistema:**\n";
-      response += "• `!stats` - Estadísticas del bot\n";
-      response += "• `!export` - Exportar datos\n";
-      response += "• `!logs` - Ver logs del sistema\n\n";
+    // Footer
+    const footerConfig = this.getValueByPath("help.general.footer");
+    if (footerConfig) {
+      response += footerConfig.usage + "\n";
+      response += footerConfig.support;
     }
-
-    // Comandos administrativos (role >= 4)
-    if (userRole >= 4) {
-      response += "🔧 **Comandos Administrativos:**\n";
-      response += "• `!admin` - Panel administrativo\n";
-      response += "• `!users` - Gestionar usuarios\n";
-      response += "• `!block` / `!unblock` - Bloquear usuarios\n";
-      response += "• `!migration` - Dashboard de migración\n\n";
-    }
-
-    response +=
-      "💡 **Uso:** Usa `!help <comando>` para información detallada\n";
-    response += "📞 **Soporte:** Contacta al administrador si necesitas ayuda";
 
     return response;
   }
 
   private getUserRoleLevel(userType?: string): number {
-    const roleLevels: Record<string, number> = {
+    const roleLevels = this.getValueByPath("help.role_levels");
+
+    if (roleLevels && userType) {
+      return roleLevels[userType] || 1;
+    }
+
+    // Fallback hardcodeado
+    const defaultRoles: Record<string, number> = {
       block: 0,
       customer: 1,
       friend: 2,
@@ -97,7 +123,7 @@ export class HelpCommand extends Command {
       admin: 4,
     };
 
-    return roleLevels[userType || "customer"] || 1;
+    return defaultRoles[userType || "customer"] || 1;
   }
 
   private async showCommandHelp(
@@ -107,86 +133,125 @@ export class HelpCommand extends Command {
     // Normalizar nombre del comando
     const normalizedName = commandName.replace(/^[!\/]/, "").toLowerCase();
 
-    // Mapeo de comandos conocidos con información detallada
-    const commandsInfo: Record<
-      string,
-      {
-        name: string;
-        description: string;
-        syntax: string;
-        examples: string[];
-        notes: string;
-      }
-    > = {
-      help: {
-        name: "help",
-        description: "Sistema de ayuda del bot",
-        syntax: "!help [comando]",
-        examples: ["!help", "!help info", "!help admin"],
-        notes: "Muestra comandos disponibles según tu nivel de permisos",
-      },
-      info: {
-        name: "info",
-        description: "Información general del bot",
-        syntax: "!info",
-        examples: ["!info"],
-        notes: "Muestra versión, estado y estadísticas básicas",
-      },
-      ping: {
-        name: "ping",
-        description: "Test de conexión y latencia",
-        syntax: "!ping",
-        examples: ["!ping"],
-        notes: "Útil para verificar si el bot responde correctamente",
-      },
-      status: {
-        name: "status",
-        description: "Estado actual del sistema",
-        syntax: "!status",
-        examples: ["!status"],
-        notes: "Muestra estado de servicios y tiempo de actividad",
-      },
-      profile: {
-        name: "profile",
-        description: "Ver información de tu perfil",
-        syntax: "!profile",
-        examples: ["!profile"],
-        notes: "Requiere estar registrado en el sistema",
-      },
-      admin: {
-        name: "admin",
-        description: "Panel de administración",
-        syntax: "!admin [acción]",
-        examples: ["!admin", "!admin users", "!admin stats"],
-        notes: "Solo disponible para administradores",
-      },
-    };
-
-    const cmdInfo = commandsInfo[normalizedName];
+    // Obtener información del comando desde configuración
+    const commandDetails = this.getValueByPath("help.command_details");
+    const cmdInfo = commandDetails?.[normalizedName];
 
     if (!cmdInfo) {
-      return (
-        `❌ **Comando no encontrado:** \`${commandName}\`\n\n` +
-        `💡 Usa \`!help\` para ver todos los comandos disponibles.`
+      return this.getConfigMessage(
+        "help.error_messages.command_not_found",
+        { commandName },
+        `❌ **Comando no encontrado:** \`${commandName}\`\n\n💡 Usa \`!help\` para ver todos los comandos disponibles.`
       );
     }
 
-    let response = `🔧 **Ayuda: !${cmdInfo.name}**\n\n`;
-    response += `📝 **Descripción:** ${cmdInfo.description}\n`;
-    response += `⌨️ **Sintaxis:** \`${cmdInfo.syntax}\`\n\n`;
+    const template = this.getValueByPath("help.command_help_template");
+
+    let response =
+      this.replaceVariables(template?.title || "🔧 **Ayuda: !{commandName}**", {
+        commandName: cmdInfo.name,
+      }) + "\n\n";
+    response +=
+      this.replaceVariables(
+        template?.description || "📝 **Descripción:** {description}",
+        { description: cmdInfo.description }
+      ) + "\n";
+    response +=
+      this.replaceVariables(template?.syntax || "⌨️ **Sintaxis:** `{syntax}`", {
+        syntax: cmdInfo.syntax,
+      }) + "\n\n";
 
     if (cmdInfo.examples && cmdInfo.examples.length > 0) {
-      response += `💡 **Ejemplos:**\n`;
-      cmdInfo.examples.forEach((example) => {
+      response += (template?.examples_title || "💡 **Ejemplos:**") + "\n";
+      cmdInfo.examples.forEach((example: string) => {
         response += `• \`${example}\`\n`;
       });
       response += "\n";
     }
 
     if (cmdInfo.notes) {
-      response += `📋 **Notas:** ${cmdInfo.notes}`;
+      response += this.replaceVariables(
+        template?.notes || "📋 **Notas:** {notes}",
+        { notes: cmdInfo.notes }
+      );
     }
 
     return response;
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde commands
+      let message = this.getValueByPath(config, `commands.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, "g");
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path?: string): any {
+    if (!path) {
+      const config = this.configService.getConfiguration();
+      return config;
+    }
+    const config = this.configService.getConfiguration();
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 }

@@ -7,6 +7,7 @@ import { IBotProcessor } from "../../interfaces/core/IBotProcessor";
 import { IRegistrationService } from "../../interfaces/services/IRegistrationService";
 import { IWhatsAppClient } from "../../interfaces/core/IWhatsAppClient";
 import { User } from "../../types/core/user.types";
+import { ConfigurationService } from "../../services/ConfigurationService";
 
 /**
  * Handler especializado para el proceso de registro de nuevos usuarios
@@ -16,6 +17,7 @@ export class RegistrationMessageHandler extends BaseMessageHandler {
   private botProcessor: IBotProcessor;
   private whatsappClient: IWhatsAppClient;
   private registrationService: IRegistrationService;
+  private configService: ConfigurationService;
 
   // Estadísticas específicas del handler de registro
   private registrationStats = {
@@ -28,12 +30,85 @@ export class RegistrationMessageHandler extends BaseMessageHandler {
   constructor(
     botProcessor: IBotProcessor,
     whatsappClient: IWhatsAppClient,
-    registrationService: IRegistrationService
+    registrationService: IRegistrationService,
+    configService: ConfigurationService
   ) {
     super("registration", 5, true); // Alta prioridad para registro
     this.botProcessor = botProcessor;
     this.whatsappClient = whatsappClient;
     this.registrationService = registrationService;
+    this.configService = configService;
+  }
+
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
+  private getConfigMessage(
+    path: string,
+    variables?: Record<string, any>,
+    fallback?: string
+  ): string {
+    try {
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        return fallback || "Configuración no disponible";
+      }
+
+      // Obtener mensaje desde responses o messages
+      let message =
+        this.getValueByPath(config, `responses.${path}`) ||
+        this.getValueByPath(config, `messages.${path}`);
+
+      // Si aún no se encuentra, usar fallback
+      if (!message) {
+        return fallback || `Mensaje no configurado: ${path}`;
+      }
+
+      // Si es un array, tomar un elemento aleatorio
+      if (Array.isArray(message)) {
+        message = message[Math.floor(Math.random() * message.length)];
+      }
+
+      // Reemplazar variables si se proporcionan
+      if (variables && typeof message === "string") {
+        return this.replaceVariables(message, variables);
+      }
+
+      return message;
+    } catch (error) {
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      return fallback || "Error en configuración";
+    }
+  }
+
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
+      return String(template);
+    }
+
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{${key}}`, "g");
+      result = result.replace(regex, String(value));
+    }
+    return result;
+  }
+
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
+  private getValueByPath(obj: any, path: string): any {
+    return path.split(".").reduce((current, key) => current?.[key], obj);
   }
 
   /**
@@ -104,14 +179,18 @@ export class RegistrationMessageHandler extends BaseMessageHandler {
         error
       );
 
-      return this.createErrorResult(
-        `Error en el proceso de registro: ${errorMessage}`,
-        {
-          chatJid: context.message.chatJid,
-          error: errorMessage,
-          requiresRegistration: true,
-        }
+      // Usar mensaje de error general configurado
+      const generalErrorMessage = this.getConfigMessage(
+        "registration.errors.general",
+        { errorMessage },
+        `Error en el proceso de registro: ${errorMessage}`
       );
+
+      return this.createErrorResult(generalErrorMessage, {
+        chatJid: context.message.chatJid,
+        error: errorMessage,
+        requiresRegistration: true,
+      });
     }
   }
 
@@ -153,16 +232,23 @@ export class RegistrationMessageHandler extends BaseMessageHandler {
 
       console.log(`Nuevo registro iniciado para: ${message.chatJid}`);
 
-      return this.createSuccessResult(
-        "¡Hola! Para poder ayudarte mejor, por favor compárteme tu nombre.\n\n" +
-          "Solo escribe tu nombre y presiona enviar. 😊",
-        {
-          requiresRegistration: true,
-          status: "registration_started",
-          chatJid: message.chatJid,
-          registrationData: registrationData,
-        }
+      // Obtener mensaje de bienvenida configurado
+      const welcomeMessage = this.getConfigMessage(
+        "registration.welcome.new_user",
+        { userName: user.display_name || "Usuario" },
+        "¡Hola! Para poder ayudarte mejor, por favor compárteme tu nombre.\n\nSolo escribe tu nombre y presiona enviar. 😊"
       );
+
+      return this.createSuccessResult(welcomeMessage, {
+        requiresRegistration: true,
+        status: this.getConfigMessage(
+          "registration.status.started",
+          {},
+          "registration_started"
+        ),
+        chatJid: message.chatJid,
+        registrationData: registrationData,
+      });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Error desconocido";
@@ -171,14 +257,18 @@ export class RegistrationMessageHandler extends BaseMessageHandler {
         error
       );
 
-      return this.createErrorResult(
-        "Hubo un problema al iniciar el registro. Por favor intenta de nuevo.",
-        {
-          error: errorMessage,
-          chatJid: context.message.chatJid,
-          requiresRegistration: true,
-        }
+      // Usar mensaje de error configurado
+      const startErrorMessage = this.getConfigMessage(
+        "registration.errors.start_error",
+        { errorMessage },
+        "Hubo un problema al iniciar el registro. Por favor intenta de nuevo."
       );
+
+      return this.createErrorResult(startErrorMessage, {
+        error: errorMessage,
+        chatJid: context.message.chatJid,
+        requiresRegistration: true,
+      });
     }
   }
 
@@ -200,29 +290,34 @@ export class RegistrationMessageHandler extends BaseMessageHandler {
 
         const userName = registrationResult.user?.display_name || "Usuario";
 
-        return this.createSuccessResult(
-          `¡Perfecto, ${userName}! 🎉\n\n` +
-            "Tu nombre ha sido registrado correctamente. Ahora puedes usar todos mis comandos.\n\n" +
-            'Escribe "ayuda" para ver qué puedo hacer por ti.',
-          {
-            registrationData: registrationResult,
-            chatJid: message.chatJid,
-            completed: true,
-            user: registrationResult.user,
-          }
+        // Usar mensaje de éxito configurado
+        const successMessage = this.getConfigMessage(
+          "registration.completion.success",
+          { userName },
+          `¡Perfecto, ${userName}! 🎉\n\nTu nombre ha sido registrado correctamente. Ahora puedes usar todos mis comandos.\n\nEscribe "ayuda" para ver qué puedo hacer por ti.`
         );
+
+        return this.createSuccessResult(successMessage, {
+          registrationData: registrationResult,
+          chatJid: message.chatJid,
+          completed: true,
+          user: registrationResult.user,
+        });
       } else {
-        // El registro no se completó, probablemente necesita más información
-        return this.createErrorResult(
+        // El registro no se completó, usar mensaje de error configurado
+        const errorMessage = this.getConfigMessage(
+          "registration.errors.processing_error",
+          { errorMessage: registrationResult.reason || "" },
           registrationResult.reason ||
-            "Hubo un problema procesando tu respuesta. Por favor intenta de nuevo.",
-          {
-            registrationData: registrationResult,
-            chatJid: message.chatJid,
-            requiresRegistration: true,
-            attempts: registrationResult.attempts,
-          }
+            "Hubo un problema procesando tu respuesta. Por favor intenta de nuevo."
         );
+
+        return this.createErrorResult(errorMessage, {
+          registrationData: registrationResult,
+          chatJid: message.chatJid,
+          requiresRegistration: true,
+          attempts: registrationResult.attempts,
+        });
       }
     } catch (error) {
       const errorMessage =
@@ -232,14 +327,18 @@ export class RegistrationMessageHandler extends BaseMessageHandler {
         error
       );
 
-      return this.createErrorResult(
-        "Hubo un problema procesando tu respuesta. Por favor intenta de nuevo.",
-        {
-          error: errorMessage,
-          chatJid: context.message.chatJid,
-          requiresRegistration: true,
-        }
+      // Usar mensaje de error general configurado
+      const generalErrorMessage = this.getConfigMessage(
+        "registration.errors.general",
+        { errorMessage },
+        "Hubo un problema procesando tu respuesta. Por favor intenta de nuevo."
       );
+
+      return this.createErrorResult(generalErrorMessage, {
+        error: errorMessage,
+        chatJid: context.message.chatJid,
+        requiresRegistration: true,
+      });
     }
   }
 
