@@ -416,6 +416,7 @@ class WhatsAppClient extends EventEmitter {
       const lastCommand = this.lastResponseTime.get(chatJid + "_command");
       if (lastCommand && now - lastCommand < 5000) {
         // 5 segundos para comandos
+        logInfo(`⏰ Comando de ${chatJid} debe esperar 5s entre comandos`);
         return false;
       }
       return true;
@@ -430,35 +431,43 @@ class WhatsAppClient extends EventEmitter {
       return false;
     }
 
-    // Para usuarios con pocas respuestas hoy, ser más permisivo
-    if (dailyCount < 5) {
-      const lastResponse = this.lastResponseTime.get(chatJid);
-      if (lastResponse && now - lastResponse < 3000) {
-        // Solo 3 segundos para usuarios nuevos/con pocas interacciones
-        logInfo(
-          `⏰ Usuario ${chatJid} debe esperar 3s entre respuestas (count: ${dailyCount})`
-        );
-        return false;
-      }
-      return true;
+    // Sistema de rate limiting por niveles
+    const lastResponse = this.lastResponseTime.get(chatJid);
+    let requiredInterval;
+    let level;
+
+    if (dailyCount < 10) {
+      // Nivel 1: Usuarios nuevos o con pocas interacciones - MUY permisivo
+      requiredInterval = 3000; // 3 segundos
+      level = "nuevo";
+    } else if (dailyCount < 25) {
+      // Nivel 2: Usuarios activos - Moderado
+      requiredInterval = 8000; // 8 segundos
+      level = "activo";
+    } else if (dailyCount < 50) {
+      // Nivel 3: Usuarios frecuentes - Estándar
+      requiredInterval = 15000; // 15 segundos
+      level = "frecuente";
+    } else {
+      // Nivel 4: Usuarios muy activos - Estricto
+      requiredInterval = this.minResponseInterval; // 20 segundos
+      level = "muy_activo";
     }
 
-    // Verificar intervalo mínimo estándar para usuarios regulares
-    const lastResponse = this.lastResponseTime.get(chatJid);
-    if (lastResponse && now - lastResponse < this.minResponseInterval) {
+    // Verificar intervalo según el nivel del usuario
+    if (lastResponse && now - lastResponse < requiredInterval) {
       const timeLeft = Math.ceil(
-        (this.minResponseInterval - (now - lastResponse)) / 1000
+        (requiredInterval - (now - lastResponse)) / 1000
       );
       logInfo(
-        `⏰ Usuario ${chatJid} debe esperar ${timeLeft}s más (count: ${dailyCount})`
+        `⏰ Usuario ${level} ${chatJid} debe esperar ${timeLeft}s más (${dailyCount}/${this.maxDailyResponses})`
       );
       return false;
     }
 
-    // Rate limiting más flexible para preguntas directas
+    // Rate limiting especial para preguntas directas
     if (messageContent && messageContent.includes("?")) {
-      // Preguntas tienen intervalo reducido
-      const questionInterval = 10000; // 10 segundos para preguntas
+      const questionInterval = Math.max(requiredInterval / 2, 5000); // Mínimo 5s para preguntas
       if (lastResponse && now - lastResponse < questionInterval) {
         const timeLeft = Math.ceil(
           (questionInterval - (now - lastResponse)) / 1000
