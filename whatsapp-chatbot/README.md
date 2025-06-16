@@ -7,6 +7,8 @@
 
 **Desarrollado por**: Daniel Martinez Sebastian
 
+> 🆕 **Nueva Funcionalidad**: Sistema de Rate Limiting Inteligente por Niveles - Conversaciones fluidas que se adaptan al comportamiento del usuario
+
 ## 📋 Descripción
 
 Sistema inteligente de chatbot para WhatsApp con arquitectura modular moderna. Diseñado desde cero por Daniel Martinez Sebastian como solución completa de automatización conversacional.
@@ -113,7 +115,7 @@ whatsapp-chatbot/
 #### 🎯 Sistema de Comandos Avanzado
 - **Comandos Dinámicos**: Registro automático de comandos
 - **Permisos Granulares**: Control de acceso por usuario
-- **Cooldowns Inteligentes**: Prevención de spam
+- **Rate Limiting Inteligente**: Sistema adaptativo por niveles de usuario 🆕
 - **Ayuda Contextual**: Ayuda personalizada por tipo de usuario
 
 #### 👥 Gestión de Usuarios Completa
@@ -139,8 +141,36 @@ whatsapp-chatbot/
 #### 🔐 Medidas de Seguridad
 - **Acceso Local Únicamente**: Solo localhost (127.0.0.1:3000)
 - **Control de Permisos**: Sistema de roles granular
-- **Rate Limiting**: Protección contra spam
+- **Rate Limiting Inteligente**: Sistema por niveles de usuario (ver detalles abajo)
 - **Validación de Entrada**: Sanitización de datos
+
+### 🚦 Sistema de Rate Limiting por Niveles
+
+El bot implementa un **sistema inteligente de rate limiting** que se adapta al comportamiento del usuario, permitiendo conversaciones fluidas para usuarios nuevos mientras protege contra spam.
+
+#### 📊 Niveles de Usuario
+
+| Nivel | Respuestas Diarias | Intervalo | Descripción |
+|-------|-------------------|-----------|-------------|
+| 🆕 **Nuevo** | < 10 respuestas | **3 segundos** | Usuarios nuevos o con poca actividad |
+| 🟢 **Activo** | 10-24 respuestas | **8 segundos** | Usuarios con actividad moderada |
+| 🟡 **Frecuente** | 25-49 respuestas | **15 segundos** | Usuarios con actividad regular |
+| 🔴 **Muy Activo** | 50+ respuestas | **20 segundos** | Usuarios con mucha actividad |
+
+#### ⚡ Casos Especiales
+
+- **🤖 Comandos**: Solo **5 segundos** entre comandos (prioridad alta)
+- **❓ Preguntas** (con `?`): **50% del intervalo** del nivel correspondiente  
+- **👑 Usuarios Admin**: **Sin límites** de rate limiting
+- **📈 Límite Diario**: Máximo **100 respuestas** por usuario por día
+
+#### 📝 Ventajas del Sistema
+
+✅ **Experiencia Fluida**: Usuarios nuevos pueden conversar naturalmente  
+✅ **Protección Anti-Spam**: Previene abuso sin afectar uso legítimo  
+✅ **Adaptativo**: Se ajusta automáticamente según el comportamiento  
+✅ **Transparente**: Logging detallado para diagnóstico  
+✅ **Configurable**: Fácil ajuste de límites por código
 
 #### 🔧 Robustez del Sistema
 - **Manejo de Errores**: Recuperación automática
@@ -606,4 +636,5 @@ Este proyecto está bajo la **Licencia MIT**.
 ## 👨‍💻 Autor
 
 **Daniel Martinez Sebastian**
-- **GitHub**: [DanielMartinezSebastian](
+- **GitHub**: [DanielMartinezSebastian](https://github.com/DanielMartinezSebastian)
+- **LinkedIn**: [DanielMartinezSebastian](https://www.linkedin.com/in/danielmartinezsebas
