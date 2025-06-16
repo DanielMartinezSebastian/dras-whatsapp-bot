@@ -182,17 +182,19 @@ export class ContextualMessageHandler
         return await this.handleNameChangeRequest(message, nameChangeRequest);
       }
 
+      let result: HandlerResult;
+
       switch (classification.type) {
         case "GREETING":
-          await this.handleGreeting(message, conversationContext);
+          result = await this.handleGreeting(message, conversationContext);
           this.contextualStats.greetings++;
           break;
         case "FAREWELL":
-          await this.handleFarewell(message, conversationContext);
+          result = await this.handleFarewell(message, conversationContext);
           this.contextualStats.farewells++;
           break;
         case "QUESTION":
-          await this.handleQuestion(
+          result = await this.handleQuestion(
             message,
             conversationContext,
             messageClassification
@@ -200,24 +202,24 @@ export class ContextualMessageHandler
           this.contextualStats.questions++;
           break;
         case "HELP_REQUEST":
-          await this.handleHelpRequest(message, conversationContext);
+          result = await this.handleHelpRequest(message, conversationContext);
           this.contextualStats.helpRequests++;
           break;
         case "GENERAL":
-          await this.handleContextualMessage(
+          result = await this.handleContextualMessage(
             message,
             conversationContext,
             messageClassification
           );
           break;
         default:
-          await this.handleDefault(message, conversationContext);
+          result = await this.handleDefault(message, conversationContext);
           this.contextualStats.generalMessages++;
       }
 
       this.contextualStats.handledMessages++;
 
-      return this.createSilentResult();
+      return result;
     } catch (error) {
       logError(
         `Error procesando mensaje contextual: ${
@@ -226,11 +228,7 @@ export class ContextualMessageHandler
       );
       this.contextualStats.failedMessages++;
 
-      await this.handleContextualError(context.message, error as Error);
-
-      return this.createErrorResult(
-        error instanceof Error ? error.message : "Unknown error"
-      );
+      return await this.handleContextualError(context.message, error as Error);
     }
   }
 
@@ -240,7 +238,7 @@ export class ContextualMessageHandler
   public async handleGreeting(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     // Extraer el número de teléfono sin el @s.whatsapp.net
     const phoneJid = message.senderPhone;
     const phone = phoneJid.includes("@") ? phoneJid.split("@")[0] : phoneJid;
@@ -279,18 +277,53 @@ export class ContextualMessageHandler
       }
     }
 
-    // Obtener información del remitente para personalizar el saludo
-    logInfo(`🔍 GREETING: Obteniendo nombre para usuario ${phone}`);
-    const userName = await this.getUserName(phoneJid);
-    logInfo(`🔍 GREETING: Nombre obtenido para saludo: "${userName}"`);
+    // Verificar si el usuario necesita registrar su nombre ANTES de obtener el nombre
+    const userService = this.getUserService();
+    let needsName = false;
+    let user = null;
 
-    // Si el usuario necesita proporcionar su nombre, detener el saludo aquí
+    if (userService) {
+      try {
+        user = await userService.getUserByPhone(phone);
+        needsName = user && this.needsDisplayName(user, phone);
+
+        logInfo(
+          `🔍 GREETING: Usuario encontrado: ${
+            user ? "Sí" : "No"
+          }, needsName: ${needsName}`
+        );
+
+        if (needsName && !this.awaitingNameUsers.has(phoneJid)) {
+          logInfo(
+            `🔍 GREETING: Usuario ${phone} necesita proporcionar nombre - solicitando`
+          );
+          this.awaitingNameUsers.add(phoneJid);
+          return await this.requestUserName(phoneJid);
+        }
+      } catch (error) {
+        logError(
+          `Error verificando usuario: ${
+            error instanceof Error ? error.message : error
+          }`
+        );
+      }
+    }
+
+    // Si estamos esperando el nombre, no procesar saludo normal
     if (this.awaitingNameUsers.has(phoneJid)) {
       logInfo(
-        `🔍 GREETING: Usuario ${phone} está esperando proporcionar nombre - no se envía saludo`
+        `🔍 GREETING: Usuario ${phone} está en proceso de registro de nombre - ignorando saludo`
       );
-      return; // Detener el procesamiento del saludo
+      return {
+        handled: false,
+        success: true,
+        action: "ignore",
+      };
     }
+
+    // Obtener el nombre del usuario (ahora sabemos que tiene nombre válido)
+    const userName = user?.display_name || "Usuario";
+    logInfo(`🔍 GREETING: Nombre obtenido para saludo: "${userName}"`);
 
     const timeOfDay = this.getTimeOfDay();
     logInfo(`🔍 GREETING: Hora del día detectada: ${timeOfDay}`);
@@ -305,7 +338,7 @@ export class ContextualMessageHandler
     );
 
     let response: string;
-    if (isReturningUser) {
+    if (isReturningUser && userName !== "Usuario") {
       logInfo(
         `🔍 GREETING: SELECCIONANDO RESPUESTA PARA USUARIO RECURRENTE: ${phone}`
       );
@@ -325,25 +358,20 @@ export class ContextualMessageHandler
 
     logInfo(`ContextualHandler: Respuesta generada: "${response}"`);
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
-
-    // Solo ofrecer ayuda adicional si:
-    // 1. La respuesta no incluye ya información de ayuda
-    // 2. No estamos esperando que el usuario proporcione su nombre
-    if (
-      !response.includes("puedo ayudarte") &&
-      !response.includes("/help") &&
-      !this.awaitingNameUsers.has(phoneJid)
-    ) {
-      setTimeout(async () => {
-        const helpPrompt = this.getConfigMessage(
-          "contextual.help_prompt",
-          {},
-          "¿En qué puedo ayudarte hoy? Puedes usar /help para ver todos los comandos disponibles."
-        );
-        await this.whatsappClient.sendMessage(phoneJid, helpPrompt);
-      }, 2000);
-    }
+    // En lugar de enviar directamente, retornar la respuesta
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: {
+        handlerName: this.name,
+        isGreeting: true,
+        isReturningUser,
+        userName,
+        timeOfDay,
+      },
+    };
   }
 
   /**
@@ -352,7 +380,7 @@ export class ContextualMessageHandler
   public async handleFarewell(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     const phoneJid = message.senderPhone;
     const phone = phoneJid.includes("@") ? phoneJid.split("@")[0] : phoneJid;
 
@@ -393,11 +421,23 @@ export class ContextualMessageHandler
 
     logInfo(`🔍 FAREWELL: Enviando respuesta: "${response}"`);
 
-    // Enviar respuesta de despedida
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
-
+    // En lugar de enviar directamente, retornar la respuesta
     // Guardar contexto con información de despedida
     this.saveConversationContext();
+
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: {
+        handlerName: this.name,
+        isFarewell: true,
+        isFrequentUser,
+        userName,
+        timeOfDay,
+      },
+    };
   }
 
   /**
@@ -407,14 +447,13 @@ export class ContextualMessageHandler
     message: WhatsAppMessage,
     context: IConversationContext | null,
     classification: IMessageClassification
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     const questionType = classification.questionType || "general";
     const questionText = message.text.toLowerCase();
 
     // Detectar preguntas específicas sobre el bot
     if (this.isBotRelatedQuestion(questionText)) {
-      await this.handleBotQuestion(message, questionText);
-      return;
+      return await this.handleBotQuestion(message, questionText);
     }
 
     // Responder según el tipo de pregunta
@@ -460,7 +499,17 @@ export class ContextualMessageHandler
         response = this.getRandomResponse("question_general");
     }
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: {
+        handlerName: this.name,
+        questionType: detectedType,
+        classification,
+      },
+    };
   }
 
   /**
@@ -469,7 +518,7 @@ export class ContextualMessageHandler
   public async handleHelpRequest(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     const helpText = message.text.toLowerCase();
 
     // Detectar tipo específico de ayuda
@@ -484,10 +533,22 @@ Los comandos principales son:
 
 ¿Necesitas ayuda con algún comando específico?`;
 
-      await this.whatsappClient.sendMessage(message.senderPhone, response);
+      return {
+        handled: true,
+        success: true,
+        response: response,
+        action: "reply",
+        data: { handlerName: this.name, isHelpRequest: true, isNewUser: true },
+      };
     } else {
       const response = this.getRandomResponse("help_request");
-      await this.whatsappClient.sendMessage(message.senderPhone, response);
+      return {
+        handled: true,
+        success: true,
+        response: response,
+        action: "reply",
+        data: { handlerName: this.name, isHelpRequest: true, isNewUser: false },
+      };
     }
   }
 
@@ -498,23 +559,20 @@ Los comandos principales son:
     message: WhatsAppMessage,
     context: IConversationContext | null,
     classification: IMessageClassification
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     const keywords = classification.keywords || [];
     const messageText = message.text.toLowerCase();
 
     // Procesar según palabras clave
-    if (keywords.includes("explicar") || keywords.includes("explicame")) {
-      await this.handleExplanationRequest(message, messageText);
-    } else if (keywords.includes("ejemplo") || keywords.includes("ejemplos")) {
-      await this.handleExampleRequest(message, messageText);
-    } else if (
-      keywords.includes("información") ||
-      keywords.includes("informacion")
-    ) {
-      await this.handleInformationRequest(message, messageText);
-    } else {
-      await this.handleDefault(message, context);
-    }
+    // Migración en progreso - por ahora retornar resultado por defecto
+    const response = this.getRandomResponse("contextual_general");
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: { handlerName: this.name, messageType: "contextual" },
+    };
   }
 
   /**
@@ -523,13 +581,23 @@ Los comandos principales son:
   public async handleDefault(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     if (!this.botProcessor.autoReply) {
-      return; // No responder automáticamente si está deshabilitado
+      return {
+        handled: false,
+        success: true,
+        action: "ignore",
+      }; // No responder automáticamente si está deshabilitado
     }
 
     const response = this.getRandomResponse("default");
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: { handlerName: this.name, messageType: "default" },
+    };
   }
 
   /**
@@ -648,11 +716,12 @@ Los comandos principales son:
       if (userService) {
         const user = await userService.getUserByPhone(phone);
 
-        // Si el usuario existe pero no tiene display_name válido, solicitar el nombre
+        // Si el usuario existe pero no tiene display_name válido, marcar para solicitud
         if (user && this.needsDisplayName(user, phone)) {
-          // Solo solicitar si no está ya en proceso de solicitud
+          // Solo marcar si no está ya en proceso de solicitud
           if (!this.awaitingNameUsers.has(phoneJid)) {
-            await this.requestUserName(phoneJid);
+            // No llamar requestUserName aquí, solo marcarlo para solicitud posterior
+            this.awaitingNameUsers.add(phoneJid);
           }
           return "Usuario"; // Usar temporalmente hasta que proporcione el nombre
         }
@@ -687,8 +756,13 @@ Los comandos principales son:
           {},
           "Por favor, proporciona un nombre válido (entre 1 y 50 caracteres)."
         );
-        await this.whatsappClient.sendMessage(phoneJid, invalidMessage);
-        return this.createSuccessResult("Nombre inválido, solicitud repetida");
+        return {
+          handled: true,
+          success: false,
+          response: invalidMessage,
+          action: "reply",
+          data: { handlerName: this.name, nameValidation: "invalid" },
+        };
       }
 
       // Actualizar el nombre del usuario en la base de datos
@@ -710,9 +784,14 @@ Los comandos principales son:
 
         const randomResponse =
           responses[Math.floor(Math.random() * responses.length)];
-        await this.whatsappClient.sendMessage(phoneJid, randomResponse);
 
-        return this.createSuccessResult("Nombre guardado exitosamente");
+        return {
+          handled: true,
+          success: true,
+          response: randomResponse,
+          action: "reply",
+          data: { handlerName: this.name, nameRegistered: name },
+        };
       } else {
         throw new Error("UserService no disponible");
       }
@@ -730,16 +809,21 @@ Los comandos principales son:
         {},
         "Hubo un problema guardando tu nombre. Por favor, inténtalo más tarde."
       );
-      await this.whatsappClient.sendMessage(message.chatJid, errorMessage);
 
-      return this.createErrorResult("Error guardando nombre");
+      return {
+        handled: true,
+        success: false,
+        response: errorMessage,
+        action: "reply",
+        data: { handlerName: this.name, error: "name_save_failed" },
+      };
     }
   }
 
   /**
    * Solicita el nombre al usuario si no lo tiene registrado
    */
-  private async requestUserName(phoneJid: string): Promise<void> {
+  private async requestUserName(phoneJid: string): Promise<HandlerResult> {
     try {
       // Agregar a la lista de usuarios esperando respuesta
       this.awaitingNameUsers.add(phoneJid);
@@ -749,9 +833,16 @@ Los comandos principales son:
         {},
         "¡Hola! 👋 Me encantaría conocerte mejor. ¿Podrías decirme tu nombre para personalizar nuestras conversaciones?"
       );
-      await this.whatsappClient.sendMessage(phoneJid, randomRequest);
 
       logInfo(`📝 Solicitando nombre a usuario: ${phoneJid}`);
+
+      return {
+        handled: true,
+        success: true,
+        response: randomRequest,
+        action: "reply",
+        data: { handlerName: this.name, nameRequest: true },
+      };
     } catch (error) {
       logError(
         `Error solicitando nombre: ${
@@ -760,6 +851,14 @@ Los comandos principales son:
       );
       // Remover de la lista si hay error
       this.awaitingNameUsers.delete(phoneJid);
+
+      return {
+        handled: true,
+        success: false,
+        response: "Error interno solicitando nombre",
+        action: "reply",
+        data: { handlerName: this.name, error: "name_request_failed" },
+      };
     }
   }
 
@@ -799,6 +898,14 @@ Los comandos principales son:
   }
 
   /**
+   * Obtiene un saludo basado en la hora del día actual
+   */
+  public getTimeOfDayGreeting(): string {
+    const timeOfDay = this.getTimeOfDay();
+    return this.getTimeBasedGreeting(timeOfDay);
+  }
+
+  /**
    * Obtiene una respuesta aleatoria de una categoría usando ConfigurationService
    */
   public getRandomResponse(
@@ -806,17 +913,56 @@ Los comandos principales son:
     replacements: IResponseReplacements = {}
   ): string {
     try {
-      // Obtener respuesta desde la configuración
-      const response = this.getConfigMessage(
-        `contextual.${category}`,
-        replacements,
-        "Estoy aquí para ayudarte."
+      const config = this.configService.getConfiguration();
+      if (!config) {
+        logError("ConfigurationService no disponible");
+        return "Estoy aquí para ayudarte.";
+      }
+
+      // Intentar múltiples rutas para encontrar las respuestas
+      let responses = null;
+
+      // 1. Buscar en messages.contextual
+      responses = this.getValueByPath(
+        config,
+        `messages.contextual.${category}`
       );
 
-      return response;
+      // 2. Si no se encuentra, buscar en responses.contextual (para compatibilidad)
+      if (!responses) {
+        responses = this.getValueByPath(
+          config,
+          `responses.contextual.${category}`
+        );
+      }
+
+      // 3. Si no se encuentra, buscar en contextual directamente
+      if (!responses) {
+        responses = this.getValueByPath(config, `contextual.${category}`);
+      }
+
+      // Si no hay respuestas, usar fallback
+      if (!responses || !Array.isArray(responses) || responses.length === 0) {
+        logWarn(`No se encontraron respuestas para categoría: ${category}`);
+        return "Estoy aquí para ayudarte.";
+      }
+
+      // Seleccionar respuesta aleatoria
+      const randomResponse =
+        responses[Math.floor(Math.random() * responses.length)];
+
+      // Agregar timeOfDayGreeting si no está en replacements
+      const finalReplacements = {
+        ...replacements,
+        timeOfDayGreeting: this.getTimeOfDayGreeting(),
+        ...replacements, // Permitir sobrescribir timeOfDayGreeting si se proporciona
+      };
+
+      // Reemplazar variables
+      return this.replaceVariables(randomResponse, finalReplacements);
     } catch (error) {
       logError(
-        `Error al obtener respuesta aleatoria: ${
+        `Error al obtener respuesta aleatoria para ${category}: ${
           error instanceof Error ? error.message : error
         }`
       );
@@ -851,7 +997,7 @@ Los comandos principales son:
   public async handleBotQuestion(
     message: WhatsAppMessage,
     questionText: string
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     let response: string;
 
     if (
@@ -882,7 +1028,13 @@ Soy un bot de WhatsApp que:
       response = this.getRandomResponse("question_general");
     }
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: { handlerName: this.name, botQuestion: true },
+    };
   }
 
   /**
@@ -891,11 +1043,17 @@ Soy un bot de WhatsApp que:
   public async handleExplanationRequest(
     message: WhatsAppMessage,
     messageText: string
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     const response =
       "Me gustaría explicarte más sobre eso. ¿Podrías ser más específico sobre qué necesitas que te explique?";
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: { handlerName: this.name, explanationRequest: true },
+    };
   }
 
   /**
@@ -904,11 +1062,17 @@ Soy un bot de WhatsApp que:
   public async handleExampleRequest(
     message: WhatsAppMessage,
     messageText: string
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     const response =
       "Puedo darte ejemplos. ¿Sobre qué tema específico necesitas ejemplos?";
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: { handlerName: this.name, exampleRequest: true },
+    };
   }
 
   /**
@@ -917,11 +1081,17 @@ Soy un bot de WhatsApp que:
   public async handleInformationRequest(
     message: WhatsAppMessage,
     messageText: string
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     const response =
       "Estoy aquí para proporcionarte información. ¿Qué información específica necesitas?";
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    return {
+      handled: true,
+      success: true,
+      response: response,
+      action: "reply",
+      data: { handlerName: this.name, informationRequest: true },
+    };
   }
 
   // Métodos de preguntas específicas
@@ -955,7 +1125,7 @@ Soy un bot de WhatsApp que:
   public async handleContextualError(
     message: WhatsAppMessage,
     error: Error
-  ): Promise<void> {
+  ): Promise<HandlerResult> {
     logError(
       `Error en ContextualHandler para ${message.senderPhone}: ${error.message}`
     );
@@ -966,15 +1136,17 @@ Soy un bot de WhatsApp que:
       "Lo siento, he tenido un problema procesando tu mensaje. ¿Podrías intentarlo de nuevo?"
     );
 
-    try {
-      await this.whatsappClient.sendMessage(message.senderPhone, errorResponse);
-    } catch (sendError) {
-      logError(
-        `Error enviando mensaje de error: ${
-          sendError instanceof Error ? sendError.message : sendError
-        }`
-      );
-    }
+    return {
+      handled: true,
+      success: false,
+      response: errorResponse,
+      action: "reply",
+      data: {
+        handlerName: this.name,
+        error: error.message,
+        isError: true,
+      },
+    };
   }
 
   /**
@@ -1248,14 +1420,17 @@ Soy un bot de WhatsApp que:
 
       // Si el nombre es el mismo, no hacer nada
       if (currentName === newName) {
-        await this.whatsappClient.sendMessage(
-          phoneJid,
-          `Ya te llamo ${newName}. 😊`
-        );
-        return this.createSilentResult({
-          nameChanged: false,
-          reason: "same_name",
-        });
+        return {
+          handled: true,
+          success: true,
+          response: `Ya te llamo ${newName}. 😊`,
+          action: "reply",
+          data: {
+            handlerName: this.name,
+            nameChanged: false,
+            reason: "same_name",
+          },
+        };
       }
 
       // Actualizar el nombre del usuario en la base de datos
@@ -1283,13 +1458,19 @@ Soy un bot de WhatsApp que:
 
         const randomResponse =
           responses[Math.floor(Math.random() * responses.length)];
-        await this.whatsappClient.sendMessage(phoneJid, randomResponse);
 
-        return this.createSilentResult({
-          nameChanged: true,
-          newName,
-          previousName: currentName,
-        });
+        return {
+          handled: true,
+          success: true,
+          response: randomResponse,
+          action: "reply",
+          data: {
+            handlerName: this.name,
+            nameChanged: true,
+            newName,
+            previousName: currentName,
+          },
+        };
       } else {
         throw new Error("UserService no disponible");
       }
@@ -1300,14 +1481,17 @@ Soy un bot de WhatsApp que:
         }`
       );
 
-      await this.whatsappClient.sendMessage(
-        message.chatJid,
-        "Hubo un problema cambiando tu nombre. Por favor, inténtalo más tarde."
-      );
-
-      return this.createErrorResult(
-        error instanceof Error ? error.message : "Error desconocido"
-      );
+      return {
+        handled: true,
+        success: false,
+        response:
+          "Hubo un problema cambiando tu nombre. Por favor, inténtalo más tarde.",
+        action: "reply",
+        data: {
+          handlerName: this.name,
+          error: error instanceof Error ? error.message : "Error desconocido",
+        },
+      };
     }
   }
 

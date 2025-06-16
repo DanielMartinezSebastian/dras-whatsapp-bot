@@ -80,18 +80,18 @@ export class CommandMessageHandler extends BaseMessageHandler {
 
       // Registrar comandos
       const commands = [
-        new HelpCommand(),
-        new PingCommand(),
-        new InfoCommand(),
-        new StatusCommand(),
-        new ProfileCommand(),
-        new PermissionsCommand(),
-        new AdminPanelCommand(),
-        new DiagnosticCommand(),
-        new UsersCommand(),
-        new AdminSystemCommand(),
-        new LogsCommand(),
-        new StatsCommand(),
+        new HelpCommand(this.configService),
+        new PingCommand(this.configService),
+        new InfoCommand(this.configService),
+        new StatusCommand(this.configService),
+        new ProfileCommand(this.configService),
+        new PermissionsCommand(this.configService),
+        new AdminPanelCommand(this.configService),
+        new DiagnosticCommand(this.configService),
+        new UsersCommand(this.configService),
+        new AdminSystemCommand(this.configService),
+        new LogsCommand(this.configService),
+        new StatsCommand(this.configService),
       ];
 
       for (const command of commands) {

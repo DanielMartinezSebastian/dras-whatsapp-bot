@@ -28,22 +28,49 @@ export class ConfigCommand extends Command {
         {},
         "Gestiona la configuración del bot y strings de respuesta"
       ),
-      syntax: this.getConfigMessage("config.syntax", {}, "!config [accion] [parametros]"),
+      syntax: this.getConfigMessage(
+        "config.syntax",
+        {},
+        "!config [accion] [parametros]"
+      ),
       category: "admin",
       permissions: ["admin"],
       cooldown: 5,
       examples: [
-        this.getConfigMessage("config.examples.show", {}, "!config show messages - Mostrar configuración de mensajes"),
-        this.getConfigMessage("config.examples.set", {}, "!config set bot.name 'Mi Bot' - Cambiar nombre del bot"),
-        this.getConfigMessage("config.examples.get", {}, "!config get messages.greetings.new - Obtener valor específico"),
-        this.getConfigMessage("config.examples.backup", {}, "!config backup - Crear respaldo de configuración"),
-        this.getConfigMessage("config.examples.reload", {}, "!config reload - Recargar configuración desde archivos"),
+        this.getConfigMessage(
+          "config.examples.show",
+          {},
+          "!config show messages - Mostrar configuración de mensajes"
+        ),
+        this.getConfigMessage(
+          "config.examples.set",
+          {},
+          "!config set bot.name 'Mi Bot' - Cambiar nombre del bot"
+        ),
+        this.getConfigMessage(
+          "config.examples.get",
+          {},
+          "!config get messages.greetings.new - Obtener valor específico"
+        ),
+        this.getConfigMessage(
+          "config.examples.backup",
+          {},
+          "!config backup - Crear respaldo de configuración"
+        ),
+        this.getConfigMessage(
+          "config.examples.reload",
+          {},
+          "!config reload - Recargar configuración desde archivos"
+        ),
       ],
       isAdmin: true,
       isSensitive: true,
     };
   }
 
+  /**
+   * Obtiene un mensaje de configuración con variables reemplazadas
+   */
   private getConfigMessage(
     path: string,
     variables?: Record<string, any>,
@@ -55,27 +82,38 @@ export class ConfigCommand extends Command {
         return fallback || "Configuración no disponible";
       }
 
+      // Obtener mensaje desde commands
       let message = this.getValueByPath(config, `commands.${path}`);
 
+      // Si aún no se encuentra, usar fallback
       if (!message) {
         return fallback || `Mensaje no configurado: ${path}`;
       }
 
+      // Si es un array, tomar un elemento aleatorio
       if (Array.isArray(message)) {
         message = message[Math.floor(Math.random() * message.length)];
       }
 
+      // Reemplazar variables si se proporcionan
       if (variables && typeof message === "string") {
         return this.replaceVariables(message, variables);
       }
 
       return message;
     } catch (error) {
-      console.error(`Error obteniendo mensaje: ${error}`);
+      console.error(
+        `Error obteniendo mensaje configurado para ${path}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
       return fallback || "Error en configuración";
     }
   }
 
+  /**
+   * Reemplaza variables en un template de mensaje
+   */
   private replaceVariables(
     template: string,
     variables: Record<string, any> = {}
@@ -92,6 +130,9 @@ export class ConfigCommand extends Command {
     return result;
   }
 
+  /**
+   * Obtiene una ruta de configuración por path anidado
+   */
   private getValueByPath(obj: any, path?: string): any {
     if (!path) {
       const config = this.configService.getConfiguration();
@@ -103,6 +144,9 @@ export class ConfigCommand extends Command {
       .reduce((current, key) => current?.[key], config as any);
   }
 
+  /**
+   * Ejecuta el comando de configuración
+   */
   async execute(context: CommandContext): Promise<CommandResult> {
     const args = context.args;
 
@@ -117,47 +161,67 @@ export class ConfigCommand extends Command {
         case "show":
         case "mostrar":
           return this.showConfiguration(args.slice(1));
+
         case "get":
         case "obtener":
           return this.getValue(args.slice(1));
+
         case "set":
         case "establecer":
           return this.setValue(args.slice(1));
+
         case "backup":
         case "respaldo":
           return this.createBackup();
+
         case "reload":
         case "recargar":
           return this.reloadConfiguration();
+
         case "export":
         case "exportar":
           return this.exportConfiguration(args.slice(1));
+
         case "strings":
           return this.manageStrings(args.slice(1));
+
         case "messages":
         case "mensajes":
           return this.showMessageCategories();
+
         case "help":
         case "ayuda":
         default:
           return this.showHelp();
       }
     } catch (error) {
-      logError(`Error ejecutando ConfigCommand: ${error instanceof Error ? error.message : error}`);
+      logError(
+        `Error ejecutando ConfigCommand: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
       return this.createErrorResult(
         this.getConfigMessage(
           "config.errors.execution",
-          { error: error instanceof Error ? error.message : "Error desconocido" },
-          `❌ Error ejecutando comando: ${error instanceof Error ? error.message : "Error desconocido"}`
+          {
+            error: error instanceof Error ? error.message : "Error desconocido",
+          },
+          `❌ Error ejecutando comando: ${
+            error instanceof Error ? error.message : "Error desconocido"
+          }`
         )
       );
     }
   }
 
+  /**
+   * Muestra la configuración o una sección específica
+   */
   private showConfiguration(args: string[]): CommandResult {
     const section = args[0];
-    
+
     if (!section) {
+      // Mostrar resumen general
       return this.createSuccessResult(
         this.getConfigMessage(
           "config.show.general",
@@ -179,7 +243,7 @@ export class ConfigCommand extends Command {
     }
 
     const sectionData = this.getValueByPath(null, section);
-    
+
     if (!sectionData) {
       return this.createErrorResult(
         this.getConfigMessage(
@@ -190,19 +254,21 @@ export class ConfigCommand extends Command {
       );
     }
 
+    // Formatear y mostrar la sección
     const formattedSection = this.formatSectionData(section, sectionData);
-    
+
     return this.createSuccessResult(
       this.getConfigMessage(
         "config.show.section",
         { section, data: formattedSection },
-        `⚙️ **Configuración: ${section}**
-
-${formattedSection}`
+        `⚙️ **Configuración: ${section}**\n\n${formattedSection}`
       )
     );
   }
 
+  /**
+   * Obtiene un valor específico de la configuración
+   */
   private getValue(args: string[]): CommandResult {
     if (args.length === 0) {
       return this.createErrorResult(
@@ -227,22 +293,23 @@ ${formattedSection}`
       );
     }
 
-    const formattedValue = typeof value === "object" 
-      ? JSON.stringify(value, null, 2) 
-      : String(value);
+    const formattedValue =
+      typeof value === "object"
+        ? JSON.stringify(value, null, 2)
+        : String(value);
 
     return this.createSuccessResult(
       this.getConfigMessage(
         "config.get.success",
         { path, value: formattedValue },
-        `📋 **${path}:**
-\`\`\`
-${formattedValue}
-\`\`\``
+        `📋 **${path}:**\n\`\`\`\n${formattedValue}\n\`\`\``
       )
     );
   }
 
+  /**
+   * Establece un valor en la configuración
+   */
   private setValue(args: string[]): CommandResult {
     if (args.length < 2) {
       return this.createErrorResult(
@@ -257,39 +324,43 @@ ${formattedValue}
     const path = args[0];
     const value = args.slice(1).join(" ");
 
+    // En una implementación completa, aquí se modificaría la configuración
+    // Por ahora, solo simular la operación
+
     return this.createSuccessResult(
       this.getConfigMessage(
         "config.set.simulated",
         { path, value },
-        `�� **Modificación simulada**
-
-**Ruta:** ${path}
-**Valor:** ${value}
-
-⚠️ La funcionalidad de escritura está en desarrollo`
+        `🚧 **Modificación simulada**\n\n**Ruta:** ${path}\n**Valor:** ${value}\n\n⚠️ La funcionalidad de escritura está en desarrollo`
       )
     );
   }
 
+  /**
+   * Crea un respaldo de la configuración
+   */
   private createBackup(): CommandResult {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    
+
     return this.createSuccessResult(
       this.getConfigMessage(
         "config.backup.simulated",
         { timestamp },
-        `💾 **Respaldo simulado**
-
-**Timestamp:** ${timestamp}
-
-🚧 La funcionalidad de respaldo está en desarrollo`
+        `💾 **Respaldo simulado**\n\n**Timestamp:** ${timestamp}\n\n🚧 La funcionalidad de respaldo está en desarrollo`
       )
     );
   }
 
+  /**
+   * Recarga la configuración desde archivos
+   */
   private reloadConfiguration(): CommandResult {
     try {
-      if (this.configService && typeof this.configService.reloadConfiguration === 'function') {
+      // Usar el método de recarga del ConfigurationService si existe
+      if (
+        this.configService &&
+        typeof this.configService.reloadConfiguration === "function"
+      ) {
         this.configService.reloadConfiguration();
         return this.createSuccessResult(
           this.getConfigMessage(
@@ -303,9 +374,7 @@ ${formattedValue}
           this.getConfigMessage(
             "config.reload.simulated",
             {},
-            "🚧 **Recarga simulada**
-
-⚠️ La funcionalidad de recarga está en desarrollo"
+            "🚧 **Recarga simulada**\n\n⚠️ La funcionalidad de recarga está en desarrollo"
           )
         );
       }
@@ -313,70 +382,94 @@ ${formattedValue}
       return this.createErrorResult(
         this.getConfigMessage(
           "config.errors.reload_failed",
-          { error: error instanceof Error ? error.message : "Error desconocido" },
-          `❌ Error recargando configuración: ${error instanceof Error ? error.message : "Error desconocido"}`
+          {
+            error: error instanceof Error ? error.message : "Error desconocido",
+          },
+          `❌ Error recargando configuración: ${
+            error instanceof Error ? error.message : "Error desconocido"
+          }`
         )
       );
     }
   }
 
+  /**
+   * Exporta la configuración en diferentes formatos
+   */
   private exportConfiguration(args: string[]): CommandResult {
     const format = args[0] || "json";
-    
+
     return this.createSuccessResult(
       this.getConfigMessage(
         "config.export.simulated",
         { format },
-        `📤 **Exportación simulada**
-
-**Formato:** ${format}
-
-🚧 La funcionalidad de exportación está en desarrollo`
+        `📤 **Exportación simulada**\n\n**Formato:** ${format}\n\n🚧 La funcionalidad de exportación está en desarrollo`
       )
     );
   }
 
+  /**
+   * Gestiona strings de respuesta
+   */
   private manageStrings(args: string[]): CommandResult {
     const action = args[0] || "list";
-    
+
     return this.createSuccessResult(
       this.getConfigMessage(
         "config.strings.simulated",
         { action },
-        `🔤 **Gestión de Strings: ${action}**
-
-🚧 La gestión de strings está en desarrollo`
+        `🔤 **Gestión de Strings: ${action}**\n\n🚧 La gestión de strings está en desarrollo`
       )
     );
   }
 
+  /**
+   * Muestra las categorías de mensajes disponibles
+   */
   private showMessageCategories(): CommandResult {
     const config = this.configService.getConfiguration();
     const categories = Object.keys(config?.messages || {});
-    
-    const categoriesList = categories.length > 0 
-      ? categories.map(cat => `• \`${cat}\``).join("\n")
-      : "No hay categorías disponibles";
+
+    const categoriesList =
+      categories.length > 0
+        ? categories.map((cat) => `• \`${cat}\``).join("\n")
+        : "No hay categorías disponibles";
 
     return this.createSuccessResult(
       this.getConfigMessage(
         "config.messages.categories",
         { categories: categoriesList },
-        `📝 **Categorías de Mensajes**
-
-${categoriesList}`
+        `📝 **Categorías de Mensajes**\n\n${categoriesList}`
       )
     );
   }
 
-  private formatSectionData(section: string, data: any, maxDepth = 2, currentDepth = 0): string {
+  /**
+   * Formatea los datos de una sección para mostrar
+   */
+  private formatSectionData(
+    section: string,
+    data: any,
+    maxDepth = 2,
+    currentDepth = 0
+  ): string {
     if (currentDepth >= maxDepth) {
       return typeof data === "object" ? "[Objeto anidado...]" : String(data);
     }
 
     if (Array.isArray(data)) {
       if (data.length <= 5) {
-        return data.map(item => `• ${this.formatSectionData(section, item, maxDepth, currentDepth + 1)}`).join("\n");
+        return data
+          .map(
+            (item) =>
+              `• ${this.formatSectionData(
+                section,
+                item,
+                maxDepth,
+                currentDepth + 1
+              )}`
+          )
+          .join("\n");
       } else {
         return `Array con ${data.length} elementos (use 'get' para ver específicos)`;
       }
@@ -385,18 +478,30 @@ ${categoriesList}`
     if (typeof data === "object" && data !== null) {
       const keys = Object.keys(data);
       if (keys.length <= 10) {
-        return keys.map(key => {
-          const value = this.formatSectionData(section, data[key], maxDepth, currentDepth + 1);
-          return `**${key}:** ${value}`;
-        }).join("\n");
+        return keys
+          .map((key) => {
+            const value = this.formatSectionData(
+              section,
+              data[key],
+              maxDepth,
+              currentDepth + 1
+            );
+            return `**${key}:** ${value}`;
+          })
+          .join("\n");
       } else {
-        return `Objeto con ${keys.length} propiedades: ${keys.slice(0, 5).join(", ")}...`;
+        return `Objeto con ${keys.length} propiedades: ${keys
+          .slice(0, 5)
+          .join(", ")}...`;
       }
     }
 
     return String(data);
   }
 
+  /**
+   * Muestra ayuda del comando
+   */
   private showHelp(): CommandResult {
     return this.createSuccessResult(
       this.getConfigMessage(

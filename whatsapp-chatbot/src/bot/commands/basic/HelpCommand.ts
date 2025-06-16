@@ -62,9 +62,10 @@ export class HelpCommand extends Command {
     const user = context.user;
     const userRole = this.getUserRoleLevel(user?.user_type);
 
-    // Obtener configuración de ayuda
-    const generalConfig = this.getValueByPath("help.general");
-    const categories = this.getValueByPath("help.categories");
+    // Obtener configuración de ayuda desde commands
+    const config = this.configService.getConfiguration();
+    const generalConfig = this.getValueByPath(config, "commands.help.general");
+    const categories = this.getValueByPath(config, "commands.help.categories");
 
     let response =
       this.getConfigMessage(
@@ -96,7 +97,10 @@ export class HelpCommand extends Command {
     }
 
     // Footer
-    const footerConfig = this.getValueByPath("help.general.footer");
+    const footerConfig = this.getValueByPath(
+      config,
+      "commands.help.general.footer"
+    );
     if (footerConfig) {
       response += footerConfig.usage + "\n";
       response += footerConfig.support;
@@ -106,7 +110,8 @@ export class HelpCommand extends Command {
   }
 
   private getUserRoleLevel(userType?: string): number {
-    const roleLevels = this.getValueByPath("help.role_levels");
+    const config = this.configService.getConfiguration();
+    const roleLevels = this.getValueByPath(config, "commands.help.role_levels");
 
     if (roleLevels && userType) {
       return roleLevels[userType] || 1;
@@ -134,7 +139,11 @@ export class HelpCommand extends Command {
     const normalizedName = commandName.replace(/^[!\/]/, "").toLowerCase();
 
     // Obtener información del comando desde configuración
-    const commandDetails = this.getValueByPath("help.command_details");
+    const config = this.configService.getConfiguration();
+    const commandDetails = this.getValueByPath(
+      config,
+      "commands.help.command_details"
+    );
     const cmdInfo = commandDetails?.[normalizedName];
 
     if (!cmdInfo) {
@@ -145,7 +154,10 @@ export class HelpCommand extends Command {
       );
     }
 
-    const template = this.getValueByPath("help.command_help_template");
+    const template = this.getValueByPath(
+      config,
+      "commands.help.command_help_template"
+    );
 
     let response =
       this.replaceVariables(template?.title || "🔧 **Ayuda: !{commandName}**", {

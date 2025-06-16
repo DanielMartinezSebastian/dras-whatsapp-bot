@@ -95,6 +95,7 @@ export interface MessageTemplates {
   system: SystemTemplates;
   help: HelpTemplates;
   responses: ResponseTemplates;
+  contextual?: ContextualTemplates;
 }
 
 export interface GreetingTemplates {
@@ -176,6 +177,28 @@ export interface ResponseTemplates {
   thinking: string[];
   acknowledgment: string[];
   clarification: string[];
+}
+
+export interface ContextualTemplates {
+  greeting_new: string[];
+  greeting_returning: string[];
+  farewell_general: string[];
+  farewell_frequent: string[];
+  farewell_night: string[];
+  help_request: string[];
+  help_prompt: string[];
+  question_default: string[];
+  bot_questions: {
+    what_can_you_do: string[];
+    how_it_works: string[];
+  };
+  default: string[];
+  registration: {
+    name_request: string[];
+    name_confirmed: string[];
+    name_changed: string[];
+  };
+  [key: string]: any; // Para permitir categorías dinámicas
 }
 
 // Tipos auxiliares

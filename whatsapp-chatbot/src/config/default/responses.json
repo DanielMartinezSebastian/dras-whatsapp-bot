@@ -1,14 +1,38 @@
 {
+  "responses": {
+    "default": [
+      "Estoy aquí para ayudarte. ¿Hay algo específico en lo que pueda asistirte?",
+      "¿Necesitas ayuda con algo en particular?",
+      "¿En qué más puedo ayudarte hoy?"
+    ],
+    "thinking": [
+      "Déjame pensar en eso...",
+      "Procesando tu consulta...",
+      "Un momento, por favor..."
+    ],
+    "acknowledgment": [
+      "Entendido.",
+      "Perfecto.",
+      "De acuerdo."
+    ],
+    "clarification": [
+      "¿Podrías ser más específico?",
+      "No estoy seguro de entender, ¿puedes explicar más?",
+      "¿Te refieres a...?"
+    ]
+  },
   "contextual": {
     "greeting_new": [
       "¡Hola {userName}! 👋 Es un placer conocerte. Soy tu asistente virtual.",
-      "¡{timeOfDayGreeting} {userName}! 🌟 Bienvenido/a.",
-      "¡Hola! 😊 Soy tu asistente y estoy aquí para ayudarte."
+      "¡{timeOfDayGreeting} {userName}! 🌟 Bienvenido/a, es genial tenerte aquí.",
+      "¡Hola {userName}! 😊 Soy tu asistente y estoy aquí para ayudarte en lo que necesites."
     ],
     "greeting_returning": [
       "¡Hola de nuevo {userName}! 👋 Me alegra verte por aquí.",
-      "¡{timeOfDayGreeting} de nuevo {userName}! ¿En qué puedo ayudarte hoy?",
-      "¡Es bueno verte otra vez {userName}! 😊 ¿Cómo va todo?"
+      "¡{timeOfDayGreeting} {userName}! 😊 ¡Qué bueno volver a verte! ¿En qué puedo ayudarte hoy?",
+      "¡Es fantástico verte otra vez {userName}! 🎉 ¿Cómo va todo?",
+      "¡Hola {userName}! 🌟 Siempre es un placer ayudarte. ¿Qué necesitas hoy?",
+      "¡{timeOfDayGreeting} de nuevo {userName}! ✨ Me encanta que regreses."
     ],
     "farewell_general": [
       "¡Hasta luego, {userName}! Que tengas un gran día.",

@@ -474,6 +474,7 @@ export class ConfigurationService extends EventEmitter {
       "commands.json",
       "errors.json",
       "system.json",
+      "responses.json",
     ];
 
     const config: any = { messages: {} };
@@ -485,6 +486,12 @@ export class ConfigurationService extends EventEmitter {
         const data = JSON.parse(content);
 
         if (fileName === "bot-config.json") {
+          Object.assign(config, data);
+        } else if (fileName === "responses.json") {
+          // Caso especial para responses.json: copiar a ambas ubicaciones
+          config.messages.responses = data.responses || {};
+          config.messages.contextual = data.contextual || {};
+          // Mantener también una copia a nivel raíz para compatibilidad
           Object.assign(config, data);
         } else {
           const key = fileName.replace(".json", "");
@@ -517,6 +524,12 @@ export class ConfigurationService extends EventEmitter {
           const data = JSON.parse(content);
 
           if (fileName === "bot-config.json") {
+            Object.assign(config, data);
+          } else if (fileName === "responses.json") {
+            // Caso especial para responses.json: copiar a ambas ubicaciones
+            config.messages.responses = data.responses || {};
+            config.messages.contextual = data.contextual || {};
+            // Mantener también una copia a nivel raíz para compatibilidad
             Object.assign(config, data);
           } else {
             const key = fileName.replace(".json", "");

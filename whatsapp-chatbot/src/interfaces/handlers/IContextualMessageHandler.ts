@@ -8,6 +8,7 @@ import {
   IResponseReplacements,
 } from "../../types/handlers/contextual-handler.types";
 import { WhatsAppMessage } from "../../types/core/message.types";
+import { HandlerResult } from "../../types/handlers/message-handler.types";
 
 /**
  * Interface for Contextual Message Handler
@@ -22,7 +23,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleGreeting(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle farewell messages
@@ -32,7 +33,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleFarewell(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle question messages
@@ -44,7 +45,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
     message: WhatsAppMessage,
     context: IConversationContext | null,
     classification: IMessageClassification
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle help request messages
@@ -54,7 +55,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleHelpRequest(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle contextual messages
@@ -66,7 +67,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
     message: WhatsAppMessage,
     context: IConversationContext | null,
     classification: IMessageClassification
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle default messages
@@ -76,7 +77,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleDefault(
     message: WhatsAppMessage,
     context?: IConversationContext | null
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Update conversation context for a message
@@ -137,7 +138,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleBotQuestion(
     message: WhatsAppMessage,
     questionText: string
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle explanation requests
@@ -147,7 +148,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleExplanationRequest(
     message: WhatsAppMessage,
     messageText: string
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle example requests
@@ -157,7 +158,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleExampleRequest(
     message: WhatsAppMessage,
     messageText: string
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle information requests
@@ -167,7 +168,7 @@ export interface IContextualMessageHandler extends IMessageHandler {
   handleInformationRequest(
     message: WhatsAppMessage,
     messageText: string
-  ): Promise<void>;
+  ): Promise<HandlerResult>;
 
   /**
    * Handle "what" questions
@@ -216,7 +217,10 @@ export interface IContextualMessageHandler extends IMessageHandler {
    * @param message - WhatsApp message
    * @param error - Error object
    */
-  handleContextualError(message: WhatsAppMessage, error: Error): Promise<void>;
+  handleContextualError(
+    message: WhatsAppMessage,
+    error: Error
+  ): Promise<HandlerResult>;
 
   /**
    * Load conversation context from file

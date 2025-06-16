@@ -23,6 +23,7 @@ import { HandlerContext } from "../../types/handlers/message-handler.types";
 import { MessageClassifier } from "./messageClassifier";
 import { UserService } from "../../services/userService";
 import { PermissionService } from "../../services/permissionService";
+import { ConfigurationService } from "../../services/ConfigurationService";
 import { unifiedCommandHandler } from "../commands/core/UnifiedCommandHandler";
 import { commandRegistry } from "../commands/core/CommandRegistry";
 import {
@@ -48,6 +49,7 @@ export class BotProcessor implements IBotProcessor {
   // Servicios principales
   private userService: UserService | null;
   private permissionService: PermissionService;
+  private configurationService: ConfigurationService;
   private messageClassifier: MessageClassifier;
 
   // Sistema de handlers
@@ -86,6 +88,7 @@ export class BotProcessor implements IBotProcessor {
     // Servicios principales
     this.userService = null;
     this.permissionService = new PermissionService();
+    this.configurationService = new ConfigurationService();
     this.messageClassifier = new MessageClassifier();
 
     // Cliente de WhatsApp
@@ -118,6 +121,13 @@ export class BotProcessor implements IBotProcessor {
   async initializeServices(): Promise<boolean> {
     try {
       logger.info("🤖 BotProcessor: Inicializando servicios...");
+
+      // Inicializar ConfigurationService
+      logger.info("🔧 BotProcessor: Inicializando ConfigurationService...");
+      await this.configurationService.initialize();
+      logger.info(
+        "✅ BotProcessor: ConfigurationService inicializado correctamente"
+      );
 
       // Inicializar UserService
       logger.info("👥 BotProcessor: Inicializando UserService...");
@@ -658,13 +668,15 @@ ${this.config.commandPrefix}status - Estado del sistema
       }
 
       // Registrar CommandMessageHandler
-      const commandHandler = new CommandMessageHandler();
+      const commandHandler = new CommandMessageHandler(
+        this.configurationService
+      );
       this.handlerRegistry.register(commandHandler);
       logger.info("✅ CommandMessageHandler registrado");
 
       // Registrar AdminMessageHandler (necesita IBotProcessor, IWhatsAppClient, IPermissionService)
-      // Por ahora usar this como IBotProcessor y crear un mock client básico
-      const mockWhatsAppClient = {
+      // Usar el cliente real de WhatsApp en lugar de un mock
+      const realWhatsAppClient = this.whatsappClient || {
         sendMessage: async () => ({ success: true }),
         isConnected: () => true,
         getConnectionState: () => "open",
@@ -673,7 +685,7 @@ ${this.config.commandPrefix}status - Estado del sistema
 
       const adminHandler = new AdminMessageHandler(
         this,
-        mockWhatsAppClient as any,
+        realWhatsAppClient as any,
         this.permissionService
       );
       this.handlerRegistry.register(adminHandler);
@@ -704,7 +716,10 @@ ${this.config.commandPrefix}status - Estado del sistema
 
       // Registrar ContextualMessageHandler
       try {
-        const contextualHandler = new ContextualMessageHandler(this);
+        const contextualHandler = new ContextualMessageHandler(
+          this,
+          this.configurationService
+        );
         this.handlerRegistry.register(contextualHandler);
         logger.info("✅ ContextualMessageHandler registrado");
       } catch (error) {
