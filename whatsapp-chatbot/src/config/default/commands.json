@@ -725,6 +725,136 @@
       "general_error": "❌ Error ejecutando comando admin: {error}"
     }
   },
+  "config": {
+    "description": "Gestiona la configuración del bot y strings de respuesta",
+    "syntax": "!config [accion] [parametros]",
+    "examples": {
+      "show": "!config show messages - Mostrar configuración de mensajes",
+      "set": "!config set bot.name 'Mi Bot' - Cambiar nombre del bot",
+      "get": "!config get messages.greetings.new - Obtener valor específico",
+      "backup": "!config backup - Crear respaldo de configuración",
+      "reload": "!config reload - Recargar configuración desde archivos"
+    },
+    "help": "⚙️ **Comando de Configuración**\n\n**📋 Acciones disponibles:**\n• `show [seccion]` - Mostrar configuración\n• `set <ruta> <valor>` - Cambiar valor\n• `get <ruta>` - Obtener valor específico\n• `backup` - Crear respaldo\n• `reload` - Recargar desde archivos\n• `export [formato]` - Exportar configuración\n• `strings <accion>` - Gestionar strings\n• `messages` - Ver categorías de mensajes\n\n**🎯 Ejemplos:**\n• `!config show messages`\n• `!config get bot.name`\n• `!config set bot.name \"Mi Bot\"`\n• `!config backup`\n• `!config reload`\n\n**📂 Secciones disponibles:**\n• `bot` - Configuración del bot\n• `messages` - Mensajes y respuestas\n• `commands` - Textos de comandos\n• `errors` - Mensajes de error\n• `system` - Mensajes del sistema\n• `responses` - Respuestas contextuales\n\n🔧 **Gestión avanzada de configuración**",
+    "show": {
+      "general": "⚙️ **Configuración del Bot**\n\n**📂 Secciones disponibles:**\n• `bot` - Configuración general del bot\n• `messages` - Mensajes y respuestas\n• `commands` - Textos de comandos\n• `errors` - Mensajes de error\n• `system` - Mensajes del sistema\n• `responses` - Respuestas contextuales\n\n**💡 Uso:**\n`!config show [seccion]` para ver detalles específicos",
+      "section": "⚙️ **Configuración: {section}**\n\n{data}"
+    },
+    "get": {
+      "success": "📋 **{path}:**\n```\n{value}\n```"
+    },
+    "set": {
+      "simulated": "🚧 **Modificación simulada**\n\n**Ruta:** {path}\n**Valor:** {value}\n\n⚠️ La funcionalidad de escritura está en desarrollo"
+    },
+    "backup": {
+      "simulated": "💾 **Respaldo simulado**\n\n**Timestamp:** {timestamp}\n\n🚧 La funcionalidad de respaldo está en desarrollo"
+    },
+    "reload": {
+      "success": "✅ Configuración recargada exitosamente",
+      "simulated": "🚧 **Recarga simulada**\n\n⚠️ La funcionalidad de recarga está en desarrollo"
+    },
+    "export": {
+      "simulated": "📤 **Exportación simulada**\n\n**Formato:** {format}\n\n🚧 La funcionalidad de exportación está en desarrollo"
+    },
+    "strings": {
+      "simulated": "🔤 **Gestión de Strings: {action}**\n\n🚧 La gestión de strings está en desarrollo"
+    },
+    "messages": {
+      "categories": "📝 **Categorías de Mensajes**\n\n{categories}"
+    },
+    "errors": {
+      "execution": "❌ Error ejecutando comando: {error}",
+      "section_not_found": "❌ Sección no encontrada: {section}",
+      "missing_path": "❌ Especifica la ruta del valor a obtener",
+      "path_not_found": "❌ Ruta no encontrada: {path}",
+      "missing_set_params": "❌ Especifica la ruta y el valor: !config set <ruta> <valor>",
+      "reload_failed": "❌ Error recargando configuración: {error}"
+    },
+    "response": {
+      "title": "⚙️ **GESTIÓN DE CONFIGURACIÓN - drasBot**",
+      "subtitle": "Administración de strings y configuración del sistema",
+      "development_notice": {
+        "title": "🚧 **COMANDO EN DESARROLLO**",
+        "content": "**Acción solicitada:** {action}\n\n**💡 Funcionalidades planificadas:**\n• Gestión de strings de respuesta en tiempo real\n• Modificación de configuración del bot\n• Respaldos automáticos de configuración\n• Recarga de configuración sin reinicio\n• Interfaz para editar mensajes contextuales"
+      },
+      "current_status": {
+        "title": "🔧 **ESTADO ACTUAL:**",
+        "content": "Este comando requiere integración con el ConfigurationService que se está desarrollando."
+      },
+      "workaround": {
+        "title": "📋 **PARA MODIFICAR CONFIGURACIÓN ACTUALMENTE:**",
+        "items": [
+          "1. Edita archivos en `src/config/default/`",
+          "2. Usa `!reload` para recargar (cuando esté disponible)",
+          "3. O reinicia el bot"
+        ]
+      },
+      "config_files": {
+        "title": "📂 **ARCHIVOS DE CONFIGURACIÓN:**",
+        "items": [
+          "• `bot-config.json` - Configuración del bot",
+          "• `messages.json` - Mensajes generales",
+          "• `responses.json` - Respuestas contextuales",
+          "• `commands.json` - Textos de comandos", 
+          "• `errors.json` - Mensajes de error",
+          "• `system.json` - Mensajes del sistema"
+        ]
+      },
+      "help": {
+        "title": "📋 **ACCIONES DISPONIBLES:**",
+        "actions": [
+          "• `show [seccion]` - Mostrar configuración",
+          "• `set <ruta> <valor>` - Cambiar valor",
+          "• `get <ruta>` - Obtener valor",
+          "• `backup` - Crear respaldo",
+          "• `reload` - Recargar desde archivos",
+          "• `export [formato]` - Exportar configuración",
+          "• `strings <accion>` - Gestionar strings",
+          "• `messages` - Ver categorías de mensajes"
+        ],
+        "examples": {
+          "title": "🎯 **EJEMPLOS:**",
+          "items": [
+            "• `!config show messages`",
+            "• `!config set bot.name \"Mi Bot\"`",
+            "• `!config strings list`",
+            "• `!config backup`"
+          ]
+        },
+        "sections": {
+          "title": "📂 **SECCIONES DISPONIBLES:**",
+          "items": [
+            "• `bot` - Configuración del bot",
+            "• `messages` - Mensajes y respuestas",
+            "• `commands` - Textos de comandos",
+            "• `errors` - Mensajes de error",
+            "• `system` - Mensajes del sistema"
+          ]
+        }
+      }
+    },
+    "actions": {
+      "show": "Mostrar configuración",
+      "set": "Cambiar valor",
+      "get": "Obtener valor",
+      "backup": "Crear respaldo",
+      "reload": "Recargar configuración",
+      "export": "Exportar configuración",
+      "strings": "Gestionar strings",
+      "messages": "Ver mensajes"
+    },
+    "error_messages": {
+      "permission_denied": "❌ **Acceso Denegado**\n\nEste comando es exclusivo para administradores del sistema.",
+      "invalid_action": "❌ Acción no válida: '{action}'\n\nAcciones disponibles: show, set, get, backup, reload, export, strings, messages",
+      "missing_parameters": "❌ Parámetros insuficientes para la acción '{action}'",
+      "not_implemented": "⚠️ La funcionalidad '{feature}' aún no está implementada",
+      "general_error": "❌ Error ejecutando comando config: {error}"
+    },
+    "notices": {
+      "development": "💡 **Nota:** Funcionalidad completa en desarrollo",
+      "restart_required": "⚠️ Algunos cambios requieren reiniciar el bot"
+    }
+  },
   "users": {
     "description": "Administración completa de usuarios del sistema",
     "response": {

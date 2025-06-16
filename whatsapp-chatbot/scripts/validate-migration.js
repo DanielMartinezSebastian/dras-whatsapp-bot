@@ -255,6 +255,14 @@ function main() {
       file: path.join("./src/bot/commands/admin", "UsersCommand.ts"),
       methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
     },
+    {
+      file: path.join("./src/bot/commands/admin", "AdminPanelCommand.ts"),
+      methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
+    },
+    {
+      file: path.join("./src/bot/commands/admin", "ConfigCommand.ts"),
+      methods: ["getConfigMessage", "replaceVariables", "getValueByPath"],
+    },
   ];
 
   for (const validation of commandValidations) {

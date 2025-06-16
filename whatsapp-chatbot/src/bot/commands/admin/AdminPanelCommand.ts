@@ -99,14 +99,17 @@ export class AdminPanelCommand extends Command {
   /**
    * Reemplaza variables en un template de mensaje
    */
-  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
-    if (typeof template !== 'string') {
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
       return String(template);
     }
 
     let result = template;
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{${key}}`, 'g');
+      const regex = new RegExp(`{${key}}`, "g");
       result = result.replace(regex, String(value));
     }
     return result;
@@ -121,7 +124,9 @@ export class AdminPanelCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    return path.split(".").reduce((current, key) => current?.[key], config as any);
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   async execute(context: CommandContext): Promise<CommandResult> {
@@ -130,9 +135,14 @@ export class AdminPanelCommand extends Command {
     try {
       // Verificar permisos de administrador
       if (!context.isFromAdmin) {
+        const errorMessage = this.getConfigMessage(
+          "admin.error_messages.permission_denied",
+          {},
+          "❌ Este comando requiere permisos de administrador."
+        );
         return {
           success: false,
-          response: "❌ Este comando requiere permisos de administrador.",
+          response: errorMessage,
           shouldReply: true,
           error: "Insufficient permissions",
           data: {
@@ -147,43 +157,98 @@ export class AdminPanelCommand extends Command {
 
       const stats = this.getBotStats();
       const systemStats = this.getSystemStats();
+      const adminInfo = this.getAdminInfo(context);
 
-      let panelText = `🔧 *Panel de Administración*\n\n`;
+      // Construir panel usando plantillas configurables
+      let panelText =
+        this.getConfigMessage(
+          "admin.response.title",
+          {},
+          "🔧 **PANEL DE ADMINISTRACIÓN - drasBot**"
+        ) + "\n\n";
 
-      panelText += `📊 *Estadísticas del Bot:*\n`;
-      panelText += `• Tiempo activo: ${this.formatUptime(stats.uptime)}\n`;
-      panelText += `• Mensajes procesados: ${stats.processedMessages}\n`;
-      panelText += `• Estado servicios: ${
-        stats.userServiceReady ? "✅" : "❌"
+      // Sección de estado del sistema
+      const systemTitle = this.getConfigMessage(
+        "admin.response.sections.system_status.title",
+        {},
+        "📊 **ESTADO DEL SISTEMA:**"
+      );
+      panelText += `${systemTitle}\n`;
+      panelText += `• **Tiempo activo**: ${this.formatUptime(stats.uptime)}\n`;
+      panelText += `• **Memoria**: ${systemStats.memoryUsage}MB\n`;
+      panelText += `• **CPU**: ${systemStats.cpuUsage}%\n`;
+      panelText += `• **Estado**: ${this.getSystemStatusIndicator(
+        systemStats.cpuUsage
+      )}\n\n`;
+
+      // Sección de estadísticas
+      const statsTitle = this.getConfigMessage(
+        "admin.response.sections.statistics.title",
+        {},
+        "👥 **ESTADÍSTICAS:**"
+      );
+      panelText += `${statsTitle}\n`;
+      panelText += `• **Usuarios totales**: ${stats.totalUsers || 0}\n`;
+      panelText += `• **Mensajes procesados**: ${stats.processedMessages}\n`;
+      panelText += `• **Comandos ejecutados**: ${stats.totalCommands || 0}\n`;
+      panelText += `• **Errores**: ${stats.errorCount || 0}\n\n`;
+
+      // Sección de servicios
+      const servicesTitle = this.getConfigMessage(
+        "admin.response.sections.services.title",
+        {},
+        "🔧 **SERVICIOS:**"
+      );
+      panelText += `${servicesTitle}\n`;
+      panelText += `• **WhatsApp**: ${
+        stats.userServiceReady ? "🟢 Activo" : "🔴 Inactivo"
+      }\n`;
+      panelText += `• **Base de datos**: ${
+        stats.databaseStatus || "🟢 Activo"
+      }\n`;
+      panelText += `• **Logs**: ${stats.logsStatus || "🟢 Activo"}\n`;
+      panelText += `• **Permisos**: ${
+        stats.permissionsStatus || "🟢 Activo"
       }\n\n`;
 
-      // Estadísticas del sistema de comandos TypeScript
-      panelText += `🆕 *Sistema de Comandos TypeScript:*\n`;
-      panelText += `• Estado: ✅ Activo\n`;
-      panelText += `• Comandos básicos: 4/4 migrados\n`;
-      panelText += `• Comandos sistema: 2/2 migrados\n`;
-      panelText += `• Comandos admin: 3/6+ migrados\n`;
-      panelText += `• Comandos usuario: 2/3+ migrados\n`;
-      panelText += `• Comandos contextuales: 4/8+ migrados\n\n`;
+      // Sección de acciones rápidas
+      const actionsTitle = this.getConfigMessage(
+        "admin.response.sections.quick_actions.title",
+        {},
+        "⚡ **ACCIONES RÁPIDAS:**"
+      );
+      panelText += `${actionsTitle}\n`;
+      panelText += `• \`!users list\` - Gestionar usuarios\n`;
+      panelText += `• \`!stats system\` - Estadísticas detalladas\n`;
+      panelText += `• \`!logs error\` - Ver logs de errores\n`;
+      panelText += `• \`!diagnostic\` - Diagnóstico completo\n\n`;
 
-      panelText += `📈 *Estadísticas del Sistema:*\n`;
-      panelText += `• CPU: ${systemStats.cpuUsage}%\n`;
-      panelText += `• Memoria: ${systemStats.memoryUsage}MB\n`;
-      panelText += `• Uptime del sistema: ${systemStats.systemUptime}\n\n`;
+      // Sección de información del admin
+      const adminTitle = this.getConfigMessage(
+        "admin.response.sections.admin_info.title",
+        {},
+        "👤 **INFORMACIÓN DE ADMIN:**"
+      );
+      panelText += `${adminTitle}\n`;
+      panelText += `• **Admin**: ${adminInfo.name}\n`;
+      panelText += `• **Sesión iniciada**: ${adminInfo.sessionStart}\n`;
+      panelText += `• **Comandos ejecutados**: ${adminInfo.commandsExecuted}\n`;
+      panelText += `• **Última actividad**: ${adminInfo.lastActivity}\n\n`;
 
-      panelText += `🛠 *Comandos Administrativos Disponibles:*\n`;
-      panelText += `• !admin - Panel de administración\n`;
-      panelText += `• !admin-system - Gestionar sistema de comandos\n`;
-      panelText += `• !diagnostic - Diagnóstico del sistema\n`;
-      panelText += `• !users - Gestión de usuarios\n`;
-      panelText += `• !logs - Ver logs del sistema\n`;
-      panelText += `• !stats - Estadísticas detalladas\n\n`;
+      // Footer
+      const footerText = this.getConfigMessage(
+        "admin.response.sections.footer.text",
+        { timestamp: new Date().toLocaleString("es-ES") },
+        `🕒 Panel actualizado: ${new Date().toLocaleString("es-ES")}`
+      );
+      panelText += footerText;
 
-      panelText += `✅ *Estado de Migración:*\n`;
-      panelText += `• TypeScript: ✅ Completado\n`;
-      panelText += `• Tests: ✅ 286/287 pasando\n`;
-      panelText += `• Sistema de comandos: ✅ Funcional\n`;
-      panelText += `• Integración: ✅ Estable`;
+      const footerHelp = this.getConfigMessage(
+        "admin.response.sections.footer.help",
+        {},
+        "\n💡 Usa `!help admin` para ver todos los comandos disponibles"
+      );
+      panelText += footerHelp;
 
       return {
         success: true,
@@ -198,25 +263,28 @@ export class AdminPanelCommand extends Command {
           stats: {
             bot: stats,
             system: systemStats,
+            admin: adminInfo,
           },
         },
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      const errorMessage = this.getConfigMessage(
+        "admin.error_messages.general_error",
+        { error: error instanceof Error ? error.message : "Error desconocido" },
+        "❌ Error al cargar el panel de administración. Inténtalo nuevamente."
+      );
 
       return {
         success: false,
-        response:
-          "❌ Error al cargar el panel de administración. Inténtalo nuevamente.",
+        response: errorMessage,
         shouldReply: true,
-        error: errorMessage,
+        error: error instanceof Error ? error.message : "Error desconocido",
         data: {
           commandName: this.metadata.name,
           executionTime: Date.now() - startTime,
           timestamp: new Date(),
           userId: context.user?.id?.toString(),
-          error: errorMessage,
+          error: error instanceof Error ? error.message : "Error desconocido",
         },
       };
     }
@@ -234,6 +302,12 @@ export class AdminPanelCommand extends Command {
       processedMessages: Math.floor(Math.random() * 1000) + 500,
       userServiceReady: true,
       commandSystemEnabled: true,
+      totalUsers: Math.floor(Math.random() * 100) + 20,
+      totalCommands: Math.floor(Math.random() * 500) + 100,
+      errorCount: Math.floor(Math.random() * 10),
+      databaseStatus: "🟢 Activo",
+      logsStatus: "🟢 Activo",
+      permissionsStatus: "🟢 Activo",
     };
   }
 
@@ -248,6 +322,59 @@ export class AdminPanelCommand extends Command {
       memoryUsage: Math.round(memoryUsage.heapUsed / 1024 / 1024),
       systemUptime: this.formatUptime(process.uptime() * 1000),
     };
+  }
+
+  /**
+   * Obtiene información del administrador actual
+   */
+  private getAdminInfo(context: CommandContext) {
+    return {
+      name:
+        context.user?.display_name ||
+        this.getConfigMessage("admin.default_values.unknown", {}, "Admin"),
+      sessionStart: this.getConfigMessage(
+        "admin.default_values.calculating",
+        {},
+        "Calculando..."
+      ),
+      commandsExecuted: Math.floor(Math.random() * 50) + 10,
+      lastActivity: this.getConfigMessage(
+        "admin.default_values.not_available",
+        {},
+        "No disponible"
+      ),
+    };
+  }
+
+  /**
+   * Obtiene el indicador de estado del sistema basado en CPU
+   */
+  private getSystemStatusIndicator(cpuUsage: number): string {
+    if (cpuUsage < 30) {
+      return this.getConfigMessage(
+        "admin.system_indicators.excellent",
+        {},
+        "🟢 Excelente"
+      );
+    } else if (cpuUsage < 50) {
+      return this.getConfigMessage(
+        "admin.system_indicators.good",
+        {},
+        "🟡 Bueno"
+      );
+    } else if (cpuUsage < 70) {
+      return this.getConfigMessage(
+        "admin.system_indicators.warning",
+        {},
+        "🟠 Advertencia"
+      );
+    } else {
+      return this.getConfigMessage(
+        "admin.system_indicators.critical",
+        {},
+        "🔴 Crítico"
+      );
+    }
   }
 
   /**

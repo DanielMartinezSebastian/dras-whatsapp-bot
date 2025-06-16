@@ -108,14 +108,17 @@ export class UsersCommand extends Command {
   /**
    * Reemplaza variables en un template de mensaje
    */
-  private replaceVariables(template: string, variables: Record<string, any> = {}): string {
-    if (typeof template !== 'string') {
+  private replaceVariables(
+    template: string,
+    variables: Record<string, any> = {}
+  ): string {
+    if (typeof template !== "string") {
       return String(template);
     }
 
     let result = template;
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{${key}}`, 'g');
+      const regex = new RegExp(`{${key}}`, "g");
       result = result.replace(regex, String(value));
     }
     return result;
@@ -130,7 +133,9 @@ export class UsersCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    return path.split(".").reduce((current, key) => current?.[key], config as any);
+    return path
+      .split(".")
+      .reduce((current, key) => current?.[key], config as any);
   }
 
   /**
@@ -199,7 +204,9 @@ export class UsersCommand extends Command {
           const invalidActionMessage = this.getConfigMessage(
             "users.error_messages.invalid_action",
             { action: action || "no especificada" },
-            `❌ Acción no válida: '${action || "no especificada"}'\n\nAcciones disponibles: list, search, info, update, stats`
+            `❌ Acción no válida: '${
+              action || "no especificada"
+            }'\n\nAcciones disponibles: list, search, info, update, stats`
           );
           return {
             success: false,
@@ -255,11 +262,12 @@ export class UsersCommand extends Command {
       // Obtener todos los usuarios reales de la base de datos
       const allUsers = await userService.getAllUsers();
 
-      const limit = parseInt(context.args[1]) || parseInt(this.getConfigMessage(
-        "users.default_values.page_size",
-        {},
-        "10"
-      )) || 10;
+      const limit =
+        parseInt(context.args[1]) ||
+        parseInt(
+          this.getConfigMessage("users.default_values.page_size", {}, "10")
+        ) ||
+        10;
       const page = parseInt(context.args[2]) || 1;
       const start = (page - 1) * limit;
       const end = start + limit;
@@ -268,39 +276,41 @@ export class UsersCommand extends Command {
       const totalUsers = allUsers.length;
       const totalPages = Math.ceil(totalUsers / limit);
 
-      let response = this.getConfigMessage(
-        "users.response.sections.list.title",
-        { page, totalPages },
-        `� **Lista de Usuarios del Sistema** (Página ${page}/${totalPages})`
-      ) + "\n\n";
+      let response =
+        this.getConfigMessage(
+          "users.response.sections.list.title",
+          { page, totalPages },
+          `� **Lista de Usuarios del Sistema** (Página ${page}/${totalPages})`
+        ) + "\n\n";
 
       if (paginatedUsers.length === 0) {
-        response += this.getConfigMessage(
-          "users.response.sections.list.no_users",
-          {},
-          "📭 No se encontraron usuarios en esta página."
-        ) + "\n\n";
+        response +=
+          this.getConfigMessage(
+            "users.response.sections.list.no_users",
+            {},
+            "📭 No se encontraron usuarios en esta página."
+          ) + "\n\n";
       } else {
         paginatedUsers.forEach((user: User, index: number) => {
           const statusIcon = user.is_active ? "🟢" : "🔴";
           const typeEmoji = this.getUserTypeEmoji(user.user_type);
-          const phone = user.phone_number || this.getConfigMessage(
-            "users.default_values.not_available",
-            {},
-            "N/A"
-          );
-          const name = user.display_name || this.getConfigMessage(
-            "users.default_values.unknown",
-            {},
-            "Sin nombre"
-          );
+          const phone =
+            user.phone_number ||
+            this.getConfigMessage(
+              "users.default_values.not_available",
+              {},
+              "N/A"
+            );
+          const name =
+            user.display_name ||
+            this.getConfigMessage(
+              "users.default_values.unknown",
+              {},
+              "Sin nombre"
+            );
           const lastSeen = user.updated_at
             ? this.getRelativeTime(new Date(user.updated_at))
-            : this.getConfigMessage(
-                "users.default_values.never",
-                {},
-                "Nunca"
-              );
+            : this.getConfigMessage("users.default_values.never", {}, "Nunca");
 
           response += `${statusIcon} **${
             start + index + 1
@@ -412,19 +422,21 @@ export class UsersCommand extends Command {
       // Buscar usuarios por nombre o teléfono
       const results = await userService.searchUsers(searchTerm);
 
-      let response = this.getConfigMessage(
-        "users.response.sections.search.title",
-        { searchTerm },
-        `🔍 **Resultados de búsqueda para:** "${searchTerm}"`
-      ) + "\n\n";
+      let response =
+        this.getConfigMessage(
+          "users.response.sections.search.title",
+          { searchTerm },
+          `🔍 **Resultados de búsqueda para:** "${searchTerm}"`
+        ) + "\n\n";
 
       if (results.length === 0) {
-        response += this.getConfigMessage(
-          "users.response.sections.search.no_results",
-          { searchTerm },
-          `❌ **No se encontraron usuarios**\n\nVerifica que el nombre o teléfono sea correcto para: "${searchTerm}"`
-        ) + "\n\n";
-        
+        response +=
+          this.getConfigMessage(
+            "users.response.sections.search.no_results",
+            { searchTerm },
+            `❌ **No se encontraron usuarios**\n\nVerifica que el nombre o teléfono sea correcto para: "${searchTerm}"`
+          ) + "\n\n";
+
         response += "💡 **Sugerencias:**\n";
         response += "• Usa solo parte del nombre\n";
         response += "• Verifica que el teléfono esté registrado\n";
@@ -440,16 +452,20 @@ export class UsersCommand extends Command {
         results.forEach((user: User, index: number) => {
           const statusIcon = user.is_active ? "🟢" : "🔴";
           const typeEmoji = this.getUserTypeEmoji(user.user_type);
-          const name = user.display_name || this.getConfigMessage(
-            "users.default_values.unknown",
-            {},
-            "Sin nombre"
-          );
-          const phone = user.phone_number || this.getConfigMessage(
-            "users.default_values.not_available",
-            {},
-            "N/A"
-          );
+          const name =
+            user.display_name ||
+            this.getConfigMessage(
+              "users.default_values.unknown",
+              {},
+              "Sin nombre"
+            );
+          const phone =
+            user.phone_number ||
+            this.getConfigMessage(
+              "users.default_values.not_available",
+              {},
+              "N/A"
+            );
 
           response += `${statusIcon} **${index + 1}.** ${typeEmoji} ${name}\n`;
           response += `   📱 ${phone} | 🆔 ${user.id}\n`;
@@ -559,17 +575,16 @@ export class UsersCommand extends Command {
 
       const typeEmoji = this.getUserTypeEmoji(user.user_type);
       const statusIcon = user.is_active ? "🟢" : "🔴";
-      const name = user.display_name || this.getConfigMessage(
-        "users.default_values.unknown",
-        {},
-        "Sin nombre"
-      );
+      const name =
+        user.display_name ||
+        this.getConfigMessage("users.default_values.unknown", {}, "Sin nombre");
 
-      let response = this.getConfigMessage(
-        "users.response.sections.info.title",
-        {},
-        "👤 **Información de Usuario**"
-      ) + "\n\n";
+      let response =
+        this.getConfigMessage(
+          "users.response.sections.info.title",
+          {},
+          "👤 **Información de Usuario**"
+        ) + "\n\n";
 
       response += `${statusIcon} **${name}** ${typeEmoji}\n\n`;
 
@@ -580,18 +595,29 @@ export class UsersCommand extends Command {
         "📋 **Datos básicos:**"
       );
       response += `${basicData}\n`;
-      response += `• 📱 Teléfono: ${user.phone_number || this.getConfigMessage("users.default_values.not_available", {}, "N/A")}\n`;
+      response += `• 📱 Teléfono: ${
+        user.phone_number ||
+        this.getConfigMessage("users.default_values.not_available", {}, "N/A")
+      }\n`;
       response += `• 🆔 ID: ${user.id}\n`;
       response += `• 📧 JID: ${user.whatsapp_jid}\n`;
       response += `• 📅 Registro: ${
         user.created_at
           ? new Date(user.created_at).toLocaleDateString("es-ES")
-          : this.getConfigMessage("users.default_values.date_unavailable", {}, "N/A")
+          : this.getConfigMessage(
+              "users.default_values.date_unavailable",
+              {},
+              "N/A"
+            )
       }\n`;
       response += `• 🔄 Actualizado: ${
         user.updated_at
           ? new Date(user.updated_at).toLocaleDateString("es-ES")
-          : this.getConfigMessage("users.default_values.not_available", {}, "N/A")
+          : this.getConfigMessage(
+              "users.default_values.not_available",
+              {},
+              "N/A"
+            )
       }\n`;
       response += `• 👥 Tipo: ${this.getUserTypeName(user.user_type)}\n\n`;
 
@@ -737,20 +763,27 @@ export class UsersCommand extends Command {
 
             response = this.getConfigMessage(
               "users.response.sections.update.success",
-              { 
+              {
                 field: this.getConfigMessage(`users.fields.type`, {}, "tipo"),
                 oldValue: this.getUserTypeName(user.user_type),
-                newValue: this.getUserTypeName(newValue.toLowerCase() as UserType)
+                newValue: this.getUserTypeName(
+                  newValue.toLowerCase() as UserType
+                ),
               },
-              `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Tipo cambiado a: **${this.getUserTypeName(newValue.toLowerCase() as UserType)}**`
+              `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Tipo cambiado a: **${this.getUserTypeName(
+                newValue.toLowerCase() as UserType
+              )}**`
             );
-            response += "\n\n⚠️ Los cambios se aplicarán en el próximo mensaje del usuario.";
+            response +=
+              "\n\n⚠️ Los cambios se aplicarán en el próximo mensaje del usuario.";
             success = true;
           } else {
             response = this.getConfigMessage(
               "users.error_messages.invalid_user_type",
               { userType: newValue },
-              `❌ **Tipo de usuario inválido**\n\n✅ **Tipos válidos:** ${validTypes.join(", ")}`
+              `❌ **Tipo de usuario inválido**\n\n✅ **Tipos válidos:** ${validTypes.join(
+                ", "
+              )}`
             );
           }
           break;
@@ -762,10 +795,10 @@ export class UsersCommand extends Command {
 
           response = this.getConfigMessage(
             "users.response.sections.update.success",
-            { 
+            {
               field: this.getConfigMessage(`users.fields.name`, {}, "nombre"),
               oldValue: user.display_name || "Sin nombre",
-              newValue: newValue
+              newValue: newValue,
             },
             `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n📝 Nombre cambiado a: **${newValue}**`
           );
@@ -787,12 +820,18 @@ export class UsersCommand extends Command {
 
             response = this.getConfigMessage(
               "users.response.sections.update.success",
-              { 
-                field: this.getConfigMessage(`users.fields.status`, {}, "estado"),
+              {
+                field: this.getConfigMessage(
+                  `users.fields.status`,
+                  {},
+                  "estado"
+                ),
                 oldValue: user.is_active ? "Activo" : "Inactivo",
-                newValue: isActive ? "Activo" : "Inactivo"
+                newValue: isActive ? "Activo" : "Inactivo",
               },
-              `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Estado cambiado a: **${isActive ? "Activo" : "Inactivo"}**`
+              `✅ **Usuario actualizado**\n\n👤 Teléfono: ${phone}\n🔄 Estado cambiado a: **${
+                isActive ? "Activo" : "Inactivo"
+              }**`
             );
             success = true;
           } else {
@@ -861,11 +900,12 @@ export class UsersCommand extends Command {
       // Obtener estadísticas reales de la base de datos
       const stats = await userService.getUserStats();
 
-      let response = this.getConfigMessage(
-        "users.response.sections.stats.title",
-        {},
-        "📊 **Estadísticas de Usuarios del Sistema**"
-      ) + "\n\n";
+      let response =
+        this.getConfigMessage(
+          "users.response.sections.stats.title",
+          {},
+          "📊 **Estadísticas de Usuarios del Sistema**"
+        ) + "\n\n";
 
       // Sección de resumen general
       const summaryTitle = this.getConfigMessage(
@@ -1161,7 +1201,7 @@ export class UsersCommand extends Command {
       {},
       undefined
     );
-    
+
     if (configEmoji) {
       return configEmoji;
     }
@@ -1188,7 +1228,7 @@ export class UsersCommand extends Command {
       {},
       undefined
     );
-    
+
     if (configName) {
       return configName;
     }
@@ -1203,10 +1243,9 @@ export class UsersCommand extends Command {
       provider: "Proveedor",
       block: "Bloqueado",
     };
-    return nameMap[type] || this.getConfigMessage(
-      "users.default_values.unknown",
-      {},
-      "Desconocido"
+    return (
+      nameMap[type] ||
+      this.getConfigMessage("users.default_values.unknown", {}, "Desconocido")
     );
   }
 
