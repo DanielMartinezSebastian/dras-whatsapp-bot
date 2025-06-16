@@ -227,7 +227,7 @@ class ContextualHandler {
     logInfo(`🚨 DEBUG TEMPORAL: Tipo de response: ${typeof response}`);
     logInfo(`🚨 DEBUG TEMPORAL: Response.length: ${response.length}`);
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
 
     // Ofrecer ayuda adicional solo si la respuesta no incluye ya información de ayuda
     if (!response.includes("puedo ayudarte") && !response.includes("/help")) {
@@ -241,7 +241,11 @@ class ContextualHandler {
         );
         logInfo(`🚨 DEBUG TEMPORAL HELP: Tipo: ${typeof helpPrompt}`);
 
-        await this.whatsappClient.sendMessage(message.senderPhone, helpPrompt);
+        await this.whatsappClient.sendMessage(
+          message.senderPhone,
+          helpPrompt,
+          false
+        );
       }, 2000);
     }
   }
@@ -296,7 +300,7 @@ class ContextualHandler {
     logInfo(`🔍 FAREWELL: Enviando respuesta: "${response}"`);
 
     // Enviar respuesta de despedida
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
 
     // Guardar contexto con información de despedida
     this.saveConversationContext();
@@ -363,7 +367,7 @@ class ContextualHandler {
         response = this.getRandomResponse("question_general");
     }
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
   }
 
   /**
@@ -388,10 +392,18 @@ Los comandos principales son:
 
 ¿Necesitas ayuda con algún comando específico?`;
 
-      await this.whatsappClient.sendMessage(message.senderPhone, response);
+      await this.whatsappClient.sendMessage(
+        message.senderPhone,
+        response,
+        false
+      );
     } else {
       const response = this.getRandomResponse("help_general");
-      await this.whatsappClient.sendMessage(message.senderPhone, response);
+      await this.whatsappClient.sendMessage(
+        message.senderPhone,
+        response,
+        false
+      );
     }
   }
 
@@ -433,7 +445,7 @@ Los comandos principales son:
     }
 
     const response = this.getRandomResponse("default");
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
   }
 
   /**
@@ -498,7 +510,7 @@ Soy un bot de WhatsApp que:
 Puedes preguntarme sobre mis funciones usando /info o explorar mis comandos con /help.`;
     }
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
   }
 
   /**
@@ -558,7 +570,7 @@ Puedo explicarte sobre:
 
 ¿Sobre qué te gustaría que te explique?`;
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
   }
 
   /**
@@ -581,7 +593,7 @@ Aquí tienes algunos ejemplos de cómo interactuar conmigo:
 
 ¿Te gustaría ver ejemplos de algo específico?`;
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
   }
 
   /**
@@ -598,7 +610,7 @@ Puedo proporcionarte información sobre:
 
 ¿Qué información específica necesitas?`;
 
-    await this.whatsappClient.sendMessage(message.senderPhone, response);
+    await this.whatsappClient.sendMessage(message.senderPhone, response, false);
   }
 
   /**
@@ -810,7 +822,11 @@ Puedo proporcionarte información sobre:
       "Lo siento, ocurrió un problema procesando tu mensaje. Por favor intenta de nuevo.";
 
     try {
-      await this.whatsappClient.sendMessage(message.senderPhone, response);
+      await this.whatsappClient.sendMessage(
+        message.senderPhone,
+        response,
+        false
+      );
     } catch (sendError) {
       logError("Error enviando mensaje de error contextual:", sendError);
     }

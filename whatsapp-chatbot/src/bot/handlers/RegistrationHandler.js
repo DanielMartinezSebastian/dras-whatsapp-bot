@@ -284,7 +284,8 @@ Tu nuevo nombre es: *${validation.cleanName}*`;
       // Usar el cliente de WhatsApp del BotProcessor
       await this.whatsappClient.sendMessage(
         phoneNumber,
-        this.botProcessor.botPrefix + message
+        this.botProcessor.botPrefix + message,
+        false // isCommand = false para mensajes de registro
       );
     } catch (error) {
       logError(`Error enviando mensaje a ${chatJid}:`, error);

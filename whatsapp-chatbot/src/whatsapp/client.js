@@ -151,8 +151,18 @@ class WhatsAppClient extends EventEmitter {
             continue;
           }
 
-          // Verificar límites de respuesta por chat
-          if (!(await this.canRespondToChat(messageRow.chat_jid))) {
+          // Verificar límites de respuesta por mensaje específico
+          const isCommand =
+            messageRow.content &&
+            (messageRow.content.trim().startsWith("/") ||
+              messageRow.content.trim().startsWith("!"));
+          if (
+            !(await this.canRespondToMessage(
+              messageRow.chat_jid,
+              messageRow.content,
+              isCommand
+            ))
+          ) {
             logInfo(
               `🚫 Chat ${messageRow.chat_jid} ha alcanzado límite de respuestas`
             );
@@ -213,10 +223,14 @@ class WhatsAppClient extends EventEmitter {
     };
   }
 
-  async sendMessage(recipient, message) {
+  async sendMessage(recipient, message, isCommand = false) {
     try {
-      // Verificar si podemos responder a este chat (con privilegios admin)
-      const canRespond = await this.canRespondToChat(recipient);
+      // Verificar si podemos responder a este mensaje específico (más inteligente)
+      const canRespond = await this.canRespondToMessage(
+        recipient,
+        message,
+        isCommand
+      );
 
       if (!canRespond) {
         logWarn(
@@ -407,23 +421,49 @@ class WhatsAppClient extends EventEmitter {
       return true;
     }
 
-    // Verificar intervalo mínimo estándar
-    const lastResponse = this.lastResponseTime.get(chatJid);
-    if (lastResponse && now - lastResponse < this.minResponseInterval) {
+    // Verificar límite diario primero
+    const dailyCount = this.dailyResponseCount.get(chatJid) || 0;
+    if (dailyCount >= this.maxDailyResponses) {
+      logInfo(
+        `📊 Usuario ${chatJid} ha alcanzado el límite diario (${dailyCount}/${this.maxDailyResponses})`
+      );
       return false;
     }
 
-    // Verificar límite diario
-    const dailyCount = this.dailyResponseCount.get(chatJid) || 0;
-    if (dailyCount >= this.maxDailyResponses) {
+    // Para usuarios con pocas respuestas hoy, ser más permisivo
+    if (dailyCount < 5) {
+      const lastResponse = this.lastResponseTime.get(chatJid);
+      if (lastResponse && now - lastResponse < 3000) {
+        // Solo 3 segundos para usuarios nuevos/con pocas interacciones
+        logInfo(
+          `⏰ Usuario ${chatJid} debe esperar 3s entre respuestas (count: ${dailyCount})`
+        );
+        return false;
+      }
+      return true;
+    }
+
+    // Verificar intervalo mínimo estándar para usuarios regulares
+    const lastResponse = this.lastResponseTime.get(chatJid);
+    if (lastResponse && now - lastResponse < this.minResponseInterval) {
+      const timeLeft = Math.ceil(
+        (this.minResponseInterval - (now - lastResponse)) / 1000
+      );
+      logInfo(
+        `⏰ Usuario ${chatJid} debe esperar ${timeLeft}s más (count: ${dailyCount})`
+      );
       return false;
     }
 
     // Rate limiting más flexible para preguntas directas
     if (messageContent && messageContent.includes("?")) {
       // Preguntas tienen intervalo reducido
-      const questionInterval = 15000; // 15 segundos para preguntas
+      const questionInterval = 10000; // 10 segundos para preguntas
       if (lastResponse && now - lastResponse < questionInterval) {
+        const timeLeft = Math.ceil(
+          (questionInterval - (now - lastResponse)) / 1000
+        );
+        logInfo(`❓ Pregunta de ${chatJid} debe esperar ${timeLeft}s más`);
         return false;
       }
     }

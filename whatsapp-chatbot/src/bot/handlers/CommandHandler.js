@@ -171,7 +171,8 @@ class CommandHandler {
     if (response) {
       await this.whatsappClient.sendMessage(
         message.senderPhone,
-        this.botProcessor.botPrefix + response
+        this.botProcessor.botPrefix + response,
+        true // isCommand = true
       );
     }
   }

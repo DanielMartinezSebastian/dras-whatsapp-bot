@@ -148,9 +148,11 @@ process.on("SIGTERM", () => {
 function cleanup() {
   logInfo("🧹 Iniciando limpieza de recursos...");
 
-  if (botProcessor) {
+  if (botProcessor && typeof botProcessor.cleanup === "function") {
     logInfo("🤖 Limpiando BotProcessor...");
     botProcessor.cleanup();
+  } else if (botProcessor) {
+    logInfo("🤖 BotProcessor detectado (sin método cleanup)");
   }
 
   if (whatsappClient) {

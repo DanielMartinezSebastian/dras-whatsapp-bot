@@ -205,12 +205,15 @@ class MessageProcessor {
   }
 
   async sendResponse(message, response, user) {
-    const isCommand = message.content.trim().startsWith("/");
+    const isCommand =
+      message.content.trim().startsWith("/") ||
+      message.content.trim().startsWith("!");
 
     try {
       const result = await this.whatsappClient.sendMessage(
         message.chatJid,
-        response
+        response,
+        isCommand
       );
 
       if (result.success) {
