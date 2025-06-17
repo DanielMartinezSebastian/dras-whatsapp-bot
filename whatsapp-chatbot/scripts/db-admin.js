@@ -191,8 +191,16 @@ class DatabaseAdmin {
   async changeUserType(jid, newType) {
     try {
       // Validar tipos válidos
-      const validTypes = ['admin', 'customer', 'friend', 'familiar', 'employee', 'provider', 'block'];
-      
+      const validTypes = [
+        "admin",
+        "customer",
+        "friend",
+        "familiar",
+        "employee",
+        "provider",
+        "block",
+      ];
+
       if (!validTypes.includes(newType)) {
         console.log(`❌ Tipo de usuario inválido: ${newType}`);
         console.log(`Tipos válidos: ${validTypes.join(", ")}`);
