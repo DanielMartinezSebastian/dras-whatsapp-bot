@@ -141,6 +141,14 @@ export interface BotConfig {
     rate_limit_max_requests: number;
     allowed_origins?: string[];
   };
+  userLevels?: Record<string, any>;
+  messages?: Record<string, any>;
+  paths?: {
+    config: string;
+    data: string;
+    logs: string;
+    plugins: string;
+  };
 }
 
 /**

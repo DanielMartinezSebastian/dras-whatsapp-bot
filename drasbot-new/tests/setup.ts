@@ -13,8 +13,18 @@ jest.mock('dotenv', () => ({
   config: jest.fn()
 }));
 
+// Extend global namespace for test utilities
+declare global {
+  var testUtils: {
+    createMockUser: () => any;
+    createMockMessage: () => any;
+    createMockContext: () => any;
+    cleanupTestData: () => Promise<void>;
+  };
+}
+
 // Global test utilities
-global.testUtils = {
+(global as any).testUtils = {
   createMockUser: () => ({
     id: 'test-user-id',
     phone: '+1234567890',

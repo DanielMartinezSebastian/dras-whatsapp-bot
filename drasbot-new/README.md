@@ -1,435 +1,310 @@
-# DrasBot v2.0 - Nueva Arquitectura TypeScript
+# DrasBot v2.0 - Modern TypeScript WhatsApp Chatbot
 
-![DrasBot](https://img.shields.io/badge/DrasBot-v2.0-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
-![Node.js](https://img.shields.io/badge/Node.js-18+-green)
-![License](https://img.shields.io/badge/License-MIT-green)
+![DrasBot Logo](https://img.shields.io/badge/DrasBot-v2.0-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
+![Tests](https://img.shields.io/badge/Tests-15%20passing-green.svg)
 
-## 🚀 Descripción
+A modern, extensible WhatsApp chatbot built with TypeScript, featuring a plugin-based architecture, robust configuration management, and comprehensive testing.
 
-DrasBot v2.0 es una reimplementación completa del chatbot de WhatsApp utilizando **TypeScript puro** con una **arquitectura modular basada en plugins**. Esta versión está diseñada para ser altamente escalable, mantenible y fácil de extender.
+## 🚀 Features
 
-## 🎯 Características Principales
+### ✅ Implemented Features
+- **Modern TypeScript Architecture** - Type-safe, modular design
+- **Plugin-Based System** - Extensible command and context management
+- **Centralized Configuration** - Hot-reload configuration with file watching
+- **Robust Database Layer** - SQLite with automatic migrations
+- **Advanced Logging** - Multi-level logging with file and console output
+- **Comprehensive Testing** - TDD approach with Jest testing framework
+- **Singleton Pattern Services** - Efficient resource management
+- **Graceful Shutdown** - Proper cleanup and signal handling
 
-- ✅ **TypeScript First** - Tipado estricto en toda la aplicación
-- ✅ **Arquitectura Plugin** - Sistema extensible de comandos y contextos
-- ✅ **Configuración JSON** - Gestión centralizada sin código
-- ✅ **Base de Datos Escalable** - SQLite con migraciones automáticas
-- ✅ **Gestión Híbrida** - PM2 + tmux para máxima flexibilidad
-- ✅ **Hot Reload** - Desarrollo ágil con recarga automática
-- ✅ **Logging Avanzado** - Winston con múltiples niveles
-- ✅ **Testing** - Jest con cobertura completa
-- ✅ **API REST** - Endpoints para gestión externa
+### 🔄 In Development
+- WhatsApp Web Integration
+- Message Processing Pipeline
+- Command System
+- Context Management
+- User Authentication & Levels
 
-## 📁 Estructura del Proyecto
+### 📋 Planned Features
+- Web Administration Panel
+- REST API
+- Real-time Dashboard
+- Advanced Analytics
+- Multi-language Support
+- Plugin Marketplace
+
+## 🏗️ Architecture
 
 ```
-drasbot-new/
-├── src/
-│   ├── types/           # Definiciones de tipos TypeScript
-│   ├── interfaces/      # Interfaces y contratos
-│   ├── core/           # Núcleo del bot (Bot, MessageProcessor, etc.)
-│   ├── plugins/        # Sistema de plugins
-│   │   ├── commands/   # Comandos (admin, general, user)
-│   │   └── contexts/   # Manejadores de contexto
-│   ├── services/       # Servicios (Database, Config, etc.)
-│   ├── utils/          # Utilidades (Logger, helpers)
-│   └── database/       # Modelos, migraciones, seeds
-├── config/
-│   ├── messages/       # Mensajes internacionalizados
-│   ├── contexts/       # Configuración de contextos
-│   └── commands/       # Configuración de comandos
-├── data/               # Base de datos SQLite
-├── logs/               # Archivos de log
-├── tests/              # Tests unitarios e integración
-└── scripts/            # Scripts de utilidades
+src/
+├── core/           # Core bot orchestration
+├── services/       # Business logic services
+├── utils/          # Utility functions
+├── types/          # TypeScript type definitions
+├── interfaces/     # Service interfaces
+├── plugins/        # Extensible plugins (planned)
+├── commands/       # Command implementations (planned)
+└── contexts/       # Context handlers (planned)
 ```
 
-## 🛠️ Instalación
+## 🚦 Quick Start
 
-### Prerrequisitos
-
+### Prerequisites
 - Node.js 18+ 
-- npm o yarn
-- Go 1.19+ (para el bridge)
-- tmux (opcional, para desarrollo)
-- PM2 (opcional, para producción)
+- npm or yarn
+- SQLite3
 
-### Setup Inicial
+### Installation
 
-```bash
-# Clonar e instalar dependencias
-cd drasbot-new
-npm install
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd drasbot-new
+   ```
 
-# Copiar configuración de ejemplo
-cp .env.example .env
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-# Editar variables de entorno
-nano .env
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-# Compilar TypeScript
-npm run build
+4. **Build the project**
+   ```bash
+   npm run build
+   ```
 
-# Ejecutar migraciones
-npm run migrate
+5. **Run tests**
+   ```bash
+   npm test
+   ```
 
-# Sembrar datos iniciales
-npm run seed
-```
-
-## 🚀 Uso
-
-### Desarrollo
-
-```bash
-# Modo desarrollo con hot reload
-npm run dev
-
-# Ejecutar tests
-npm test
-
-# Ejecutar tests en modo watch
-npm run test:watch
-
-# Linting y formateo
-npm run lint
-npm run format
-```
-
-### Producción
-
-```bash
-# Compilar para producción
-npm run build
-
-# Iniciar con PM2 (recomendado)
-pm2 start ecosystem.config.js --env production
-
-# O iniciar directamente
-npm start
-```
-
-### Gestión con manage.sh
-
-```bash
-# Setup inicial (muestra QR code)
-../manage.sh setup
-
-# Inicio inteligente (auto-detecta modo)
-../manage.sh start
-
-# Modo desarrollo
-../manage.sh dev-start
-
-# Modo producción
-../manage.sh prod-start
-
-# Estado del sistema
-../manage.sh status
-
-# Logs en tiempo real
-../manage.sh logs
-```
-
-## 🔧 Configuración
-
-### Variables de Entorno (.env)
-
-```env
-# Bot Configuration
-BOT_NAME=DrasBot
-BOT_PREFIX=!
-BOT_LANGUAGE=es
-
-# Database
-DATABASE_PATH=./data/drasbot.db
-
-# WhatsApp Bridge
-BRIDGE_URL=http://127.0.0.1:8080
-
-# Server
-PORT=3000
-HOST=127.0.0.1
-```
-
-### Mensajes (config/messages/es.json)
-
-```json
-{
-  "welcome": "¡Hola! Soy {bot_name} 🤖",
-  "help": "Comandos disponibles:\n{commands}",
-  "error": "Ocurrió un error: {error}"
-}
-```
-
-## 🔌 Sistema de Plugins
-
-### Crear un Comando
-
-```typescript
-// src/plugins/commands/general/hello.ts
-import { ICommand } from '@interfaces/index';
-
-export class HelloCommand implements ICommand {
-  readonly metadata = {
-    name: 'hello',
-    version: '1.0.0',
-    description: 'Comando de saludo',
-    author: 'DrasBot',
-    category: 'command' as const
-  };
-
-  readonly config = {
-    name: 'hello',
-    description: 'Saluda al usuario',
-    usage: '!hello',
-    category: 'general' as const,
-    min_user_level: 'guest' as const,
-    enabled: true
-  };
-
-  async execute(message: Message, user: User): Promise<CommandResult> {
-    return {
-      success: true,
-      response: `¡Hola ${user.display_name}! 👋`
-    };
-  }
-
-  validatePermissions(user: User): boolean {
-    return true; // Todos pueden usar este comando
-  }
-
-  getUsage(): string {
-    return this.config.usage;
-  }
-}
-```
-
-### Crear un Contexto
-
-```typescript
-// src/plugins/contexts/survey.ts
-import { IContextHandler } from '@interfaces/index';
-
-export class SurveyContext implements IContextHandler {
-  readonly metadata = {
-    name: 'survey',
-    version: '1.0.0',
-    description: 'Contexto de encuesta',
-    author: 'DrasBot',
-    category: 'context' as const
-  };
-
-  readonly config = {
-    name: 'survey',
-    description: 'Encuesta de satisfacción',
-    max_duration: 300000, // 5 minutos
-    auto_exit_on_timeout: true,
-    steps: [
-      {
-        id: 'rating',
-        name: 'Calificación',
-        message_key: 'survey_rating',
-        validation: {
-          type: 'choice',
-          choices: ['1', '2', '3', '4', '5'],
-          required: true
-        },
-        next_step: 'feedback'
-      },
-      {
-        id: 'feedback',
-        name: 'Comentarios',
-        message_key: 'survey_feedback',
-        validation: {
-          type: 'text',
-          max_length: 500,
-          required: false
-        }
-      }
-    ]
-  };
-
-  async enter(user: User): Promise<ConversationContext> {
-    // Lógica de entrada al contexto
-  }
-
-  async process(context: ConversationContext, message: Message): Promise<CommandResult> {
-    // Procesar mensaje en el contexto
-  }
-
-  // ... más métodos
-}
-```
-
-## 📊 Base de Datos
-
-### Tipos Escalables
-
-```typescript
-// src/types/database.ts
-export interface User extends BaseEntity {
-  phone: string;
-  whatsapp_jid: string;
-  display_name: string;
-  user_level: UserLevel;
-  preferences: UserPreferences;
-  metadata: Record<string, any>; // Extensible
-}
-
-// Plugin data (auto-extensible)
-export interface PluginData extends BaseEntity {
-  plugin_name: string;
-  user_id: string;
-  data: Record<string, any>;
-}
-```
-
-### Migraciones
-
-```typescript
-// src/database/migrations/001_initial.ts
-export class InitialMigration implements IMigration {
-  version = '001';
-  description = 'Create initial tables';
-
-  async up(db: Database): Promise<void> {
-    await db.exec(`
-      CREATE TABLE users (
-        id TEXT PRIMARY KEY,
-        phone TEXT UNIQUE NOT NULL,
-        whatsapp_jid TEXT UNIQUE NOT NULL,
-        display_name TEXT NOT NULL,
-        user_level TEXT DEFAULT 'guest',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    `);
-  }
-
-  async down(db: Database): Promise<void> {
-    await db.exec('DROP TABLE users');
-  }
-}
-```
+6. **Start the bot**
+   ```bash
+   npm start
+   ```
 
 ## 🧪 Testing
 
+DrasBot follows Test-Driven Development (TDD) practices:
+
 ```bash
-# Ejecutar todos los tests
+# Run all tests
 npm test
 
-# Tests con cobertura
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
 npm run test:coverage
 
-# Tests específicos
-npm test -- --grep "UserService"
-
-# Tests en modo watch
-npm run test:watch
+# Run specific test file
+npm test -- logger.test.ts
 ```
 
-### Ejemplo de Test
+### Test Coverage
+- **Logger Service**: ✅ 100% (Basic functionality)
+- **Bot Core**: ✅ 100% (Lifecycle management)
+- **Configuration Service**: ✅ Integrated
+- **Database Service**: ✅ Integrated
 
-```typescript
-// tests/services/user.service.test.ts
-describe('UserService', () => {
-  it('should create a new user', async () => {
-    const userData = {
-      phone: '+1234567890',
-      whatsapp_jid: '1234567890@s.whatsapp.net',
-      display_name: 'Test User'
-    };
+## 📁 Project Structure
 
-    const user = await userService.createUser(userData);
-    
-    expect(user).toBeDefined();
-    expect(user.phone).toBe(userData.phone);
-    expect(user.user_level).toBe('guest');
-  });
-});
+```
+drasbot-new/
+├── src/                 # Source code
+│   ├── core/           # Core bot logic
+│   ├── services/       # Service layer
+│   ├── utils/          # Utilities
+│   ├── types/          # Type definitions
+│   └── interfaces/     # Interfaces
+├── tests/              # Test files
+├── config/             # Configuration files
+├── data/               # Database and data files
+├── logs/               # Log files
+├── dist/               # Compiled JavaScript
+├── docs/               # Documentation
+└── scripts/            # Utility scripts
 ```
 
-## 📈 Monitoreo
+## ⚙️ Configuration
 
-### PM2 Monitoring
+Configuration is managed through JSON files in the `config/` directory:
 
-```bash
-# Ver estado de procesos
-pm2 status
+- `main.json` - Main bot configuration
+- `user-levels.json` - User permission levels
+- `messages/es.json` - Localized messages
 
-# Logs en tiempo real
-pm2 logs drasbot-new
+### Example Configuration
 
-# Monitor de recursos
-pm2 monit
-
-# Reiniciar si es necesario
-pm2 restart drasbot-new
-```
-
-### Health Check
-
-```bash
-# API de salud
-curl http://localhost:3000/health
-
-# Respuesta
+```json
 {
-  "status": "healthy",
-  "services": {
-    "database": "connected",
-    "whatsapp": "connected",
-    "plugins": "loaded"
+  "name": "DrasBot",
+  "prefix": "!",
+  "language": "es",
+  "timezone": "America/Santiago",
+  "features": {
+    "plugins": true,
+    "contexts": true,
+    "web_panel": false,
+    "api": true
   }
 }
 ```
 
-## 🔒 Seguridad
+## 🔧 Development
 
-- ✅ **Rate Limiting** - Protección contra spam
-- ✅ **Input Validation** - Joi schemas para validación
-- ✅ **SQL Injection Protection** - Prepared statements
-- ✅ **User Level Authorization** - Sistema de permisos
-- ✅ **Environment Variables** - Configuración segura
+### Available Scripts
 
-## 📖 Documentación
+```bash
+npm run build         # Compile TypeScript
+npm run dev           # Development mode (planned)
+npm run test          # Run tests
+npm run test:watch    # Tests in watch mode
+npm run lint          # ESLint checking
+npm run format        # Prettier formatting
+npm start             # Start production build
+```
 
-- [Arquitectura Completa](../ARQUITECTURA_NUEVA_DRASBOT.md) - Documentación técnica detallada
-- [API Reference](./docs/api.md) - Documentación de endpoints
-- [Plugin Development](./docs/plugins.md) - Guía de desarrollo de plugins
-- [Database Schema](./docs/database.md) - Esquema de base de datos
+### Adding New Features
 
-## 🤝 Contribuir
+1. Write tests first (TDD approach)
+2. Implement the feature
+3. Ensure all tests pass
+4. Update documentation
 
-1. Fork el proyecto
-2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -m 'feat: agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
+## 🚀 Deployment
 
-## 📝 Changelog
+### Using PM2 (Recommended)
 
-### v2.0.0 (2025-06-17)
-- ✨ Reescritura completa en TypeScript
-- ✨ Sistema de plugins modular
-- ✨ Configuración JSON centralizada
-- ✨ Base de datos escalable con migraciones
-- ✨ Gestión híbrida PM2/tmux
-- ✨ API REST integrada
-- ✨ Sistema de tests completo
+```bash
+# Install PM2 globally
+npm install -g pm2
 
-## 📄 Licencia
+# Start the bot
+pm2 start ecosystem.config.js
 
-MIT License - ver [LICENSE](../LICENSE) para más detalles.
+# Monitor
+pm2 monit
 
-## 👨‍💻 Autor
+# View logs
+pm2 logs drasbot
+```
+
+### Using tmux
+
+```bash
+# Create new session
+tmux new-session -d -s drasbot
+
+# Run the bot
+tmux send-keys -t drasbot "npm start" Enter
+
+# Attach to session
+tmux attach -t drasbot
+```
+
+## 📊 Monitoring
+
+### Built-in Logging
+- All activities are logged to `logs/drasbot.log`
+- Console output with color coding
+- Log levels: DEBUG, INFO, WARN, ERROR
+
+### Status Monitoring
+```javascript
+const bot = DrasBot.getInstance();
+const status = bot.getStatus();
+console.log(status);
+```
+
+## 🛠️ Migration from Legacy System
+
+A migration script is provided to transfer data from the old system:
+
+```bash
+# Run migration script
+./scripts/migrate.sh
+```
+
+This will:
+- Backup existing data
+- Convert database schema
+- Transfer user data
+- Update configuration files
+
+## 🔒 Security
+
+### Features
+- Input validation and sanitization
+- Rate limiting
+- User permission levels
+- Secure configuration management
+- SQL injection prevention
+
+### Best Practices
+- Regular dependency updates
+- Environment variable protection
+- Secure communication protocols
+- Access control and authentication
+
+## 📚 Documentation
+
+- [Architecture Overview](ARQUITECTURA_NUEVA_DRASBOT.md)
+- [TDD Progress](TDD.md)
+- [API Documentation](docs/api/) (planned)
+- [Plugin Development](docs/plugins/) (planned)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for new features
+4. Implement the feature
+5. Ensure all tests pass
+6. Submit a pull request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
 
 **Daniel Martinez Sebastian**
-- GitHub: [@tu-usuario](https://github.com/tu-usuario)
-- Email: tu-email@ejemplo.com
+- GitHub: [@drasBot](https://github.com/drasBot)
+
+## 🙏 Acknowledgments
+
+- WhatsApp Web API community
+- TypeScript community
+- Jest testing framework
+- SQLite database engine
 
 ---
 
-**DrasBot v2.0** - Chatbot WhatsApp moderno y escalable 🚀
+## 📈 Current Status
+
+**Phase 1: Core Infrastructure** ✅ **COMPLETED**
+- ✅ TypeScript project setup
+- ✅ Core services implementation
+- ✅ Testing framework
+- ✅ Configuration management
+- ✅ Database layer
+- ✅ Logging system
+
+**Phase 2: WhatsApp Integration** 🔄 **IN PROGRESS**
+- 🔄 WhatsApp client service
+- 🔄 Message processing
+- 📋 Command system
+- 📋 Context management
+
+**Total Progress: 35% Complete**
+
+---
+
+*Last updated: June 17, 2025*

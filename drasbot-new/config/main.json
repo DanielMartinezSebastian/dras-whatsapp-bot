@@ -1,0 +1,22 @@
+{
+  "name": "DrasBot",
+  "prefix": "!",
+  "language": "es",
+  "timezone": "America/Santiago",
+  "features": {
+    "plugins": true,
+    "contexts": true,
+    "web_panel": false,
+    "api": true
+  },
+  "performance": {
+    "message_polling_interval": 1000,
+    "context_cleanup_interval": 300000,
+    "cache_ttl": 3600000
+  },
+  "security": {
+    "rate_limit_window": 60000,
+    "rate_limit_max_requests": 20,
+    "allowed_origins": ["http://localhost:3000"]
+  }
+}

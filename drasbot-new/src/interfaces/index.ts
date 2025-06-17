@@ -9,7 +9,7 @@ import {
   CommandResult, 
   PluginMetadata, 
   BotConfig 
-} from '@types/index';
+} from '../types';
 
 /**
  * Command interface
