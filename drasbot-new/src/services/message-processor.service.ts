@@ -284,14 +284,14 @@ export class MessageProcessorService {
         });
       } else {
         // Update last activity
-        await this.updateUserLastActivity(user.id);
+        await this.updateUserLastActivity(user.id.toString());
       }
 
       context.user = user;
 
       // Update message with user ID
       if (context.parsedMessage) {
-        context.parsedMessage.user_id = user.id;
+        context.parsedMessage.user_id = user.id.toString();
       }
     } catch (error) {
       this.logger.error(
@@ -613,26 +613,19 @@ export class MessageProcessorService {
   ): Promise<User> {
     // TODO: Implement with actual database insertion
     const user: User = {
-      id: `user_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      phone,
-      whatsapp_jid: whatsappJid,
-      display_name: phone,
-      user_level: UserLevel.USER,
-      level: UserLevel.USER,
-      user_type: 'normal',
-      language: 'es',
-      is_registered: false,
-      last_activity: new Date().toISOString(),
-      preferences: {
-        notifications: true,
-        auto_reply: true,
-        language: 'es',
-        timezone: 'America/Santiago',
-        privacy_level: 'normal',
-      },
-      metadata: {},
+      id: Date.now(), // Simple numeric ID
+      jid: whatsappJid,
+      phoneNumber: phone,
+      name: phone, // Default name
+      userLevel: UserLevel.USER,
+      isRegistered: false,
+      registrationDate: null,
+      lastActivity: new Date(),
+      messageCount: 0,
+      banned: false,
+      preferences: {},
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     return user;

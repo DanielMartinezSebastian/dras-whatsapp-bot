@@ -16,7 +16,16 @@ import {
 jest.mock('../src/services/config.service', () => ({
   ConfigService: {
     getInstance: jest.fn(() => ({
-      getValue: jest.fn(),
+      getValue: jest.fn((key: string, defaultValue: any) => {
+        if (key === 'context') {
+          return {
+            timeout: 300000,
+            maxActiveContexts: 100,
+            cleanupInterval: 60000,
+          };
+        }
+        return defaultValue;
+      }),
       setValue: jest.fn(),
       initialize: jest.fn(),
       shutdown: jest.fn(),
@@ -100,6 +109,9 @@ describe('ContextManagerService', () => {
     });
 
     it('should load configuration during initialization', async () => {
+      // Reset the mock to track calls
+      mockConfigService.getValue.mockClear();
+      
       await contextManager.initialize();
 
       expect(mockConfigService.getValue).toHaveBeenCalledWith('context', {});
@@ -152,6 +164,11 @@ describe('ContextManagerService', () => {
 
     it('should unregister a handler successfully', () => {
       contextManager.registerHandler(mockHandler);
+      
+      // The test_handler will be assigned to CONVERSATION type by default
+      const assignedHandler = contextManager.getHandler(ContextType.CONVERSATION);
+      expect(assignedHandler).toBeDefined();
+      
       const result = contextManager.unregisterHandler(ContextType.CONVERSATION);
 
       expect(result).toBe(true);
@@ -167,16 +184,16 @@ describe('ContextManagerService', () => {
 
   describe('Context Detection', () => {
     const mockUser: User = {
-      id: 'user_123',
-      phone: '+1234567890',
-      whatsapp_jid: 'user@s.whatsapp.net',
-      display_name: 'Test User',
-      user_level: UserLevel.USER,
-      level: UserLevel.USER,
-      user_type: 'normal',
-      language: 'es',
-      is_registered: true,
-      last_activity: new Date().toISOString(),
+      id: 123,
+      jid: 'user@s.whatsapp.net',
+      phoneNumber: '+1234567890',
+      name: 'Test User',
+      userLevel: UserLevel.USER,
+      isRegistered: true,
+      registrationDate: new Date(),
+      lastActivity: new Date(),
+      messageCount: 0,
+      banned: false,
       preferences: {
         notifications: true,
         auto_reply: false,
@@ -184,9 +201,8 @@ describe('ContextManagerService', () => {
         timezone: 'UTC',
         privacy_level: 'normal',
       },
-      metadata: {},
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const mockHandler: ContextHandler = {
@@ -344,16 +360,16 @@ describe('ContextManagerService', () => {
 
   describe('Context Execution', () => {
     const mockUser: User = {
-      id: 'user_123',
-      phone: '+1234567890',
-      whatsapp_jid: 'user@s.whatsapp.net',
-      display_name: 'Test User',
-      user_level: UserLevel.USER,
-      level: UserLevel.USER,
-      user_type: 'normal',
-      language: 'es',
-      is_registered: true,
-      last_activity: new Date().toISOString(),
+      id: 456,
+      jid: 'user@s.whatsapp.net',
+      phoneNumber: '+1234567890',
+      name: 'Test User',
+      userLevel: UserLevel.USER,
+      isRegistered: true,
+      registrationDate: new Date(),
+      lastActivity: new Date(),
+      messageCount: 0,
+      banned: false,
       preferences: {
         notifications: true,
         auto_reply: false,
@@ -361,14 +377,13 @@ describe('ContextManagerService', () => {
         timezone: 'UTC',
         privacy_level: 'normal',
       },
-      metadata: {},
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const mockMessage: Message = {
       id: 'msg_123',
-      user_id: 'user_123',
+      user_id: '456',
       whatsapp_message_id: 'wa_msg_123',
       content: 'test message',
       message_type: 'text',
@@ -395,7 +410,7 @@ describe('ContextManagerService', () => {
 
       contextManager.registerHandler(mockHandler);
       const context = await contextManager.createContext(
-        mockUser.id,
+        mockUser.id.toString(),
         ContextType.CONVERSATION
       );
 
@@ -410,13 +425,16 @@ describe('ContextManagerService', () => {
     });
 
     it('should get user context info', async () => {
+      // Clear any existing contexts first
+      await contextManager.clearUserContexts(mockUser.id.toString());
+      
       await contextManager.createContext(
-        mockUser.id,
+        mockUser.id.toString(),
         ContextType.REGISTRATION,
         { step: 'start' }
       );
 
-      const info = await contextManager.getUserContextInfo(mockUser.id);
+      const info = await contextManager.getUserContextInfo(mockUser.id.toString());
 
       expect(info.hasContext).toBe(true);
       expect(info.contextType).toBe(ContextType.REGISTRATION);
@@ -425,7 +443,7 @@ describe('ContextManagerService', () => {
 
     it('should create specific context type', async () => {
       const context = await contextManager.createSpecificContext(
-        mockUser.id,
+        mockUser.id.toString(),
         ContextType.CONFIGURATION,
         { setting: 'language' }
       );

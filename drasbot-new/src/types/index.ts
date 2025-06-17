@@ -50,9 +50,28 @@ export interface BaseEntity {
 }
 
 /**
- * User entity
+ * User entity - Application level user representation
  */
-export interface User extends BaseEntity {
+export interface User {
+  id: number;
+  jid: string;
+  phoneNumber: string;
+  name: string;
+  userLevel: UserLevel;
+  isRegistered: boolean;
+  registrationDate: Date | null;
+  lastActivity: Date;
+  messageCount: number;
+  banned: boolean;
+  preferences: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Legacy User entity - for backward compatibility
+ */
+export interface LegacyUser extends BaseEntity {
   phone: string;
   whatsapp_jid: string;
   display_name: string;
@@ -383,4 +402,112 @@ export interface PluginConfig {
   enabledPlugins: string[];
   disabledPlugins: string[];
   pluginConfigs: Record<string, Record<string, any>>;
+}
+
+/**
+ * Database Types - Raw database entity representations
+ */
+
+// Database User Types
+export interface DatabaseUser {
+  id: number;
+  jid: string;
+  phone_number: string;
+  name: string;
+  user_level: UserLevel;
+  is_registered: boolean;
+  registration_date: Date | null;
+  last_activity: Date;
+  message_count: number;
+  banned: boolean;
+  preferences: string; // JSON string
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface DatabaseUserInsert {
+  jid: string;
+  phone_number: string;
+  name: string;
+  user_level: UserLevel;
+  is_registered: boolean;
+  registration_date: Date | null;
+  last_activity: Date;
+  message_count: number;
+  banned: boolean;
+  preferences: string;
+}
+
+export interface DatabaseUserUpdate {
+  jid?: string;
+  phone_number?: string;
+  name?: string;
+  user_level?: UserLevel;
+  is_registered?: boolean;
+  registration_date?: Date | null;
+  last_activity?: Date;
+  message_count?: number;
+  banned?: boolean;
+  preferences?: string;
+  updated_at?: Date;
+}
+
+// Database Context Types
+export interface DatabaseContext {
+  id: number;
+  user_id: number;
+  context_type: ContextType;
+  context_data: string; // JSON string
+  is_active: boolean;
+  expires_at: Date | null;
+  step_index: number;
+  metadata: string; // JSON string
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface DatabaseContextInsert {
+  user_id: number;
+  context_type: ContextType;
+  context_data: string;
+  is_active: boolean;
+  expires_at: Date | null;
+  step_index: number;
+  metadata: string;
+}
+
+export interface DatabaseContextUpdate {
+  context_type?: ContextType;
+  context_data?: string;
+  is_active?: boolean;
+  expires_at?: Date | null;
+  step_index?: number;
+  metadata?: string;
+  updated_at?: Date;
+}
+
+// Database Message Types
+export interface DatabaseMessage {
+  id: number;
+  user_id: number;
+  whatsapp_message_id: string;
+  content: string;
+  message_type: MessageType;
+  is_from_bot: boolean;
+  processed: boolean;
+  response_to: string | null;
+  metadata: string; // JSON string
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface DatabaseMessageInsert {
+  user_id: number;
+  whatsapp_message_id: string;
+  content: string;
+  message_type: MessageType;
+  is_from_bot: boolean;
+  processed: boolean;
+  response_to: string | null;
+  metadata: string;
 }

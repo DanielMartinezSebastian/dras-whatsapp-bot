@@ -249,7 +249,7 @@ export class CommandRegistryService {
     }
 
     // Check user permissions
-    if (!this.isUserLevelSufficient(user.level, command.userLevel)) {
+    if (!this.isUserLevelSufficient(user.userLevel, command.userLevel)) {
       return {
         success: false,
         command: commandName,
@@ -259,8 +259,8 @@ export class CommandRegistryService {
     }
 
     // Check cooldown
-    if (!this.checkCooldown(command.name, user.id)) {
-      const remainingTime = this.getRemainingCooldown(command.name, user.id);
+    if (!this.checkCooldown(command.name, user.id.toString())) {
+      const remainingTime = this.getRemainingCooldown(command.name, user.id.toString());
       return {
         success: false,
         command: commandName,
@@ -295,7 +295,7 @@ export class CommandRegistryService {
       const executionTime = Date.now() - startTime;
 
       // Update cooldown
-      this.updateCooldown(command.name, user.id);
+      this.updateCooldown(command.name, user.id.toString());
 
       // Update usage stats
       this.updateUsageStats(command.name);

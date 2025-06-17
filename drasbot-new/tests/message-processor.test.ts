@@ -8,6 +8,7 @@ import {
 } from '../src/services/message-processor.service';
 import { ConfigService } from '../src/services/config.service';
 import { WhatsAppBridgeService } from '../src/services/whatsapp-bridge.service';
+import { Logger } from '../src/utils/logger';
 import { UserLevel } from '../src/types';
 
 // Mock all dependencies
@@ -32,18 +33,54 @@ describe('MessageProcessorService', () => {
     (MessageProcessorService as any).instance = undefined;
     (ConfigService as any).instance = undefined;
     (WhatsAppBridgeService as any).instance = undefined;
+    (Logger as any).instance = undefined;
 
-    // Get service instances after resetting
+    // Create properly mocked instances
+    const mockLogger = {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+      log: jest.fn(),
+      logLevel: 'info',
+      logDir: './logs',
+      logFile: 'app.log',
+      setLogLevel: jest.fn(),
+      enable: jest.fn(),
+      disable: jest.fn(),
+      getStats: jest.fn(),
+    } as any;
+
+    mockConfigService = {
+      getValue: jest.fn(),
+      updateValue: jest.fn(),
+      getConfig: jest.fn(),
+      saveConfig: jest.fn(),
+      initialize: jest.fn(),
+      cleanup: jest.fn(),
+    } as any;
+
+    mockWhatsAppBridge = {
+      sendMessage: jest.fn(),
+      sendTextMessage: jest.fn(),
+      sendMediaMessage: jest.fn(),
+      isAvailable: jest.fn(),
+      getHealth: jest.fn(),
+      getStatus: jest.fn(),
+      initialize: jest.fn(),
+      disconnect: jest.fn(),
+    } as any;
+
+    // Mock the getInstance methods
+    jest.spyOn(ConfigService, 'getInstance').mockReturnValue(mockConfigService);
+    jest.spyOn(WhatsAppBridgeService, 'getInstance').mockReturnValue(mockWhatsAppBridge);
+    jest.spyOn(Logger, 'getInstance').mockReturnValue(mockLogger);
+
+    // Get service instances after setting up mocks
     messageProcessor = MessageProcessorService.getInstance();
-    mockConfigService =
-      ConfigService.getInstance() as jest.Mocked<ConfigService>;
-    mockWhatsAppBridge =
-      WhatsAppBridgeService.getInstance() as jest.Mocked<WhatsAppBridgeService>;
 
-    // Setup ConfigService mocks
-    (mockConfigService as any).getValue = jest
-      .fn()
-      .mockImplementation((key: string, defaultValue?: any) => {
+    // Setup ConfigService mocks with proper implementation
+    mockConfigService.getValue.mockImplementation((key: string, defaultValue?: any) => {
         const config = {
           bot: {
             prefix: '!',
@@ -60,24 +97,83 @@ describe('MessageProcessorService', () => {
       });
 
     // Setup WhatsApp Bridge mocks
-    (mockWhatsAppBridge as any).sendTextMessage = jest
-      .fn()
-      .mockResolvedValue(true);
-    (mockWhatsAppBridge as any).sendMediaMessage = jest
-      .fn()
-      .mockResolvedValue(true);
-    (mockWhatsAppBridge as any).isAvailable = jest.fn().mockResolvedValue(true);
+    mockWhatsAppBridge.sendMessage = jest.fn().mockResolvedValue(true);
+    mockWhatsAppBridge.isAvailable = jest.fn().mockResolvedValue(true);
+
+    // Mock other services used by MessageProcessor
+    const mockDatabaseService = {
+      query: jest.fn(),
+      get: jest.fn(),
+      insert: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      initialize: jest.fn(),
+      shutdown: jest.fn(),
+    };
+
+    const mockPluginManager = {
+      executePlugin: jest.fn(),
+      getRegisteredPlugins: jest.fn().mockReturnValue([]),
+      initialize: jest.fn(),
+      shutdown: jest.fn(),
+    };
+
+    const mockCommandRegistry = {
+      findCommand: jest.fn(),
+      executeCommand: jest.fn(),
+      getRegisteredCommands: jest.fn().mockReturnValue([]),
+      initialize: jest.fn(),
+      shutdown: jest.fn(),
+    };
+
+    const mockContextManager = {
+      detectContext: jest.fn(),
+      executeContext: jest.fn(),
+      getUserContextInfo: jest.fn(),
+      getActiveContext: jest.fn(),
+      initialize: jest.fn(),
+      shutdown: jest.fn(),
+    };
+
+    // const mockLogger - removed duplicate declaration
+
+    // Mock the singleton getInstance methods for all services
+    jest.doMock('../src/services/database.service', () => ({
+      DatabaseService: {
+        getInstance: jest.fn(() => mockDatabaseService),
+      },
+    }));
+
+    jest.doMock('../src/services/plugin-manager.service', () => ({
+      PluginManagerService: {
+        getInstance: jest.fn(() => mockPluginManager),
+      },
+    }));
+
+    jest.doMock('../src/services/command-registry.service', () => ({
+      CommandRegistryService: {
+        getInstance: jest.fn(() => mockCommandRegistry),
+      },
+    }));
+
+    jest.doMock('../src/services/context-manager.service', () => ({
+      ContextManagerService: {
+        getInstance: jest.fn(() => mockContextManager),
+      },
+    }));
+
+    jest.doMock('../src/utils/logger', () => ({
+      Logger: {
+        getInstance: jest.fn(() => mockLogger),
+      },
+    }));
 
     // Setup other ConfigService methods
-    (mockConfigService as any).initialize = jest
-      .fn()
-      .mockResolvedValue(undefined);
-    (mockConfigService as any).getConfig = jest.fn().mockReturnValue({});
-    (mockConfigService as any).updateValue = jest.fn();
-    (mockConfigService as any).saveConfig = jest
-      .fn()
-      .mockResolvedValue(undefined);
-    (mockConfigService as any).cleanup = jest.fn();
+    mockConfigService.initialize = jest.fn().mockResolvedValue(undefined);
+    mockConfigService.getConfig = jest.fn().mockReturnValue({});
+    mockConfigService.updateValue = jest.fn();
+    mockConfigService.saveConfig = jest.fn().mockResolvedValue(undefined);
+    mockConfigService.cleanup = jest.fn();
   });
 
   describe('Singleton Pattern', () => {
@@ -168,9 +264,9 @@ describe('MessageProcessorService', () => {
 
         expect(result.success).toBe(true);
         expect(result.user).toBeDefined();
-        expect(result.user?.phone).toBe('1234567890');
-        expect(result.user?.whatsapp_jid).toBe('1234567890@s.whatsapp.net');
-        expect(result.user?.user_level).toBe(UserLevel.USER);
+        expect(result.user?.phoneNumber).toBe('1234567890');
+        expect(result.user?.jid).toBe('1234567890@s.whatsapp.net');
+        expect(result.user?.userLevel).toBe(UserLevel.USER);
       });
 
       it('should set user ID in parsed message', async () => {

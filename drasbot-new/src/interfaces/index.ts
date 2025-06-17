@@ -32,7 +32,7 @@ export interface CommandConfig {
   description: string;
   usage: string;
   category: 'admin' | 'general' | 'user' | 'premium';
-  min_user_level: User['user_level'];
+  min_user_level: User['userLevel'];
   rate_limit?: {
     requests: number;
     window: number; // milliseconds

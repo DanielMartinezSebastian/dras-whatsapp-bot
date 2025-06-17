@@ -203,7 +203,7 @@ export class ContextManagerService {
         // Check user level requirements
         const requiredLevel = this.getHandlerRequiredLevel(handler);
         if (
-          this.getUserLevelValue(user.user_level) <
+          this.getUserLevelValue(user.userLevel) <
           this.getUserLevelValue(requiredLevel)
         ) {
           continue;
@@ -436,7 +436,7 @@ export class ContextManagerService {
       this.executionCounter++;
       
       // Check if user has an active context
-      let context = contextState || (await this.getActiveContext(user.id));
+      let context = contextState || (await this.getActiveContext(user.id.toString()));
 
       if (!context) {
         // Try to detect new context
@@ -445,7 +445,7 @@ export class ContextManagerService {
         if (detection.detected && detection.handler) {
           // Create new context
           context = await this.createContext(
-            user.id,
+            user.id.toString(),
             this.getHandlerContextType(detection.handler),
             {
               detectionMetadata: detection.metadata,
@@ -795,6 +795,19 @@ export class ContextManagerService {
     if ('userLevel' in handler) {
       return handler.userLevel as UserLevel;
     }
+    
+    // Also check metadata.userLevel
+    if (
+      'metadata' in handler &&
+      handler.metadata &&
+      typeof handler.metadata === 'object'
+    ) {
+      const metadata = handler.metadata as Record<string, any>;
+      if (metadata.userLevel) {
+        return metadata.userLevel as UserLevel;
+      }
+    }
+    
     return UserLevel.USER;
   }
 
