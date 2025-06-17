@@ -64,8 +64,14 @@ export class HelpCommand extends Command {
 
     // Obtener configuración de ayuda desde messages.commands
     const config = this.configService.getConfiguration();
-    const generalConfig = this.getValueByPath(config, "messages.commands.help.general");
-    const categories = this.getValueByPath(config, "messages.commands.help.categories");
+    const generalConfig = this.getValueByPath(
+      config,
+      "messages.commands.help.general"
+    );
+    const categories = this.getValueByPath(
+      config,
+      "messages.commands.help.categories"
+    );
 
     let response =
       this.getConfigMessage(
@@ -101,7 +107,7 @@ export class HelpCommand extends Command {
       config,
       "messages.commands.help.general.footer"
     );
-    
+
     if (footerConfig) {
       response += footerConfig.usage + "\n";
       response += footerConfig.support;
@@ -112,7 +118,10 @@ export class HelpCommand extends Command {
 
   private getUserRoleLevel(userType?: string): number {
     const config = this.configService.getConfiguration();
-    const roleLevels = this.getValueByPath(config, "messages.commands.role_levels");
+    const roleLevels = this.getValueByPath(
+      config,
+      "messages.commands.role_levels"
+    );
 
     if (roleLevels && userType) {
       return roleLevels[userType] || 1;

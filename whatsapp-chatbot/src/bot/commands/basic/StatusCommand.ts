@@ -56,42 +56,72 @@ export class StatusCommand extends Command {
     const performanceStats = this.getPerformanceStats();
 
     // Obtener configuración de respuesta
-    const responseConfig = this.getValueByPath("status.response");
-    const statusIndicators = this.getValueByPath("status.status_indicators");
-    const systemDefaults = this.getValueByPath("status.system_defaults");
+    const responseConfig = this.getValueByPath(
+      null,
+      "messages.commands.status.response"
+    );
+    const statusIndicators = this.getValueByPath(
+      null,
+      "messages.commands.status.status_indicators"
+    );
+    const systemDefaults = this.getValueByPath(
+      null,
+      "messages.commands.status.system_defaults"
+    );
 
     let statusText =
       this.getConfigMessage(
-        "status.response.title",
+        "messages.commands.status.response.title",
         {},
         "📊 **ESTADO DEL SISTEMA**"
       ) + "\n\n";
 
     // Sección de servicios
     const servicesSection = this.getValueByPath(
-      "status.response.sections.services"
+      null,
+      "messages.commands.status.response.sections.services"
     );
+    console.log(`🔍 DEBUG StatusCommand: servicesSection=`, servicesSection);
+
     if (servicesSection) {
       statusText += servicesSection.title + "\n";
-      for (const item of servicesSection.items) {
-        statusText +=
-          this.replaceVariables(item, {
-            botStatus: statusIndicators?.active || "✅ Funcionando",
-            dbStatus: `${dbStatus.isConnected ? "✅" : "❌"} ${
-              dbStatus.status
-            }`,
-            commandSystemStatus:
-              systemDefaults?.command_system || "✅ TypeScript Activo",
-            permissionsStatus: systemDefaults?.permissions || "✅ Activo",
-            logsStatus: systemDefaults?.logs || "✅ Activo",
-          }) + "\n";
+      console.log(
+        `🔍 DEBUG StatusCommand: servicesSection.items=`,
+        servicesSection.items
+      );
+      console.log(
+        `🔍 DEBUG StatusCommand: servicesSection.items is array?=`,
+        Array.isArray(servicesSection.items)
+      );
+
+      if (Array.isArray(servicesSection.items)) {
+        for (const item of servicesSection.items) {
+          statusText +=
+            this.replaceVariables(item, {
+              botStatus: statusIndicators?.active || "✅ Funcionando",
+              dbStatus: `${dbStatus.isConnected ? "✅" : "❌"} ${
+                dbStatus.status
+              }`,
+              commandSystemStatus:
+                systemDefaults?.command_system || "✅ TypeScript Activo",
+              permissionsStatus: systemDefaults?.permissions || "✅ Activo",
+              logsStatus: systemDefaults?.logs || "✅ Activo",
+            }) + "\n";
+        }
+      } else {
+        console.log(
+          `🔍 DEBUG StatusCommand: servicesSection.items no es un array o es undefined`
+        );
       }
       statusText += "\n";
+    } else {
+      console.log(`🔍 DEBUG StatusCommand: servicesSection es undefined`);
     }
 
     // Sección de actividad
     const activitySection = this.getValueByPath(
-      "status.response.sections.activity"
+      null,
+      "messages.commands.status.response.sections.activity"
     );
     if (activitySection) {
       statusText += activitySection.title + "\n";
@@ -109,7 +139,8 @@ export class StatusCommand extends Command {
 
     // Sección de rendimiento
     const performanceSection = this.getValueByPath(
-      "status.response.sections.performance"
+      null,
+      "messages.commands.status.response.sections.performance"
     );
     if (performanceSection) {
       statusText += performanceSection.title + "\n";
@@ -128,7 +159,8 @@ export class StatusCommand extends Command {
 
     // Sección de TypeScript
     const typescriptSection = this.getValueByPath(
-      "status.response.sections.typescript"
+      null,
+      "messages.commands.status.response.sections.typescript"
     );
     if (typescriptSection) {
       statusText += typescriptSection.title + "\n";
@@ -150,7 +182,8 @@ export class StatusCommand extends Command {
 
     // Footer
     const footerSection = this.getValueByPath(
-      "status.response.sections.footer"
+      null,
+      "messages.commands.status.response.sections.footer"
     );
     if (footerSection?.text) {
       statusText += footerSection.text;
@@ -230,9 +263,24 @@ export class StatusCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    return path
-      .split(".")
-      .reduce((current, key) => current?.[key], config as any);
+    console.log(
+      `🔍 DEBUG StatusCommand getValueByPath: path=${path}, config existe=${!!config}`
+    );
+
+    const result = path.split(".").reduce((current, key) => {
+      console.log(
+        `🔍 DEBUG StatusCommand getValueByPath: navegando key=${key}, current=${!!current}, tiene key=${
+          current && current[key] !== undefined
+        }`
+      );
+      return current?.[key];
+    }, config as any);
+
+    console.log(
+      `🔍 DEBUG StatusCommand getValueByPath: resultado final=`,
+      result
+    );
+    return result;
   }
 
   private async getDatabaseStatus(): Promise<{
