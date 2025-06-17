@@ -16,7 +16,7 @@ describe('CommandRegistryService', () => {
     (CommandRegistryService as any).instance = undefined;
     (ConfigService as any).instance = undefined;
     (PluginManagerService as any).instance = undefined;
-    
+
     commandRegistry = CommandRegistryService.getInstance();
 
     // Mock command for testing
@@ -32,12 +32,12 @@ describe('CommandRegistryService', () => {
           name: 'message',
           type: 'string',
           required: true,
-          description: 'Test message parameter'
-        }
+          description: 'Test message parameter',
+        },
       ],
       examples: ['!test hello'],
       enabled: true,
-      plugin: 'test-plugin'
+      plugin: 'test-plugin',
     };
   });
 
@@ -52,7 +52,7 @@ describe('CommandRegistryService', () => {
     it('should return singleton instance', () => {
       const instance1 = CommandRegistryService.getInstance();
       const instance2 = CommandRegistryService.getInstance();
-      
+
       expect(instance1).toBe(instance2);
       expect(instance1).toBeInstanceOf(CommandRegistryService);
     });
@@ -61,17 +61,17 @@ describe('CommandRegistryService', () => {
   describe('command registration', () => {
     it('should register command successfully', () => {
       commandRegistry.registerCommand(mockCommand);
-      
+
       const retrievedCommand = commandRegistry.getCommand('test');
       expect(retrievedCommand).toBe(mockCommand);
     });
 
     it('should register command aliases', () => {
       commandRegistry.registerCommand(mockCommand);
-      
+
       const commandByAlias = commandRegistry.getCommand('t');
       expect(commandByAlias).toBe(mockCommand);
-      
+
       const commandByAlias2 = commandRegistry.getCommand('testing');
       expect(commandByAlias2).toBe(mockCommand);
     });
@@ -79,10 +79,10 @@ describe('CommandRegistryService', () => {
     it('should unregister command successfully', () => {
       commandRegistry.registerCommand(mockCommand);
       commandRegistry.unregisterCommand('test');
-      
+
       const command = commandRegistry.getCommand('test');
       expect(command).toBeNull();
-      
+
       // Aliases should also be removed
       const alias = commandRegistry.getCommand('t');
       expect(alias).toBeNull();
@@ -103,10 +103,10 @@ describe('CommandRegistryService', () => {
 
     it('should parse command from message', () => {
       const result = commandRegistry.parseCommand('!test hello world');
-      
+
       expect(result).toEqual({
         command: 'test',
-        args: ['hello', 'world']
+        args: ['hello', 'world'],
       });
     });
 
@@ -122,10 +122,10 @@ describe('CommandRegistryService', () => {
 
     it('should handle command with no arguments', () => {
       const result = commandRegistry.parseCommand('!test');
-      
+
       expect(result).toEqual({
         command: 'test',
-        args: []
+        args: [],
       });
     });
   });
@@ -134,8 +134,13 @@ describe('CommandRegistryService', () => {
     beforeEach(() => {
       // Register multiple test commands
       const command1 = { ...mockCommand, name: 'cmd1', category: 'cat1' };
-      const command2 = { ...mockCommand, name: 'cmd2', category: 'cat2', userLevel: UserLevel.ADMIN };
-      
+      const command2 = {
+        ...mockCommand,
+        name: 'cmd2',
+        category: 'cat2',
+        userLevel: UserLevel.ADMIN,
+      };
+
       commandRegistry.registerCommand(command1);
       commandRegistry.registerCommand(command2);
     });
@@ -152,11 +157,15 @@ describe('CommandRegistryService', () => {
     });
 
     it('should get commands for user level', () => {
-      const userCommands = commandRegistry.getCommandsForUserLevel(UserLevel.USER);
+      const userCommands = commandRegistry.getCommandsForUserLevel(
+        UserLevel.USER
+      );
       expect(userCommands).toHaveLength(1);
       expect(userCommands[0].name).toBe('cmd1');
-      
-      const adminCommands = commandRegistry.getCommandsForUserLevel(UserLevel.ADMIN);
+
+      const adminCommands = commandRegistry.getCommandsForUserLevel(
+        UserLevel.ADMIN
+      );
       expect(adminCommands).toHaveLength(2);
     });
   });
@@ -184,11 +193,11 @@ describe('CommandRegistryService', () => {
           auto_reply: false,
           language: 'es',
           timezone: 'UTC',
-          privacy_level: 'normal' as const
+          privacy_level: 'normal' as const,
         },
         metadata: {},
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       mockMessage = {
@@ -201,7 +210,7 @@ describe('CommandRegistryService', () => {
         processed: false,
         metadata: {},
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       mockPluginContext = {
@@ -210,7 +219,7 @@ describe('CommandRegistryService', () => {
         config: {} as any,
         database: {} as any,
         logger: {} as any,
-        whatsappBridge: {} as any
+        whatsappBridge: {} as any,
       };
 
       // Mock plugin manager
@@ -222,14 +231,14 @@ describe('CommandRegistryService', () => {
         response: {
           type: 'text',
           content: 'Test response',
-          metadata: {}
-        }
+          metadata: {},
+        },
       });
     });
 
     it('should execute command successfully', async () => {
       commandRegistry.registerCommand(mockCommand);
-      
+
       const result = await commandRegistry.executeCommand(
         'test',
         ['hello'],
@@ -240,7 +249,10 @@ describe('CommandRegistryService', () => {
 
       expect(result.success).toBe(true);
       expect(result.command).toBe('test');
-      expect(mockPluginManager.executePlugin).toHaveBeenCalledWith('test-plugin', mockPluginContext);
+      expect(mockPluginManager.executePlugin).toHaveBeenCalledWith(
+        'test-plugin',
+        mockPluginContext
+      );
     });
 
     it('should fail for non-existent command', async () => {
@@ -253,13 +265,13 @@ describe('CommandRegistryService', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Command \'non-existent\' not found');
+      expect(result.error).toBe("Command 'non-existent' not found");
     });
 
     it('should fail for disabled command', async () => {
       const disabledCommand = { ...mockCommand, enabled: false };
       commandRegistry.registerCommand(disabledCommand);
-      
+
       const result = await commandRegistry.executeCommand(
         'test',
         [],
@@ -269,13 +281,13 @@ describe('CommandRegistryService', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Command \'test\' is disabled');
+      expect(result.error).toBe("Command 'test' is disabled");
     });
 
     it('should fail for insufficient permissions', async () => {
       const adminCommand = { ...mockCommand, userLevel: UserLevel.ADMIN };
       commandRegistry.registerCommand(adminCommand);
-      
+
       const result = await commandRegistry.executeCommand(
         'test',
         [],
@@ -285,7 +297,7 @@ describe('CommandRegistryService', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Insufficient permissions to execute \'test\'');
+      expect(result.error).toBe("Insufficient permissions to execute 'test'");
     });
   });
 
@@ -311,11 +323,11 @@ describe('CommandRegistryService', () => {
           auto_reply: false,
           language: 'en',
           timezone: 'UTC',
-          privacy_level: 'normal' as any
+          privacy_level: 'normal' as any,
         },
         metadata: {},
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const mockMessage = {
@@ -328,7 +340,7 @@ describe('CommandRegistryService', () => {
         processed: false,
         metadata: {},
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const mockPluginContext = {
@@ -337,22 +349,34 @@ describe('CommandRegistryService', () => {
         config: {} as any,
         database: {} as any,
         logger: {} as any,
-        whatsappBridge: {} as any
+        whatsappBridge: {} as any,
       };
 
       const mockPluginManager = PluginManagerService.getInstance();
       jest.spyOn(mockPluginManager, 'executePlugin').mockResolvedValue({
         success: true,
         command: 'test',
-        executionTime: 100
+        executionTime: 100,
       });
 
       // First execution should succeed
-      const result1 = await commandRegistry.executeCommand('test', ['hello'], mockUser, mockMessage, mockPluginContext);
+      const result1 = await commandRegistry.executeCommand(
+        'test',
+        ['hello'],
+        mockUser,
+        mockMessage,
+        mockPluginContext
+      );
       expect(result1.success).toBe(true);
 
       // Second execution should fail due to cooldown
-      const result2 = await commandRegistry.executeCommand('test', ['hello'], mockUser, mockMessage, mockPluginContext);
+      const result2 = await commandRegistry.executeCommand(
+        'test',
+        ['hello'],
+        mockUser,
+        mockMessage,
+        mockPluginContext
+      );
       expect(result2.success).toBe(false);
       expect(result2.error).toContain('is on cooldown');
     });
@@ -367,9 +391,9 @@ describe('CommandRegistryService', () => {
             name: 'required_param',
             type: 'string' as const,
             required: true,
-            description: 'Required parameter'
-          }
-        ]
+            description: 'Required parameter',
+          },
+        ],
       };
 
       // This is testing internal parameter parsing/validation logic
@@ -385,7 +409,7 @@ describe('CommandRegistryService', () => {
 
     it('should generate command help', () => {
       const help = commandRegistry.getCommandHelp('test');
-      
+
       expect(help).toBeDefined();
       expect(help).toContain('test');
       expect(help).toContain('Test command');
@@ -402,12 +426,16 @@ describe('CommandRegistryService', () => {
   describe('command statistics', () => {
     beforeEach(() => {
       commandRegistry.registerCommand(mockCommand);
-      commandRegistry.registerCommand({ ...mockCommand, name: 'test2', category: 'cat2' });
+      commandRegistry.registerCommand({
+        ...mockCommand,
+        name: 'test2',
+        category: 'cat2',
+      });
     });
 
     it('should return correct statistics', () => {
       const stats = commandRegistry.getCommandStats();
-      
+
       expect(stats.totalCommands).toBe(2);
       expect(stats.totalAliases).toBeGreaterThan(0);
       expect(stats.categoriesCount).toBeDefined();

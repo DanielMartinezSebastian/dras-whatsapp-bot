@@ -1,6 +1,6 @@
 /**
  * Command Registry Service
- * 
+ *
  * Manages command registration, lookup, execution, and validation.
  * Handles command discovery from plugins and provides centralized command management.
  */
@@ -15,7 +15,7 @@ import {
   PluginContext,
   UserLevel,
   User,
-  Message
+  Message,
 } from '../types';
 
 export interface CommandExecutionContext {
@@ -38,7 +38,7 @@ export class CommandRegistryService {
   private logger: Logger;
   private config: ConfigService;
   private pluginManager: PluginManagerService;
-  
+
   private commands: CommandRegistry = {};
   private commandAliases: Map<string, string> = new Map();
   private commandCooldowns: Map<string, Map<string, number>> = new Map();
@@ -66,13 +66,20 @@ export class CommandRegistryService {
     try {
       // Load commands from plugins
       await this.discoverCommands();
-      
+
       // Register command aliases
       this.registerAliases();
 
-      this.logger.info('CommandRegistry', `Command Registry initialized with ${Object.keys(this.commands).length} commands`);
+      this.logger.info(
+        'CommandRegistry',
+        `Command Registry initialized with ${Object.keys(this.commands).length} commands`
+      );
     } catch (error) {
-      this.logger.error('CommandRegistry', 'Failed to initialize Command Registry', { error });
+      this.logger.error(
+        'CommandRegistry',
+        'Failed to initialize Command Registry',
+        { error }
+      );
       throw error;
     }
   }
@@ -82,27 +89,36 @@ export class CommandRegistryService {
    */
   public registerCommand(command: Command): void {
     if (this.commands[command.name]) {
-      this.logger.warn('CommandRegistry', `Command '${command.name}' is already registered. Overwriting...`);
+      this.logger.warn(
+        'CommandRegistry',
+        `Command '${command.name}' is already registered. Overwriting...`
+      );
     }
 
     // Validate command structure
     const validation = this.validateCommand(command);
     if (!validation.valid) {
-      throw new Error(`Invalid command '${command.name}': ${validation.errors.join(', ')}`);
+      throw new Error(
+        `Invalid command '${command.name}': ${validation.errors.join(', ')}`
+      );
     }
 
     this.commands[command.name] = command;
-    
+
     // Register aliases
     for (const alias of command.aliases) {
       this.commandAliases.set(alias, command.name);
     }
 
-    this.logger.debug('CommandRegistry', `Command '${command.name}' registered`, {
-      aliases: command.aliases,
-      category: command.category,
-      userLevel: command.userLevel
-    });
+    this.logger.debug(
+      'CommandRegistry',
+      `Command '${command.name}' registered`,
+      {
+        aliases: command.aliases,
+        category: command.category,
+        userLevel: command.userLevel,
+      }
+    );
   }
 
   /**
@@ -111,7 +127,10 @@ export class CommandRegistryService {
   public unregisterCommand(commandName: string): void {
     const command = this.commands[commandName];
     if (!command) {
-      this.logger.warn('CommandRegistry', `Command '${commandName}' is not registered`);
+      this.logger.warn(
+        'CommandRegistry',
+        `Command '${commandName}' is not registered`
+      );
       return;
     }
 
@@ -126,7 +145,10 @@ export class CommandRegistryService {
     // Clear cooldowns
     this.commandCooldowns.delete(commandName);
 
-    this.logger.debug('CommandRegistry', `Command '${commandName}' unregistered`);
+    this.logger.debug(
+      'CommandRegistry',
+      `Command '${commandName}' unregistered`
+    );
   }
 
   /**
@@ -158,14 +180,16 @@ export class CommandRegistryService {
    * Get commands by category
    */
   public getCommandsByCategory(category: string): Command[] {
-    return Object.values(this.commands).filter(command => command.category === category);
+    return Object.values(this.commands).filter(
+      command => command.category === category
+    );
   }
 
   /**
    * Get commands available to user level
    */
   public getCommandsForUserLevel(userLevel: UserLevel): Command[] {
-    return Object.values(this.commands).filter(command => 
+    return Object.values(this.commands).filter(command =>
       this.isUserLevelSufficient(userLevel, command.userLevel)
     );
   }
@@ -173,9 +197,11 @@ export class CommandRegistryService {
   /**
    * Parse command from message
    */
-  public parseCommand(message: string): { command: string; args: string[] } | null {
+  public parseCommand(
+    message: string
+  ): { command: string; args: string[] } | null {
     const prefix = this.config.getValue('bot.commandPrefix', '!');
-    
+
     if (!message.startsWith(prefix)) {
       return null;
     }
@@ -208,7 +234,7 @@ export class CommandRegistryService {
         success: false,
         command: commandName,
         executionTime: 0,
-        error: `Command '${commandName}' not found`
+        error: `Command '${commandName}' not found`,
       };
     }
 
@@ -218,7 +244,7 @@ export class CommandRegistryService {
         success: false,
         command: commandName,
         executionTime: 0,
-        error: `Command '${commandName}' is disabled`
+        error: `Command '${commandName}' is disabled`,
       };
     }
 
@@ -228,7 +254,7 @@ export class CommandRegistryService {
         success: false,
         command: commandName,
         executionTime: 0,
-        error: `Insufficient permissions to execute '${commandName}'`
+        error: `Insufficient permissions to execute '${commandName}'`,
       };
     }
 
@@ -239,7 +265,7 @@ export class CommandRegistryService {
         success: false,
         command: commandName,
         executionTime: 0,
-        error: `Command '${commandName}' is on cooldown. Wait ${remainingTime}s`
+        error: `Command '${commandName}' is on cooldown. Wait ${remainingTime}s`,
       };
     }
 
@@ -248,7 +274,7 @@ export class CommandRegistryService {
 
       // Parse parameters
       const parsedParams = this.parseParameters(command, args);
-      
+
       // Validate parameters
       const validation = this.validateParameters(command, parsedParams);
       if (!validation.valid) {
@@ -256,12 +282,15 @@ export class CommandRegistryService {
           success: false,
           command: commandName,
           executionTime: Date.now() - startTime,
-          error: `Invalid parameters: ${validation.errors.join(', ')}`
+          error: `Invalid parameters: ${validation.errors.join(', ')}`,
         };
       }
 
       // Execute command via plugin
-      const result = await this.pluginManager.executePlugin(command.plugin, pluginContext);
+      const result = await this.pluginManager.executePlugin(
+        command.plugin,
+        pluginContext
+      );
 
       const executionTime = Date.now() - startTime;
 
@@ -271,25 +300,32 @@ export class CommandRegistryService {
       // Update usage stats
       this.updateUsageStats(command.name);
 
-      this.logger.debug('CommandRegistry', `Command '${commandName}' executed`, {
-        user: user.id,
-        executionTime,
-        success: result.success
-      });
+      this.logger.debug(
+        'CommandRegistry',
+        `Command '${commandName}' executed`,
+        {
+          user: user.id,
+          executionTime,
+          success: result.success,
+        }
+      );
 
       return {
         ...result,
         command: commandName,
-        executionTime
+        executionTime,
       };
-
     } catch (error) {
-      this.logger.error('CommandRegistry', `Command '${commandName}' execution failed`, { error });
+      this.logger.error(
+        'CommandRegistry',
+        `Command '${commandName}' execution failed`,
+        { error }
+      );
       return {
         success: false,
         command: commandName,
         executionTime: Date.now(),
-        error: `Command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        error: `Command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -306,7 +342,7 @@ export class CommandRegistryService {
     let help = `**${command.name}** - ${command.description}\n`;
     help += `Category: ${command.category}\n`;
     help += `User Level: ${command.userLevel}\n`;
-    
+
     if (command.aliases.length > 0) {
       help += `Aliases: ${command.aliases.join(', ')}\n`;
     }
@@ -338,7 +374,7 @@ export class CommandRegistryService {
       totalAliases: this.commandAliases.size,
       categoriesCount: this.getCategoriesCount(),
       usageStats: Object.fromEntries(this.commandUsageStats),
-      topCommands: this.getTopCommands(10)
+      topCommands: this.getTopCommands(10),
     };
   }
 
@@ -349,8 +385,11 @@ export class CommandRegistryService {
   private async discoverCommands(): Promise<void> {
     // This would typically scan plugins for commands
     // For now, we'll implement a basic discovery mechanism
-    this.logger.debug('CommandRegistry', 'Discovering commands from plugins...');
-    
+    this.logger.debug(
+      'CommandRegistry',
+      'Discovering commands from plugins...'
+    );
+
     // TODO: Implement command discovery from plugins
     // This would involve scanning plugin metadata and extracting command definitions
   }
@@ -394,13 +433,16 @@ export class CommandRegistryService {
     return {
       valid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 
-  private parseParameters(command: Command, args: string[]): Record<string, any> {
+  private parseParameters(
+    command: Command,
+    args: string[]
+  ): Record<string, any> {
     const parsed: Record<string, any> = {};
-    
+
     if (!command.parameters) {
       return parsed;
     }
@@ -419,7 +461,10 @@ export class CommandRegistryService {
     return parsed;
   }
 
-  private validateParameters(command: Command, params: Record<string, any>): CommandValidationResult {
+  private validateParameters(
+    command: Command,
+    params: Record<string, any>
+  ): CommandValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -437,7 +482,9 @@ export class CommandRegistryService {
 
       if (value !== undefined && param.validation) {
         if (typeof value === 'string' && !param.validation.test(value)) {
-          errors.push(`Parameter '${param.name}' does not match required format`);
+          errors.push(
+            `Parameter '${param.name}' does not match required format`
+          );
         }
       }
     }
@@ -445,7 +492,7 @@ export class CommandRegistryService {
     return {
       valid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 
@@ -461,8 +508,17 @@ export class CommandRegistryService {
     }
   }
 
-  private isUserLevelSufficient(userLevel: UserLevel, requiredLevel: UserLevel): boolean {
-    const levels = [UserLevel.BANNED, UserLevel.USER, UserLevel.MODERATOR, UserLevel.ADMIN, UserLevel.OWNER];
+  private isUserLevelSufficient(
+    userLevel: UserLevel,
+    requiredLevel: UserLevel
+  ): boolean {
+    const levels = [
+      UserLevel.BANNED,
+      UserLevel.USER,
+      UserLevel.MODERATOR,
+      UserLevel.ADMIN,
+      UserLevel.OWNER,
+    ];
     return levels.indexOf(userLevel) >= levels.indexOf(requiredLevel);
   }
 
@@ -502,7 +558,7 @@ export class CommandRegistryService {
     }
 
     const elapsed = Date.now() - lastUsed;
-    const remaining = (command.cooldown * 1000) - elapsed;
+    const remaining = command.cooldown * 1000 - elapsed;
     return Math.max(0, Math.ceil(remaining / 1000));
   }
 
@@ -522,15 +578,17 @@ export class CommandRegistryService {
 
   private getCategoriesCount(): Record<string, number> {
     const categories: Record<string, number> = {};
-    
+
     for (const command of Object.values(this.commands)) {
       categories[command.category] = (categories[command.category] || 0) + 1;
     }
-    
+
     return categories;
   }
 
-  private getTopCommands(limit: number): Array<{ command: string; usage: number }> {
+  private getTopCommands(
+    limit: number
+  ): Array<{ command: string; usage: number }> {
     return Array.from(this.commandUsageStats.entries())
       .map(([command, usage]) => ({ command, usage }))
       .sort((a, b) => b.usage - a.usage)

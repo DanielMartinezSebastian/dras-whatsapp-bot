@@ -1,6 +1,6 @@
 /**
  * Plugin Manager Service
- * 
+ *
  * Manages the plugin ecosystem for the WhatsApp bot.
  * Handles plugin loading, unloading, dependency resolution, and lifecycle management.
  */
@@ -19,7 +19,7 @@ import {
   CommandResult,
   User,
   Message,
-  ConversationContext
+  ConversationContext,
 } from '../types';
 
 export class PluginManagerService implements IPluginManager {
@@ -28,7 +28,7 @@ export class PluginManagerService implements IPluginManager {
   private config: ConfigService;
   private database: DatabaseService;
   private whatsappBridge: WhatsAppBridgeService;
-  
+
   private plugins: Map<string, Plugin> = new Map();
   private enabledPlugins: Set<string> = new Set();
   private pluginDependencies: Map<string, string[]> = new Map();
@@ -39,13 +39,13 @@ export class PluginManagerService implements IPluginManager {
     this.config = ConfigService.getInstance();
     this.database = DatabaseService.getInstance();
     this.whatsappBridge = WhatsAppBridgeService.getInstance();
-    
+
     this.pluginConfig = {
       pluginsDirectory: './plugins',
       autoLoad: true,
       enabledPlugins: [],
       disabledPlugins: [],
-      pluginConfigs: {}
+      pluginConfigs: {},
     };
   }
 
@@ -65,18 +65,25 @@ export class PluginManagerService implements IPluginManager {
     try {
       // Load plugin configuration
       this.pluginConfig = this.config.getValue('plugins', this.pluginConfig);
-      
+
       // Ensure plugins directory exists
       await this.ensurePluginDirectory();
-      
+
       // Auto-load plugins if enabled
       if (this.pluginConfig.autoLoad) {
         await this.loadAllPlugins();
       }
 
-      this.logger.info('PluginManager', `Plugin Manager initialized with ${this.plugins.size} plugins`);
+      this.logger.info(
+        'PluginManager',
+        `Plugin Manager initialized with ${this.plugins.size} plugins`
+      );
     } catch (error) {
-      this.logger.error('PluginManager', 'Failed to initialize Plugin Manager', { error });
+      this.logger.error(
+        'PluginManager',
+        'Failed to initialize Plugin Manager',
+        { error }
+      );
       throw error;
     }
   }
@@ -90,54 +97,65 @@ export class PluginManagerService implements IPluginManager {
     try {
       // Resolve absolute path
       const absolutePath = path.resolve(pluginPath);
-      
+
       // Check if file exists
       await fs.access(absolutePath);
-      
+
       // Dynamic import of the plugin
       const pluginModule = await import(absolutePath);
       const PluginClass = pluginModule.default || pluginModule;
-      
+
       if (!PluginClass) {
         throw new Error('Plugin does not export a default class');
       }
-      
+
       // Create plugin instance
       const plugin: Plugin = new PluginClass();
-      
+
       // Validate plugin interface
       this.validatePluginInterface(plugin);
-      
+
       // Check for conflicts
       if (this.plugins.has(plugin.info.name)) {
         throw new Error(`Plugin '${plugin.info.name}' is already loaded`);
       }
-      
+
       // Validate dependencies
       if (!this.validateDependencies(plugin)) {
         throw new Error(`Plugin '${plugin.info.name}' has unmet dependencies`);
       }
-      
+
       // Initialize plugin
       await plugin.initialize();
-      
+
       // Register plugin
       this.plugins.set(plugin.info.name, plugin);
-      this.pluginDependencies.set(plugin.info.name, plugin.info.dependencies || []);
-      
+      this.pluginDependencies.set(
+        plugin.info.name,
+        plugin.info.dependencies || []
+      );
+
       // Enable plugin if it's in the enabled list
       if (this.pluginConfig.enabledPlugins.includes(plugin.info.name)) {
         this.enabledPlugins.add(plugin.info.name);
       }
 
-      this.logger.info('PluginManager', `Plugin '${plugin.info.name}' loaded successfully`, {
-        version: plugin.info.version,
-        category: plugin.info.category
-      });
+      this.logger.info(
+        'PluginManager',
+        `Plugin '${plugin.info.name}' loaded successfully`,
+        {
+          version: plugin.info.version,
+          category: plugin.info.category,
+        }
+      );
 
       return plugin;
     } catch (error) {
-      this.logger.error('PluginManager', `Failed to load plugin from '${pluginPath}'`, { error });
+      this.logger.error(
+        'PluginManager',
+        `Failed to load plugin from '${pluginPath}'`,
+        { error }
+      );
       throw error;
     }
   }
@@ -157,20 +175,29 @@ export class PluginManagerService implements IPluginManager {
       // Check for dependent plugins
       const dependentPlugins = this.getDependentPlugins(pluginName);
       if (dependentPlugins.length > 0) {
-        throw new Error(`Cannot unload plugin '${pluginName}'. Other plugins depend on it: ${dependentPlugins.join(', ')}`);
+        throw new Error(
+          `Cannot unload plugin '${pluginName}'. Other plugins depend on it: ${dependentPlugins.join(', ')}`
+        );
       }
 
       // Shutdown plugin
       await plugin.shutdown();
-      
+
       // Remove from registries
       this.plugins.delete(pluginName);
       this.enabledPlugins.delete(pluginName);
       this.pluginDependencies.delete(pluginName);
 
-      this.logger.info('PluginManager', `Plugin '${pluginName}' unloaded successfully`);
+      this.logger.info(
+        'PluginManager',
+        `Plugin '${pluginName}' unloaded successfully`
+      );
     } catch (error) {
-      this.logger.error('PluginManager', `Failed to unload plugin '${pluginName}'`, { error });
+      this.logger.error(
+        'PluginManager',
+        `Failed to unload plugin '${pluginName}'`,
+        { error }
+      );
       throw error;
     }
   }
@@ -193,7 +220,7 @@ export class PluginManagerService implements IPluginManager {
    * Get enabled plugins only
    */
   public getEnabledPlugins(): Plugin[] {
-    return Array.from(this.plugins.values()).filter(plugin => 
+    return Array.from(this.plugins.values()).filter(plugin =>
       this.enabledPlugins.has(plugin.info.name)
     );
   }
@@ -214,7 +241,9 @@ export class PluginManagerService implements IPluginManager {
 
     // Check dependencies
     if (!this.validateDependencies(plugin)) {
-      throw new Error(`Cannot enable plugin '${name}'. Dependencies are not met`);
+      throw new Error(
+        `Cannot enable plugin '${name}'. Dependencies are not met`
+      );
     }
 
     this.enabledPlugins.add(name);
@@ -233,7 +262,9 @@ export class PluginManagerService implements IPluginManager {
     // Check for dependent plugins
     const dependentPlugins = this.getDependentPlugins(name);
     if (dependentPlugins.length > 0) {
-      throw new Error(`Cannot disable plugin '${name}'. Other plugins depend on it: ${dependentPlugins.join(', ')}`);
+      throw new Error(
+        `Cannot disable plugin '${name}'. Other plugins depend on it: ${dependentPlugins.join(', ')}`
+      );
     }
 
     this.enabledPlugins.delete(name);
@@ -256,21 +287,29 @@ export class PluginManagerService implements IPluginManager {
     try {
       // Unload plugin
       await this.unloadPlugin(name);
-      
+
       // Find plugin file path (this is a simplified approach)
-      const pluginPath = path.join(this.pluginConfig.pluginsDirectory, `${name}.plugin.js`);
-      
+      const pluginPath = path.join(
+        this.pluginConfig.pluginsDirectory,
+        `${name}.plugin.js`
+      );
+
       // Reload plugin
       await this.loadPlugin(pluginPath);
-      
+
       // Re-enable if it was enabled before
       if (wasEnabled) {
         await this.enablePlugin(name);
       }
 
-      this.logger.info('PluginManager', `Plugin '${name}' reloaded successfully`);
+      this.logger.info(
+        'PluginManager',
+        `Plugin '${name}' reloaded successfully`
+      );
     } catch (error) {
-      this.logger.error('PluginManager', `Failed to reload plugin '${name}'`, { error });
+      this.logger.error('PluginManager', `Failed to reload plugin '${name}'`, {
+        error,
+      });
       throw error;
     }
   }
@@ -286,7 +325,10 @@ export class PluginManagerService implements IPluginManager {
     for (const dependency of plugin.info.dependencies) {
       const dependencyPlugin = this.plugins.get(dependency);
       if (!dependencyPlugin || !this.enabledPlugins.has(dependency)) {
-        this.logger.warn('PluginManager', `Plugin '${plugin.info.name}' has unmet dependency: ${dependency}`);
+        this.logger.warn(
+          'PluginManager',
+          `Plugin '${plugin.info.name}' has unmet dependency: ${dependency}`
+        );
         return false;
       }
     }
@@ -297,7 +339,10 @@ export class PluginManagerService implements IPluginManager {
   /**
    * Execute a plugin in a given context
    */
-  public async executePlugin(pluginName: string, context: PluginContext): Promise<CommandResult> {
+  public async executePlugin(
+    pluginName: string,
+    context: PluginContext
+  ): Promise<CommandResult> {
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
       throw new Error(`Plugin '${pluginName}' is not loaded`);
@@ -314,12 +359,16 @@ export class PluginManagerService implements IPluginManager {
 
       this.logger.debug('PluginManager', `Plugin '${pluginName}' executed`, {
         executionTime,
-        success: result.success
+        success: result.success,
       });
 
       return result;
     } catch (error) {
-      this.logger.error('PluginManager', `Plugin '${pluginName}' execution failed`, { error });
+      this.logger.error(
+        'PluginManager',
+        `Plugin '${pluginName}' execution failed`,
+        { error }
+      );
       throw error;
     }
   }
@@ -338,7 +387,7 @@ export class PluginManagerService implements IPluginManager {
       config: this.config,
       database: this.database,
       logger: this.logger,
-      whatsappBridge: this.whatsappBridge
+      whatsappBridge: this.whatsappBridge,
     };
 
     if (conversationContext) {
@@ -357,7 +406,7 @@ export class PluginManagerService implements IPluginManager {
       enabledPlugins: this.enabledPlugins.size,
       disabledPlugins: this.plugins.size - this.enabledPlugins.size,
       categories: this.getPluginsByCategory(),
-      dependencies: Object.fromEntries(this.pluginDependencies)
+      dependencies: Object.fromEntries(this.pluginDependencies),
     };
   }
 
@@ -370,7 +419,10 @@ export class PluginManagerService implements IPluginManager {
       await fs.access(this.pluginConfig.pluginsDirectory);
     } catch {
       await fs.mkdir(this.pluginConfig.pluginsDirectory, { recursive: true });
-      this.logger.info('PluginManager', `Created plugins directory: ${this.pluginConfig.pluginsDirectory}`);
+      this.logger.info(
+        'PluginManager',
+        `Created plugins directory: ${this.pluginConfig.pluginsDirectory}`
+      );
     }
   }
 
@@ -384,11 +436,17 @@ export class PluginManagerService implements IPluginManager {
         try {
           await this.loadPlugin(pluginPath);
         } catch (error) {
-          this.logger.error('PluginManager', `Failed to auto-load plugin: ${file}`, { error });
+          this.logger.error(
+            'PluginManager',
+            `Failed to auto-load plugin: ${file}`,
+            { error }
+          );
         }
       }
     } catch (error) {
-      this.logger.error('PluginManager', 'Failed to auto-load plugins', { error });
+      this.logger.error('PluginManager', 'Failed to auto-load plugins', {
+        error,
+      });
     }
   }
 
@@ -397,7 +455,13 @@ export class PluginManagerService implements IPluginManager {
       throw new Error('Plugin must have an info property');
     }
 
-    const requiredFields = ['name', 'version', 'description', 'author', 'category'];
+    const requiredFields = [
+      'name',
+      'version',
+      'description',
+      'author',
+      'category',
+    ];
     for (const field of requiredFields) {
       if (!plugin.info[field]) {
         throw new Error(`Plugin info must have a '${field}' field`);
@@ -419,24 +483,24 @@ export class PluginManagerService implements IPluginManager {
 
   private getDependentPlugins(pluginName: string): string[] {
     const dependents: string[] = [];
-    
+
     for (const [name, dependencies] of this.pluginDependencies) {
       if (dependencies.includes(pluginName)) {
         dependents.push(name);
       }
     }
-    
+
     return dependents;
   }
 
   private getPluginsByCategory(): Record<string, number> {
     const categories: Record<string, number> = {};
-    
+
     for (const plugin of this.plugins.values()) {
       const category = plugin.info.category;
       categories[category] = (categories[category] || 0) + 1;
     }
-    
+
     return categories;
   }
 }

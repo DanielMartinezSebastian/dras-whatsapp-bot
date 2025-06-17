@@ -9,10 +9,10 @@
  */
 export enum UserLevel {
   BANNED = 'banned',
-  USER = 'user', 
+  USER = 'user',
   MODERATOR = 'moderator',
   ADMIN = 'admin',
-  OWNER = 'owner'
+  OWNER = 'owner',
 }
 export type UserType = 'normal' | 'block' | 'vip';
 export type MessageType =
@@ -36,7 +36,7 @@ export enum ContextType {
   CUSTOM = 'custom',
   GENERAL = 'general',
   CONFIGURATION = 'configuration',
-  COMMAND_SEQUENCE = 'command_sequence'
+  COMMAND_SEQUENCE = 'command_sequence',
 }
 
 /**
@@ -297,7 +297,7 @@ export interface PluginContext {
   message?: Message;
   conversationContext?: ConversationContext;
   config: any; // ConfigService
-  database: any; // DatabaseService  
+  database: any; // DatabaseService
   logger: any; // Logger
   whatsappBridge: any; // WhatsAppBridgeService
   metadata?: Record<string, any>; // Additional context data
@@ -344,7 +344,10 @@ export interface ContextHandler {
   patterns?: RegExp[];
   userLevel?: UserLevel;
   plugin?: string;
-  handler?: (message: Message, context: PluginContext) => Promise<CommandResult>;
+  handler?: (
+    message: Message,
+    context: PluginContext
+  ) => Promise<CommandResult>;
   execute?: (context: PluginContext) => Promise<CommandResult>;
   metadata?: Record<string, any>;
 }
@@ -368,7 +371,10 @@ export interface PluginManager {
 export interface MiddlewareHandler {
   name: string;
   priority: number;
-  execute(context: PluginContext, next: () => Promise<CommandResult>): Promise<CommandResult>;
+  execute(
+    context: PluginContext,
+    next: () => Promise<CommandResult>
+  ): Promise<CommandResult>;
 }
 
 export interface PluginConfig {

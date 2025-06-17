@@ -13,7 +13,7 @@ describe('PluginManagerService', () => {
   beforeEach(async () => {
     // Reset singleton for testing
     (PluginManagerService as any).instance = undefined;
-    
+
     pluginManager = PluginManagerService.getInstance();
 
     // Mock plugin for testing
@@ -25,7 +25,7 @@ describe('PluginManagerService', () => {
         author: 'Test Author',
         category: 'command',
         priority: 1,
-        dependencies: []
+        dependencies: [],
       },
       initialize: jest.fn(),
       shutdown: jest.fn(),
@@ -36,9 +36,9 @@ describe('PluginManagerService', () => {
         response: {
           type: 'text',
           content: 'Test response',
-          metadata: {}
-        }
-      })
+          metadata: {},
+        },
+      }),
     };
   });
 
@@ -52,7 +52,7 @@ describe('PluginManagerService', () => {
     it('should return singleton instance', () => {
       const instance1 = PluginManagerService.getInstance();
       const instance2 = PluginManagerService.getInstance();
-      
+
       expect(instance1).toBe(instance2);
       expect(instance1).toBeInstanceOf(PluginManagerService);
     });
@@ -75,9 +75,15 @@ describe('PluginManagerService', () => {
 
     it('should return all plugins', () => {
       // Create test plugins with proper names
-      const plugin1 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin1' } };
-      const plugin2 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin2' } };
-      
+      const plugin1 = {
+        ...mockPlugin,
+        info: { ...mockPlugin.info, name: 'plugin1' },
+      };
+      const plugin2 = {
+        ...mockPlugin,
+        info: { ...mockPlugin.info, name: 'plugin2' },
+      };
+
       // Add test plugins
       (pluginManager as any).plugins.set('plugin1', plugin1);
       (pluginManager as any).plugins.set('plugin2', plugin2);
@@ -88,13 +94,19 @@ describe('PluginManagerService', () => {
 
     it('should return only enabled plugins', () => {
       // Create test plugins with proper names
-      const plugin1 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin1' } };
-      const plugin2 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin2' } };
-      
+      const plugin1 = {
+        ...mockPlugin,
+        info: { ...mockPlugin.info, name: 'plugin1' },
+      };
+      const plugin2 = {
+        ...mockPlugin,
+        info: { ...mockPlugin.info, name: 'plugin2' },
+      };
+
       // Add test plugins
       (pluginManager as any).plugins.set('plugin1', plugin1);
       (pluginManager as any).plugins.set('plugin2', plugin2);
-      
+
       // Enable only one plugin
       (pluginManager as any).enabledPlugins.add('plugin1');
 
@@ -112,16 +124,23 @@ describe('PluginManagerService', () => {
 
     it('should validate plugin dependencies when dependencies are met', () => {
       // Create dependency plugin
-      const dependencyPlugin = { ...mockPlugin, info: { ...mockPlugin.info, name: 'dependency' } };
-      
+      const dependencyPlugin = {
+        ...mockPlugin,
+        info: { ...mockPlugin.info, name: 'dependency' },
+      };
+
       // Add dependency plugin and enable it
       (pluginManager as any).plugins.set('dependency', dependencyPlugin);
       (pluginManager as any).enabledPlugins.add('dependency');
 
       // Create plugin with dependency
-      const pluginWithDep = { 
-        ...mockPlugin, 
-        info: { ...mockPlugin.info, name: 'dependent', dependencies: ['dependency'] } 
+      const pluginWithDep = {
+        ...mockPlugin,
+        info: {
+          ...mockPlugin.info,
+          name: 'dependent',
+          dependencies: ['dependency'],
+        },
       };
 
       const isValid = pluginManager.validateDependencies(pluginWithDep);
@@ -129,9 +148,9 @@ describe('PluginManagerService', () => {
     });
 
     it('should fail validation when dependencies are not met', () => {
-      const pluginWithDep = { 
-        ...mockPlugin, 
-        info: { ...mockPlugin.info, dependencies: ['missing-dependency'] } 
+      const pluginWithDep = {
+        ...mockPlugin,
+        info: { ...mockPlugin.info, dependencies: ['missing-dependency'] },
       };
 
       const isValid = pluginManager.validateDependencies(pluginWithDep);
@@ -157,11 +176,11 @@ describe('PluginManagerService', () => {
           auto_reply: false,
           language: 'es',
           timezone: 'UTC',
-          privacy_level: 'normal' as const
+          privacy_level: 'normal' as const,
         },
         metadata: {},
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const mockMessage = {
@@ -174,7 +193,7 @@ describe('PluginManagerService', () => {
         processed: false,
         metadata: {},
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const context = pluginManager.createPluginContext(mockUser, mockMessage);
@@ -200,10 +219,13 @@ describe('PluginManagerService', () => {
         config: {} as any,
         database: {} as any,
         logger: {} as any,
-        whatsappBridge: {} as any
+        whatsappBridge: {} as any,
       };
 
-      const result = await pluginManager.executePlugin('test-plugin', mockContext);
+      const result = await pluginManager.executePlugin(
+        'test-plugin',
+        mockContext
+      );
 
       expect(result.success).toBe(true);
       expect(result.command).toBe('test');
@@ -213,8 +235,9 @@ describe('PluginManagerService', () => {
     it('should throw error for non-existent plugin', async () => {
       const mockContext = {} as any;
 
-      await expect(pluginManager.executePlugin('non-existent', mockContext))
-        .rejects.toThrow('Plugin \'non-existent\' is not loaded');
+      await expect(
+        pluginManager.executePlugin('non-existent', mockContext)
+      ).rejects.toThrow("Plugin 'non-existent' is not loaded");
     });
 
     it('should throw error for disabled plugin', async () => {
@@ -223,17 +246,32 @@ describe('PluginManagerService', () => {
 
       const mockContext = {} as any;
 
-      await expect(pluginManager.executePlugin('test-plugin', mockContext))
-        .rejects.toThrow('Plugin \'test-plugin\' is not enabled');
+      await expect(
+        pluginManager.executePlugin('test-plugin', mockContext)
+      ).rejects.toThrow("Plugin 'test-plugin' is not enabled");
     });
   });
 
   describe('plugin statistics', () => {
     it('should return correct plugin statistics', () => {
       // Add test plugins of different categories
-      const commandPlugin = { ...mockPlugin, info: { ...mockPlugin.info, name: 'cmd1', category: 'command' as const } };
-      const contextPlugin = { ...mockPlugin, info: { ...mockPlugin.info, name: 'ctx1', category: 'context' as const } };
-      
+      const commandPlugin = {
+        ...mockPlugin,
+        info: {
+          ...mockPlugin.info,
+          name: 'cmd1',
+          category: 'command' as const,
+        },
+      };
+      const contextPlugin = {
+        ...mockPlugin,
+        info: {
+          ...mockPlugin.info,
+          name: 'ctx1',
+          category: 'context' as const,
+        },
+      };
+
       (pluginManager as any).plugins.set('cmd1', commandPlugin);
       (pluginManager as any).plugins.set('ctx1', contextPlugin);
       (pluginManager as any).enabledPlugins.add('cmd1');
@@ -255,7 +293,7 @@ describe('PluginManagerService', () => {
 
     it('should enable plugin successfully', async () => {
       await pluginManager.enablePlugin('test-plugin');
-      
+
       const enabledPlugins = pluginManager.getEnabledPlugins();
       expect(enabledPlugins).toHaveLength(1);
       expect(enabledPlugins[0].info.name).toBe('test-plugin');
@@ -264,16 +302,17 @@ describe('PluginManagerService', () => {
     it('should disable plugin successfully', async () => {
       // First enable the plugin
       (pluginManager as any).enabledPlugins.add('test-plugin');
-      
+
       await pluginManager.disablePlugin('test-plugin');
-      
+
       const enabledPlugins = pluginManager.getEnabledPlugins();
       expect(enabledPlugins).toHaveLength(0);
     });
 
     it('should throw error when enabling non-existent plugin', async () => {
-      await expect(pluginManager.enablePlugin('non-existent'))
-        .rejects.toThrow('Plugin \'non-existent\' is not loaded');
+      await expect(pluginManager.enablePlugin('non-existent')).rejects.toThrow(
+        "Plugin 'non-existent' is not loaded"
+      );
     });
   });
 });

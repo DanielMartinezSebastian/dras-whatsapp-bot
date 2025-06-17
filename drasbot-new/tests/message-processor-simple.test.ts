@@ -17,7 +17,7 @@ describe('MessageProcessorService - Basic Tests', () => {
     it('should return the same instance', () => {
       const instance1 = MessageProcessorService.getInstance();
       const instance2 = MessageProcessorService.getInstance();
-      
+
       expect(instance1).toBe(instance2);
     });
   });
