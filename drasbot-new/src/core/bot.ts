@@ -6,6 +6,7 @@
 import { Logger } from '../utils/logger';
 import { ConfigService } from '../services/config.service';
 import { DatabaseService } from '../services/database.service';
+import { WhatsAppBridgeService } from '../services/whatsapp-bridge.service';
 import { BotConfig } from '../types';
 
 export interface BotStatus {
@@ -20,6 +21,7 @@ export class DrasBot {
   private logger: Logger;
   private configService: ConfigService;
   private databaseService: DatabaseService;
+  private whatsappService: WhatsAppBridgeService;
   private isInitialized: boolean = false;
   private isRunning: boolean = false;
   private startTime: Date | undefined;
@@ -28,6 +30,7 @@ export class DrasBot {
     this.logger = Logger.getInstance();
     this.configService = ConfigService.getInstance();
     this.databaseService = DatabaseService.getInstance();
+    this.whatsappService = WhatsAppBridgeService.getInstance();
   }
 
   public static getInstance(): DrasBot {
@@ -51,6 +54,14 @@ export class DrasBot {
       
       // Initialize database service
       await this.databaseService.initialize();
+
+      // Try to initialize WhatsApp bridge service (optional)
+      try {
+        await this.whatsappService.initialize();
+        this.logger.info('DrasBot', 'WhatsApp Bridge service connected');
+      } catch (error) {
+        this.logger.warn('DrasBot', 'WhatsApp Bridge service not available, continuing without it', error);
+      }
 
       this.isInitialized = true;
       this.logger.info('DrasBot', 'DrasBot initialized successfully');
@@ -129,7 +140,7 @@ export class DrasBot {
       servicesStatus: {
         config: this.isInitialized,
         database: this.isInitialized,
-        whatsapp: false, // TODO: Implement WhatsApp client status
+        whatsapp: this.whatsappService.isConnected(),
         plugins: false,  // TODO: Implement plugin loader status
         contexts: false  // TODO: Implement context manager status
       }
@@ -143,6 +154,44 @@ export class DrasBot {
     return this.configService.getConfig();
   }
 
+  public async sendMessage(recipient: string, message: string): Promise<boolean> {
+    if (!this.isInitialized) {
+      throw new Error('Bot not initialized. Call initialize() first.');
+    }
+
+    if (!this.whatsappService.isConnected()) {
+      throw new Error('WhatsApp service not connected.');
+    }
+
+    try {
+      return await this.whatsappService.sendTextMessage(recipient, message);
+    } catch (error) {
+      this.logger.error('DrasBot', 'Failed to send message', error);
+      return false;
+    }
+  }
+
+  public async sendMediaMessage(
+    recipient: string, 
+    mediaPath: string, 
+    caption?: string
+  ): Promise<boolean> {
+    if (!this.isInitialized) {
+      throw new Error('Bot not initialized. Call initialize() first.');
+    }
+
+    if (!this.whatsappService.isConnected()) {
+      throw new Error('WhatsApp service not connected.');
+    }
+
+    try {
+      return await this.whatsappService.sendMediaMessage(recipient, mediaPath, caption);
+    } catch (error) {
+      this.logger.error('DrasBot', 'Failed to send media message', error);
+      return false;
+    }
+  }
+
   public async cleanup(): Promise<void> {
     this.logger.info('DrasBot', 'Cleaning up DrasBot...');
     
@@ -154,6 +203,7 @@ export class DrasBot {
       // Cleanup services
       this.configService.cleanup();
       await this.databaseService.close();
+      await this.whatsappService.disconnect();
 
       this.isInitialized = false;
       this.logger.info('DrasBot', 'DrasBot cleanup completed');
