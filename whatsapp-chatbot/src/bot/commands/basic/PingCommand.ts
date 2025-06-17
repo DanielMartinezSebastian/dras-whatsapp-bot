@@ -176,7 +176,7 @@ export class PingCommand extends Command {
 
       // Obtener mensaje desde commands o responses
       let message =
-        this.getValueByPath(config, `commands.${path}`) ||
+        this.getValueByPath(config, `messages.commands.${path}`) ||
         this.getValueByPath(config, `responses.${path}`);
 
       // Si aún no se encuentra, usar fallback

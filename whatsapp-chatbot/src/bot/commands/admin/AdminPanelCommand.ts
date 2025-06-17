@@ -68,7 +68,7 @@ export class AdminPanelCommand extends Command {
       }
 
       // Obtener mensaje desde commands
-      let message = this.getValueByPath(config, `commands.${path}`);
+      let message = this.getValueByPath(config, `messages.commands.${path}`);
 
       // Si aún no se encuentra, usar fallback
       if (!message) {

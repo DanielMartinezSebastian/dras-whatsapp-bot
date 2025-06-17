@@ -62,7 +62,7 @@ export class AdminSystemCommand extends Command {
         return fallback || ("Configuración no disponible" as any);
       }
 
-      let message = this.getValueByPath(config, `commands.${path}`);
+      let message = this.getValueByPath(config, `messages.commands.${path}`);
 
       if (!message) {
         return fallback || (`Mensaje no configurado: ${path}` as any);

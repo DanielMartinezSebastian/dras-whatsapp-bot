@@ -112,7 +112,7 @@ export class HelpCommand extends Command {
 
   private getUserRoleLevel(userType?: string): number {
     const config = this.configService.getConfiguration();
-    const roleLevels = this.getValueByPath(config, "messages.commands.help.role_levels");
+    const roleLevels = this.getValueByPath(config, "messages.commands.role_levels");
 
     if (roleLevels && userType) {
       return roleLevels[userType] || 1;
@@ -207,7 +207,7 @@ export class HelpCommand extends Command {
       }
 
       // Obtener mensaje desde commands
-      let message = this.getValueByPath(config, `commands.${path}`);
+      let message = this.getValueByPath(config, `messages.commands.${path}`);
 
       // Si aún no se encuentra, usar fallback
       if (!message) {

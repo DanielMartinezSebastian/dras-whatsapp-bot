@@ -67,7 +67,7 @@ export class StatsCommand extends Command {
       }
 
       // Obtener mensaje desde commands
-      let message = this.getValueByPath(config, `commands.${path}`);
+      let message = this.getValueByPath(config, `messages.commands.${path}`);
 
       // Si aún no se encuentra, usar fallback
       if (!message) {
@@ -137,7 +137,7 @@ export class StatsCommand extends Command {
       const memoryUsage = process.memoryUsage();
 
       // Obtener configuración de respuesta
-      const responseConfig = this.getValueByPath("stats.response.general");
+      const responseConfig = this.getValueByPath("messages.commands.stats.response.general");
 
       // Variables para plantillas
       const variables = {
@@ -216,11 +216,11 @@ export class StatsCommand extends Command {
   private async getUsersStats(): Promise<string> {
     try {
       // Simulación de estadísticas de usuarios (en producción vendría del UserService)
-      const defaultValues = this.getValueByPath("stats.default_values");
+      const defaultValues = this.getValueByPath("messages.commands.stats.default_values");
       const noConnection = defaultValues?.no_connection || "Sin conexión BD";
 
       // Obtener configuración de respuesta
-      const responseConfig = this.getValueByPath("stats.response.users");
+      const responseConfig = this.getValueByPath("messages.commands.stats.response.users");
 
       // Variables para plantillas (simuladas)
       const variables = {
@@ -297,14 +297,14 @@ export class StatsCommand extends Command {
   private async getCommandsStats(): Promise<string> {
     try {
       // Obtener valores por defecto y configuración de respuesta
-      const defaultValues = this.getValueByPath("stats.default_values");
+      const defaultValues = this.getValueByPath("messages.commands.stats.default_values");
       const noRecord = defaultValues?.no_record || "Sin registro disponible";
       const noRegistry =
         defaultValues?.no_registry || "Sin conexión al registro";
       const noData = defaultValues?.no_data || "Sin datos";
 
       // Obtener configuración de respuesta
-      const responseConfig = this.getValueByPath("stats.response.commands");
+      const responseConfig = this.getValueByPath("messages.commands.stats.response.commands");
 
       // Variables para plantillas (simuladas)
       const variables = {
@@ -399,12 +399,12 @@ export class StatsCommand extends Command {
   private async getPermissionsStats(): Promise<string> {
     try {
       // Obtener valores por defecto y configuración de respuesta
-      const defaultValues = this.getValueByPath("stats.default_values");
+      const defaultValues = this.getValueByPath("messages.commands.stats.default_values");
       const noRecord = defaultValues?.no_record || "Sin registro";
       const noData = defaultValues?.no_data || "Sin datos";
 
       // Obtener configuración de respuesta
-      const responseConfig = this.getValueByPath("stats.response.permissions");
+      const responseConfig = this.getValueByPath("messages.commands.stats.response.permissions");
 
       // Variables para plantillas (simuladas)
       const variables = {
@@ -482,11 +482,11 @@ export class StatsCommand extends Command {
       const memoryUsage = process.memoryUsage();
 
       // Obtener valores por defecto y configuración de respuesta
-      const defaultValues = this.getValueByPath("stats.default_values");
+      const defaultValues = this.getValueByPath("messages.commands.stats.default_values");
       const noData = defaultValues?.no_data || "Sin datos";
 
       // Obtener configuración de respuesta
-      const responseConfig = this.getValueByPath("stats.response.system");
+      const responseConfig = this.getValueByPath("messages.commands.stats.response.system");
 
       // Variables para plantillas
       const variables = {
