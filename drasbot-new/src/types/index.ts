@@ -35,7 +35,8 @@ export enum ContextType {
   SUPPORT = 'support',
   CUSTOM = 'custom',
   GENERAL = 'general',
-  CONFIGURATION = 'configuration'
+  CONFIGURATION = 'configuration',
+  COMMAND_SEQUENCE = 'command_sequence'
 }
 
 /**
@@ -131,6 +132,7 @@ export interface CommandResult {
   command?: string;
   executionTime?: number;
   response?: ResponseMessage | string;
+  message?: string; // User-friendly message
   context?: Partial<ConversationContext>;
   metadata?: Record<string, any>;
   data?: Record<string, any>;
@@ -292,12 +294,13 @@ export interface PluginInfo {
 
 export interface PluginContext {
   user: User;
-  message: Message;
+  message?: Message;
   conversationContext?: ConversationContext;
   config: any; // ConfigService
   database: any; // DatabaseService  
   logger: any; // Logger
   whatsappBridge: any; // WhatsAppBridgeService
+  metadata?: Record<string, any>; // Additional context data
 }
 
 export interface Plugin {
@@ -337,11 +340,13 @@ export interface CommandRegistry {
 export interface ContextHandler {
   name: string;
   description: string;
-  priority: number;
-  patterns: RegExp[];
-  userLevel: UserLevel;
-  plugin: string;
-  execute(context: PluginContext): Promise<CommandResult>;
+  priority?: number;
+  patterns?: RegExp[];
+  userLevel?: UserLevel;
+  plugin?: string;
+  handler?: (message: Message, context: PluginContext) => Promise<CommandResult>;
+  execute?: (context: PluginContext) => Promise<CommandResult>;
+  metadata?: Record<string, any>;
 }
 
 export interface ContextRegistry {

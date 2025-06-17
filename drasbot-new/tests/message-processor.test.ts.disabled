@@ -4,11 +4,7 @@
 
 import { MessageProcessorService, IncomingMessage } from '../src/services/message-processor.service';
 import { ConfigService } from '../src/services/config.service';
-import { DatabaseService } from '../src/services/database.service';
 import { WhatsAppBridgeService } from '../src/services/whatsapp-bridge.service';
-import { PluginManagerService } from '../src/services/plugin-manager.service';
-import { CommandRegistryService } from '../src/services/command-registry.service';
-import { ContextManagerService } from '../src/services/context-manager.service';
 import { UserLevel } from '../src/types';
 
 // Mock all dependencies
@@ -29,13 +25,18 @@ describe('MessageProcessorService', () => {
     // Reset all mocks
     jest.clearAllMocks();
 
-    // Get service instances
+    // Reset singletons for testing
+    (MessageProcessorService as any).instance = undefined;
+    (ConfigService as any).instance = undefined;
+    (WhatsAppBridgeService as any).instance = undefined;
+
+    // Get service instances after resetting
     messageProcessor = MessageProcessorService.getInstance();
     mockConfigService = ConfigService.getInstance() as jest.Mocked<ConfigService>;
     mockWhatsAppBridge = WhatsAppBridgeService.getInstance() as jest.Mocked<WhatsAppBridgeService>;
 
-    // Setup default mocks
-    mockConfigService.getValue.mockImplementation((key: string, defaultValue?: any) => {
+    // Setup ConfigService mocks
+    (mockConfigService as any).getValue = jest.fn().mockImplementation((key: string, defaultValue?: any) => {
       const config = {
         'bot': {
           prefix: '!',
@@ -51,8 +52,17 @@ describe('MessageProcessorService', () => {
       return config[key as keyof typeof config] || defaultValue;
     });
 
-    mockWhatsAppBridge.sendTextMessage.mockResolvedValue(true);
-    mockWhatsAppBridge.sendMediaMessage.mockResolvedValue(true);
+    // Setup WhatsApp Bridge mocks
+    (mockWhatsAppBridge as any).sendTextMessage = jest.fn().mockResolvedValue(true);
+    (mockWhatsAppBridge as any).sendMediaMessage = jest.fn().mockResolvedValue(true);
+    (mockWhatsAppBridge as any).isAvailable = jest.fn().mockResolvedValue(true);
+    
+    // Setup other ConfigService methods
+    (mockConfigService as any).initialize = jest.fn().mockResolvedValue(undefined);
+    (mockConfigService as any).getConfig = jest.fn().mockReturnValue({});
+    (mockConfigService as any).updateValue = jest.fn();
+    (mockConfigService as any).saveConfig = jest.fn().mockResolvedValue(undefined);
+    (mockConfigService as any).cleanup = jest.fn();
   });
 
   describe('Singleton Pattern', () => {

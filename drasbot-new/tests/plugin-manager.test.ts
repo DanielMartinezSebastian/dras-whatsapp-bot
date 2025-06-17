@@ -4,7 +4,7 @@
 
 import { PluginManagerService } from '../src/services/plugin-manager.service';
 import { ConfigService } from '../src/services/config.service';
-import { Plugin, PluginInfo, UserLevel, UserType, MessageType } from '../src/types';
+import { Plugin, UserLevel, UserType, MessageType } from '../src/types';
 
 describe('PluginManagerService', () => {
   let pluginManager: PluginManagerService;
@@ -74,18 +74,26 @@ describe('PluginManagerService', () => {
     });
 
     it('should return all plugins', () => {
+      // Create test plugins with proper names
+      const plugin1 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin1' } };
+      const plugin2 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin2' } };
+      
       // Add test plugins
-      (pluginManager as any).plugins.set('plugin1', mockPlugin);
-      (pluginManager as any).plugins.set('plugin2', { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin2' } });
+      (pluginManager as any).plugins.set('plugin1', plugin1);
+      (pluginManager as any).plugins.set('plugin2', plugin2);
 
       const allPlugins = pluginManager.getAllPlugins();
       expect(allPlugins).toHaveLength(2);
     });
 
     it('should return only enabled plugins', () => {
+      // Create test plugins with proper names
+      const plugin1 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin1' } };
+      const plugin2 = { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin2' } };
+      
       // Add test plugins
-      (pluginManager as any).plugins.set('plugin1', mockPlugin);
-      (pluginManager as any).plugins.set('plugin2', { ...mockPlugin, info: { ...mockPlugin.info, name: 'plugin2' } });
+      (pluginManager as any).plugins.set('plugin1', plugin1);
+      (pluginManager as any).plugins.set('plugin2', plugin2);
       
       // Enable only one plugin
       (pluginManager as any).enabledPlugins.add('plugin1');

@@ -297,8 +297,48 @@ describe('CommandRegistryService', () => {
     it('should handle cooldown correctly', async () => {
       const mockUser = {
         id: 'user1',
-        level: UserLevel.USER
-      } as any;
+        phone: '+1234567890',
+        whatsapp_jid: 'user1@s.whatsapp.net',
+        display_name: 'Test User',
+        user_level: UserLevel.USER,
+        level: UserLevel.USER,
+        user_type: 'individual' as any,
+        language: 'en',
+        is_registered: true,
+        last_activity: new Date().toISOString(),
+        preferences: {
+          notifications: true,
+          auto_reply: false,
+          language: 'en',
+          timezone: 'UTC',
+          privacy_level: 'normal' as any
+        },
+        metadata: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const mockMessage = {
+        id: 'msg1',
+        user_id: 'user1',
+        whatsapp_message_id: 'wa_msg_1',
+        content: 'test message',
+        message_type: 'text' as MessageType,
+        is_from_bot: false,
+        processed: false,
+        metadata: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const mockPluginContext = {
+        user: mockUser,
+        message: mockMessage,
+        config: {} as any,
+        database: {} as any,
+        logger: {} as any,
+        whatsappBridge: {} as any
+      };
 
       const mockPluginManager = PluginManagerService.getInstance();
       jest.spyOn(mockPluginManager, 'executePlugin').mockResolvedValue({
@@ -308,11 +348,11 @@ describe('CommandRegistryService', () => {
       });
 
       // First execution should succeed
-      const result1 = await commandRegistry.executeCommand('test', [], mockUser, {} as any, {} as any);
+      const result1 = await commandRegistry.executeCommand('test', ['hello'], mockUser, mockMessage, mockPluginContext);
       expect(result1.success).toBe(true);
 
       // Second execution should fail due to cooldown
-      const result2 = await commandRegistry.executeCommand('test', [], mockUser, {} as any, {} as any);
+      const result2 = await commandRegistry.executeCommand('test', ['hello'], mockUser, mockMessage, mockPluginContext);
       expect(result2.success).toBe(false);
       expect(result2.error).toContain('is on cooldown');
     });
