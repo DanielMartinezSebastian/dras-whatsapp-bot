@@ -1,0 +1,65 @@
+module.exports = {
+  apps: [
+    {
+      name: "drasbot-bridge",
+      script: "go",
+      args: ["run", "main.go"],
+      cwd: "../whatsapp-bridge",
+      instances: 1,
+      exec_mode: "fork",
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "200M",
+      env: {
+        NODE_ENV: "production",
+        BRIDGE_PORT: "8080",
+        BRIDGE_HOST: "127.0.0.1",
+        LOG_LEVEL: "INFO"
+      },
+      env_development: {
+        NODE_ENV: "development",
+        LOG_LEVEL: "DEBUG"
+      },
+      log_file: "./logs/bridge-combined.log",
+      out_file: "./logs/bridge-out.log",
+      error_file: "./logs/bridge-error.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      min_uptime: "30s",
+      max_restarts: 5,
+      restart_delay: 10000,
+      interpreter: "none",
+      kill_timeout: 5000,
+      listen_timeout: 10000,
+    },
+    {
+      name: "drasbot-new",
+      script: "./dist/index.js",
+      instances: 1,
+      exec_mode: "fork",
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "300M",
+      env: {
+        NODE_ENV: "production",
+        PORT: "3000",
+        HOST: "127.0.0.1",
+        BRIDGE_URL: "http://127.0.0.1:8080",
+        BOT_NAME: "DrasBot",
+        BOT_PREFIX: "!",
+        LOG_LEVEL: "info"
+      },
+      env_development: {
+        NODE_ENV: "development",
+        LOG_LEVEL: "debug",
+        DEBUG_MODE: "true"
+      },
+      log_file: "./logs/drasbot-combined.log",
+      out_file: "./logs/drasbot-out.log",
+      error_file: "./logs/drasbot-error.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      min_uptime: "30s",
+      max_restarts: 10,
+      restart_delay: 5000,
+    }
+  ]
+};

@@ -1,0 +1,18 @@
+{
+  "welcome": "¡Hola! Soy **{bot_name}** 🤖\n\n¡Estoy aquí para ayudarte! Escribe `{prefix}help` para ver los comandos disponibles.",
+  "help": "📋 **Comandos Disponibles**\n\n{commands}\n\n💡 **Tip:** Usa `{prefix}<comando>` para ejecutar cualquier comando.",
+  "command_not_found": "❓ **Comando no encontrado**\n\nEl comando `{command}` no existe.\n\n💡 Escribe `{prefix}help` para ver comandos disponibles.",
+  "permission_denied": "🚫 **Acceso Denegado**\n\nNo tienes permisos para ejecutar este comando.\n\n📋 Tu nivel actual: **{user_level}**\n🔐 Nivel requerido: **{required_level}**",
+  "rate_limit_exceeded": "⏰ **Límite de Velocidad**\n\nEstás enviando comandos muy rápido.\n\n⏳ Espera {wait_time} segundos antes de intentar nuevamente.",
+  "user_not_registered": "👤 **Usuario No Registrado**\n\n¡Parece que es tu primera vez aquí!\n\n📝 Escribe `{prefix}register` para comenzar.",
+  "registration_required": "📝 **Registro Requerido**\n\nPara usar este comando necesitas estar registrado.\n\n✨ Escribe `{prefix}register` para comenzar.",
+  "error_occurred": "❌ **Error del Sistema**\n\nOcurrió un error inesperado.\n\n🔍 Error: {error}\n⏰ Timestamp: {timestamp}",
+  "maintenance_mode": "🔧 **Modo Mantenimiento**\n\nEl bot está temporalmente en mantenimiento.\n\n⏳ Por favor, intenta más tarde.",
+  "context_timeout": "⏰ **Tiempo Agotado**\n\nLa conversación ha expirado por inactividad.\n\n🔄 Puedes comenzar nuevamente cuando gustes.",
+  "invalid_input": "❌ **Entrada Inválida**\n\n{validation_message}\n\n💡 Por favor, intenta nuevamente con el formato correcto.",
+  "operation_cancelled": "🚫 **Operación Cancelada**\n\nLa operación ha sido cancelada exitosamente.",
+  "processing": "⏳ **Procesando...**\n\nPor favor espera mientras proceso tu solicitud.",
+  "success": "✅ **Completado**\n\n{message}",
+  "info": "ℹ️ **Información**\n\n{message}",
+  "warning": "⚠️ **Advertencia**\n\n{message}"
+}

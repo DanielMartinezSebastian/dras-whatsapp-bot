@@ -1,0 +1,109 @@
+{
+  "guest": {
+    "name": "Invitado",
+    "level": 0,
+    "permissions": [
+      "help",
+      "info",
+      "register"
+    ],
+    "rate_limits": {
+      "commands_per_minute": 5,
+      "messages_per_hour": 20
+    },
+    "features": {
+      "basic_commands": true,
+      "contexts": false,
+      "premium_features": false
+    }
+  },
+  "user": {
+    "name": "Usuario",
+    "level": 1,
+    "permissions": [
+      "help",
+      "info",
+      "ping",
+      "status",
+      "profile",
+      "settings"
+    ],
+    "rate_limits": {
+      "commands_per_minute": 10,
+      "messages_per_hour": 50
+    },
+    "features": {
+      "basic_commands": true,
+      "contexts": true,
+      "premium_features": false
+    }
+  },
+  "premium": {
+    "name": "Premium",
+    "level": 2,
+    "permissions": [
+      "help",
+      "info",
+      "ping",
+      "status",
+      "profile",
+      "settings",
+      "advanced_features",
+      "priority_support"
+    ],
+    "rate_limits": {
+      "commands_per_minute": 20,
+      "messages_per_hour": 100
+    },
+    "features": {
+      "basic_commands": true,
+      "contexts": true,
+      "premium_features": true,
+      "priority_queue": true
+    }
+  },
+  "admin": {
+    "name": "Administrador",
+    "level": 3,
+    "permissions": [
+      "*",
+      "user_management",
+      "system_commands",
+      "config_commands",
+      "diagnostic_commands"
+    ],
+    "rate_limits": {
+      "commands_per_minute": 50,
+      "messages_per_hour": 500
+    },
+    "features": {
+      "basic_commands": true,
+      "contexts": true,
+      "premium_features": true,
+      "admin_panel": true,
+      "user_management": true
+    }
+  },
+  "super_admin": {
+    "name": "Super Administrador",
+    "level": 4,
+    "permissions": [
+      "*",
+      "system_administration",
+      "database_access",
+      "server_management"
+    ],
+    "rate_limits": {
+      "commands_per_minute": 100,
+      "messages_per_hour": 1000
+    },
+    "features": {
+      "basic_commands": true,
+      "contexts": true,
+      "premium_features": true,
+      "admin_panel": true,
+      "user_management": true,
+      "system_administration": true
+    }
+  }
+}
