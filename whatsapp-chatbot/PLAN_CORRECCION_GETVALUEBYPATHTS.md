@@ -206,7 +206,7 @@ pm2 status
 - [x] Código compilado sin errores
 - [x] Bot reiniciado y funcionando
 - [x] Commit realizado con documentación completa
-- [ ] Push a la rama dev
+- [x] Push a la rama dev - **COMPLETADO**
 
 ---
 
