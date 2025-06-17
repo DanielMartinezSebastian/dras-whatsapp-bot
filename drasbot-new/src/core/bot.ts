@@ -51,7 +51,7 @@ export class DrasBot {
 
       // Initialize configuration service
       await this.configService.initialize();
-      
+
       // Initialize database service
       await this.databaseService.initialize();
 
@@ -60,7 +60,11 @@ export class DrasBot {
         await this.whatsappService.initialize();
         this.logger.info('DrasBot', 'WhatsApp Bridge service connected');
       } catch (error) {
-        this.logger.warn('DrasBot', 'WhatsApp Bridge service not available, continuing without it', error);
+        this.logger.warn(
+          'DrasBot',
+          'WhatsApp Bridge service not available, continuing without it',
+          error
+        );
       }
 
       this.isInitialized = true;
@@ -83,7 +87,7 @@ export class DrasBot {
 
     try {
       this.logger.info('DrasBot', 'Starting DrasBot...');
-      
+
       this.startTime = new Date();
       this.isRunning = true;
 
@@ -132,7 +136,7 @@ export class DrasBot {
 
   public getStatus(): BotStatus {
     const uptime = this.startTime ? Date.now() - this.startTime.getTime() : 0;
-    
+
     return {
       running: this.isRunning,
       startTime: this.startTime,
@@ -141,9 +145,9 @@ export class DrasBot {
         config: this.isInitialized,
         database: this.isInitialized,
         whatsapp: this.whatsappService.isConnected(),
-        plugins: false,  // TODO: Implement plugin loader status
-        contexts: false  // TODO: Implement context manager status
-      }
+        plugins: false, // TODO: Implement plugin loader status
+        contexts: false, // TODO: Implement context manager status
+      },
     };
   }
 
@@ -154,7 +158,10 @@ export class DrasBot {
     return this.configService.getConfig();
   }
 
-  public async sendMessage(recipient: string, message: string): Promise<boolean> {
+  public async sendMessage(
+    recipient: string,
+    message: string
+  ): Promise<boolean> {
     if (!this.isInitialized) {
       throw new Error('Bot not initialized. Call initialize() first.');
     }
@@ -172,8 +179,8 @@ export class DrasBot {
   }
 
   public async sendMediaMessage(
-    recipient: string, 
-    mediaPath: string, 
+    recipient: string,
+    mediaPath: string,
     caption?: string
   ): Promise<boolean> {
     if (!this.isInitialized) {
@@ -185,7 +192,11 @@ export class DrasBot {
     }
 
     try {
-      return await this.whatsappService.sendMediaMessage(recipient, mediaPath, caption);
+      return await this.whatsappService.sendMediaMessage(
+        recipient,
+        mediaPath,
+        caption
+      );
     } catch (error) {
       this.logger.error('DrasBot', 'Failed to send media message', error);
       return false;
@@ -194,7 +205,7 @@ export class DrasBot {
 
   public async cleanup(): Promise<void> {
     this.logger.info('DrasBot', 'Cleaning up DrasBot...');
-    
+
     try {
       if (this.isRunning) {
         await this.stop();

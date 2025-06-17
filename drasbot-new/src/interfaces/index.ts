@@ -2,13 +2,13 @@
  * Core Interfaces for DrasBot Plugin System
  */
 
-import { 
-  User, 
-  Message, 
-  ConversationContext, 
-  CommandResult, 
-  PluginMetadata, 
-  BotConfig 
+import {
+  User,
+  Message,
+  ConversationContext,
+  CommandResult,
+  PluginMetadata,
+  BotConfig,
 } from '../types';
 
 /**
@@ -17,7 +17,7 @@ import {
 export interface ICommand {
   readonly metadata: PluginMetadata;
   readonly config: CommandConfig;
-  
+
   execute(message: Message, user: User, args: string[]): Promise<CommandResult>;
   validatePermissions(user: User): boolean;
   getUsage(): string;
@@ -46,9 +46,16 @@ export interface CommandConfig {
 export interface IContextHandler {
   readonly metadata: PluginMetadata;
   readonly config: ContextConfig;
-  
-  enter(user: User, initialData?: Record<string, any>): Promise<ConversationContext>;
-  process(context: ConversationContext, message: Message, user: User): Promise<CommandResult>;
+
+  enter(
+    user: User,
+    initialData?: Record<string, any>
+  ): Promise<ConversationContext>;
+  process(
+    context: ConversationContext,
+    message: Message,
+    user: User
+  ): Promise<CommandResult>;
   exit(context: ConversationContext, user: User): Promise<void>;
   validateStep(context: ConversationContext, input: string): boolean;
   getNextStep(context: ConversationContext): ContextStep | null;
@@ -107,7 +114,12 @@ export interface IMessageProcessor {
   processMessage(message: Message, user: User): Promise<CommandResult>;
   isCommand(content: string): boolean;
   parseCommand(content: string): { command: string; args: string[] };
-  executeCommand(command: string, message: Message, user: User, args: string[]): Promise<CommandResult>;
+  executeCommand(
+    command: string,
+    message: Message,
+    user: User,
+    args: string[]
+  ): Promise<CommandResult>;
 }
 
 /**
@@ -117,7 +129,11 @@ export interface IContextManager {
   getContext(userId: string): Promise<ConversationContext | null>;
   setContext(context: ConversationContext): Promise<void>;
   clearContext(userId: string): Promise<void>;
-  processContextMessage(context: ConversationContext, message: Message, user: User): Promise<CommandResult>;
+  processContextMessage(
+    context: ConversationContext,
+    message: Message,
+    user: User
+  ): Promise<CommandResult>;
   isContextActive(userId: string): Promise<boolean>;
   cleanupExpiredContexts(): Promise<number>;
 }
@@ -128,11 +144,15 @@ export interface IContextManager {
 export interface IDatabaseService {
   initialize(): Promise<void>;
   close(): Promise<void>;
-  createUser(user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User>;
+  createUser(
+    user: Omit<User, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<User>;
   getUserByPhone(phone: string): Promise<User | null>;
   getUserByJid(jid: string): Promise<User | null>;
   updateUser(id: string, data: Partial<User>): Promise<User>;
-  saveMessage(message: Omit<Message, 'id' | 'created_at' | 'updated_at'>): Promise<Message>;
+  saveMessage(
+    message: Omit<Message, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Message>;
   getContext(userId: string): Promise<ConversationContext | null>;
   saveContext(context: ConversationContext): Promise<void>;
   deleteContext(userId: string): Promise<void>;
@@ -158,7 +178,11 @@ export interface IWhatsAppClient {
  */
 export interface IConfigService {
   getConfig(): BotConfig;
-  getMessage(key: string, language?: string, params?: Record<string, any>): string;
+  getMessage(
+    key: string,
+    language?: string,
+    params?: Record<string, any>
+  ): string;
   getCommandConfig(commandName: string): CommandConfig | null;
   getContextConfig(contextName: string): ContextConfig | null;
   reloadConfig(): Promise<void>;

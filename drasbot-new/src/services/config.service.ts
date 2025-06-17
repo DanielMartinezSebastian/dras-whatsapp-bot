@@ -17,7 +17,8 @@ export class ConfigService {
 
   private constructor() {
     this.logger = Logger.getInstance();
-    this.configPath = process.env.CONFIG_PATH || path.join(process.cwd(), 'config');
+    this.configPath =
+      process.env.CONFIG_PATH || path.join(process.cwd(), 'config');
   }
 
   public static getInstance(): ConfigService {
@@ -31,9 +32,16 @@ export class ConfigService {
     try {
       await this.loadConfig();
       this.setupConfigWatchers();
-      this.logger.info('ConfigService', 'Configuration service initialized successfully');
+      this.logger.info(
+        'ConfigService',
+        'Configuration service initialized successfully'
+      );
     } catch (error) {
-      this.logger.error('ConfigService', 'Failed to initialize configuration service', error);
+      this.logger.error(
+        'ConfigService',
+        'Failed to initialize configuration service',
+        error
+      );
       throw error;
     }
   }
@@ -50,7 +58,7 @@ export class ConfigService {
 
       // Load user levels
       const userLevelsPath = path.join(this.configPath, 'user-levels.json');
-      const userLevels = fs.existsSync(userLevelsPath) 
+      const userLevels = fs.existsSync(userLevelsPath)
         ? JSON.parse(fs.readFileSync(userLevelsPath, 'utf-8'))
         : {};
 
@@ -69,8 +77,8 @@ export class ConfigService {
           config: this.configPath,
           data: path.join(process.cwd(), 'data'),
           logs: path.join(process.cwd(), 'logs'),
-          plugins: path.join(process.cwd(), 'src', 'plugins')
-        }
+          plugins: path.join(process.cwd(), 'src', 'plugins'),
+        },
       };
 
       this.logger.info('ConfigService', 'Configuration loaded successfully');
@@ -84,14 +92,17 @@ export class ConfigService {
     const watchPaths = [
       path.join(this.configPath, 'main.json'),
       path.join(this.configPath, 'user-levels.json'),
-      path.join(this.configPath, 'messages', 'es.json')
+      path.join(this.configPath, 'messages', 'es.json'),
     ];
 
     watchPaths.forEach(watchPath => {
       if (fs.existsSync(watchPath)) {
-        const watcher = fs.watch(watchPath, (eventType) => {
+        const watcher = fs.watch(watchPath, eventType => {
           if (eventType === 'change') {
-            this.logger.info('ConfigService', `Configuration file changed: ${watchPath}`);
+            this.logger.info(
+              'ConfigService',
+              `Configuration file changed: ${watchPath}`
+            );
             this.reloadConfig();
           }
         });
@@ -105,7 +116,11 @@ export class ConfigService {
       await this.loadConfig();
       this.logger.info('ConfigService', 'Configuration reloaded successfully');
     } catch (error) {
-      this.logger.error('ConfigService', 'Failed to reload configuration', error);
+      this.logger.error(
+        'ConfigService',
+        'Failed to reload configuration',
+        error
+      );
     }
   }
 
@@ -153,7 +168,10 @@ export class ConfigService {
 
     if (lastKey) {
       target[lastKey] = value;
-      this.logger.info('ConfigService', `Configuration value updated: ${path} = ${JSON.stringify(value)}`);
+      this.logger.info(
+        'ConfigService',
+        `Configuration value updated: ${path} = ${JSON.stringify(value)}`
+      );
     }
   }
 
@@ -190,7 +208,10 @@ export class ConfigService {
   public cleanup(): void {
     this.watchers.forEach((watcher, path) => {
       watcher.close();
-      this.logger.debug('ConfigService', `Stopped watching configuration file: ${path}`);
+      this.logger.debug(
+        'ConfigService',
+        `Stopped watching configuration file: ${path}`
+      );
     });
     this.watchers.clear();
   }

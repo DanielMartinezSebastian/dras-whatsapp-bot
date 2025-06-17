@@ -26,7 +26,7 @@ export class DatabaseService {
     this.config = {
       path: path.join(process.cwd(), 'data', 'drasbot.db'),
       enableWAL: true,
-      busyTimeout: 30000
+      busyTimeout: 30000,
     };
   }
 
@@ -45,9 +45,16 @@ export class DatabaseService {
     try {
       await this.connect();
       await this.runMigrations();
-      this.logger.info('DatabaseService', 'Database service initialized successfully');
+      this.logger.info(
+        'DatabaseService',
+        'Database service initialized successfully'
+      );
     } catch (error) {
-      this.logger.error('DatabaseService', 'Failed to initialize database service', error);
+      this.logger.error(
+        'DatabaseService',
+        'Failed to initialize database service',
+        error
+      );
       throw error;
     }
   }
@@ -60,13 +67,20 @@ export class DatabaseService {
         fs.mkdirSync(dataDir, { recursive: true });
       }
 
-      this.db = new sqlite3.Database(this.config.path, (err) => {
+      this.db = new sqlite3.Database(this.config.path, err => {
         if (err) {
-          this.logger.error('DatabaseService', 'Failed to connect to database', err);
+          this.logger.error(
+            'DatabaseService',
+            'Failed to connect to database',
+            err
+          );
           reject(err);
         } else {
-          this.logger.info('DatabaseService', `Connected to database: ${this.config.path}`);
-          
+          this.logger.info(
+            'DatabaseService',
+            `Connected to database: ${this.config.path}`
+          );
+
           // Configure database
           if (this.db) {
             if (this.config.enableWAL) {
@@ -75,7 +89,7 @@ export class DatabaseService {
             this.db.run(`PRAGMA busy_timeout = ${this.config.busyTimeout}`);
             this.db.run('PRAGMA foreign_keys = ON');
           }
-          
+
           resolve();
         }
       });
@@ -92,7 +106,7 @@ export class DatabaseService {
       this.createMessagesTable(),
       this.createContextsTable(),
       this.createSessionsTable(),
-      this.createPluginDataTable()
+      this.createPluginDataTable(),
     ];
 
     for (const migration of migrations) {
@@ -199,7 +213,7 @@ export class DatabaseService {
         return;
       }
 
-      this.db.run(sql, params, function(err) {
+      this.db.run(sql, params, function (err) {
         if (err) {
           reject(err);
         } else {
@@ -209,7 +223,10 @@ export class DatabaseService {
     });
   }
 
-  public async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
+  public async get<T = any>(
+    sql: string,
+    params: any[] = []
+  ): Promise<T | undefined> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
@@ -244,39 +261,59 @@ export class DatabaseService {
   }
 
   // User operations
-  public async createUser(user: Omit<User, 'created_at' | 'updated_at'>): Promise<User> {
+  public async createUser(
+    user: Omit<User, 'created_at' | 'updated_at'>
+  ): Promise<User> {
     const now = new Date().toISOString();
     const userData = {
       ...user,
       created_at: now,
       updated_at: now,
       preferences: JSON.stringify(user.preferences || {}),
-      metadata: JSON.stringify(user.metadata || {})
+      metadata: JSON.stringify(user.metadata || {}),
     };
 
-    await this.run(`
+    await this.run(
+      `
       INSERT INTO users (
         id, phone, whatsapp_jid, display_name, user_level, user_type,
         language, is_registered, last_activity, preferences, metadata,
         created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      userData.id, userData.phone, userData.whatsapp_jid, userData.display_name,
-      userData.user_level, userData.user_type, userData.language, userData.is_registered,
-      userData.last_activity, userData.preferences, userData.metadata,
-      userData.created_at, userData.updated_at
-    ]);
+    `,
+      [
+        userData.id,
+        userData.phone,
+        userData.whatsapp_jid,
+        userData.display_name,
+        userData.user_level,
+        userData.user_type,
+        userData.language,
+        userData.is_registered,
+        userData.last_activity,
+        userData.preferences,
+        userData.metadata,
+        userData.created_at,
+        userData.updated_at,
+      ]
+    );
 
     return this.getUserById(user.id) as Promise<User>;
   }
 
   public async getUserById(id: string): Promise<User | undefined> {
-    const row = await this.get<any>('SELECT * FROM users WHERE id = ? AND deleted_at IS NULL', [id]);
+    const row = await this.get<any>(
+      'SELECT * FROM users WHERE id = ? AND deleted_at IS NULL',
+      [id]
+    );
     return row ? this.parseUser(row) : undefined;
   }
 
   public async getUserByPhone(phone: string): Promise<User | undefined> {
-    const row = await this.get<any>('SELECT * FROM users WHERE phone = ? AND deleted_at IS NULL', [phone]);
+    const row = await this.get<any>(
+      'SELECT * FROM users WHERE phone = ? AND deleted_at IS NULL',
+      [phone]
+    );
     return row ? this.parseUser(row) : undefined;
   }
 
@@ -285,14 +322,14 @@ export class DatabaseService {
       ...row,
       is_registered: Boolean(row.is_registered),
       preferences: JSON.parse(row.preferences || '{}'),
-      metadata: JSON.parse(row.metadata || '{}')
+      metadata: JSON.parse(row.metadata || '{}'),
     };
   }
 
   public async close(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (this.db) {
-        this.db.close((err) => {
+        this.db.close(err => {
           if (err) {
             this.logger.error('DatabaseService', 'Error closing database', err);
           } else {
@@ -317,7 +354,10 @@ export class DatabaseService {
       try {
         // Simple file copy for SQLite backup
         fs.copyFileSync(this.config.path, backupPath);
-        this.logger.info('DatabaseService', `Database backup created: ${backupPath}`);
+        this.logger.info(
+          'DatabaseService',
+          `Database backup created: ${backupPath}`
+        );
         resolve();
       } catch (err: any) {
         this.logger.error('DatabaseService', 'Database backup failed', err);

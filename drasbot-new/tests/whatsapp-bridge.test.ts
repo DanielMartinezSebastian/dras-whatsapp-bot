@@ -19,7 +19,7 @@ describe('WhatsAppBridgeService', () => {
       whatsappService.configure({
         baseURL: 'http://127.0.0.1',
         port: 8080,
-        timeout: 15000
+        timeout: 15000,
       });
     } catch (error) {
       // Ignore cleanup errors in tests
@@ -48,12 +48,12 @@ describe('WhatsAppBridgeService', () => {
         baseURL: 'http://localhost',
         port: 9000,
         timeout: 10000,
-        enableLogging: false
+        enableLogging: false,
       };
-      
+
       whatsappService.configure(customConfig);
       const config = whatsappService.getConfig();
-      
+
       expect(config.port).toBe(9000);
       expect(config.timeout).toBe(10000);
       expect(config.enableLogging).toBe(false);
@@ -61,9 +61,9 @@ describe('WhatsAppBridgeService', () => {
 
     it('should support API key configuration', () => {
       whatsappService.configure({
-        apiKey: 'test-api-key'
+        apiKey: 'test-api-key',
       });
-      
+
       expect(whatsappService.getConfig().apiKey).toBe('test-api-key');
     });
   });
@@ -121,14 +121,24 @@ describe('WhatsAppBridgeService', () => {
     });
 
     it('should validate message parameters', async () => {
-      await expect(whatsappService.sendMessage('', 'test message')).rejects.toThrow('Recipient is required');
-      await expect(whatsappService.sendMessage('1234567890', '')).rejects.toThrow('Message is required');
+      await expect(
+        whatsappService.sendMessage('', 'test message')
+      ).rejects.toThrow('Recipient is required');
+      await expect(
+        whatsappService.sendMessage('1234567890', '')
+      ).rejects.toThrow('Message is required');
     });
 
     it('should format phone numbers correctly', () => {
-      expect(whatsappService.formatPhoneNumber('+1234567890')).toBe('1234567890');
-      expect(whatsappService.formatPhoneNumber('1234567890')).toBe('1234567890');
-      expect(whatsappService.formatPhoneNumber('(123) 456-7890')).toBe('1234567890');
+      expect(whatsappService.formatPhoneNumber('+1234567890')).toBe(
+        '1234567890'
+      );
+      expect(whatsappService.formatPhoneNumber('1234567890')).toBe(
+        '1234567890'
+      );
+      expect(whatsappService.formatPhoneNumber('(123) 456-7890')).toBe(
+        '1234567890'
+      );
     });
 
     it('should create JID from phone number', () => {
@@ -139,7 +149,9 @@ describe('WhatsAppBridgeService', () => {
     it('should handle group JIDs', () => {
       const groupJID = '1234567890@g.us';
       expect(whatsappService.isGroupJID(groupJID)).toBe(true);
-      expect(whatsappService.isGroupJID('1234567890@s.whatsapp.net')).toBe(false);
+      expect(whatsappService.isGroupJID('1234567890@s.whatsapp.net')).toBe(
+        false
+      );
     });
 
     it('should send text message when bridge is available', async () => {
@@ -149,7 +161,10 @@ describe('WhatsAppBridgeService', () => {
       }
 
       try {
-        const result = await whatsappService.sendTextMessage('1234567890', 'test message');
+        const result = await whatsappService.sendTextMessage(
+          '1234567890',
+          'test message'
+        );
         expect(typeof result).toBe('boolean');
       } catch (error) {
         // Bridge may respond with error but still be working
@@ -164,7 +179,11 @@ describe('WhatsAppBridgeService', () => {
       }
 
       try {
-        const result = await whatsappService.sendMediaMessage('1234567890', '/path/to/test.jpg', 'test caption');
+        const result = await whatsappService.sendMediaMessage(
+          '1234567890',
+          '/path/to/test.jpg',
+          'test caption'
+        );
         expect(typeof result).toBe('boolean');
       } catch (error) {
         // Bridge may respond with error but still be working
@@ -175,8 +194,12 @@ describe('WhatsAppBridgeService', () => {
 
   describe('media download', () => {
     it('should validate download parameters', async () => {
-      await expect(whatsappService.downloadMedia('', 'test@s.whatsapp.net')).rejects.toThrow('Message ID is required');
-      await expect(whatsappService.downloadMedia('msg123', '')).rejects.toThrow('Chat JID is required');
+      await expect(
+        whatsappService.downloadMedia('', 'test@s.whatsapp.net')
+      ).rejects.toThrow('Message ID is required');
+      await expect(whatsappService.downloadMedia('msg123', '')).rejects.toThrow(
+        'Chat JID is required'
+      );
     });
   });
 
@@ -185,20 +208,22 @@ describe('WhatsAppBridgeService', () => {
       // Configure to use invalid URL
       whatsappService.configure({
         baseURL: 'http://invalid-host',
-        port: 99999
+        port: 99999,
       });
 
-      await expect(whatsappService.sendMessage('1234567890', 'test')).rejects.toThrow();
+      await expect(
+        whatsappService.sendMessage('1234567890', 'test')
+      ).rejects.toThrow();
     });
 
     it('should support retry configuration', () => {
       const mockRetryConfig = {
         maxRetries: 3,
-        retryDelay: 100
+        retryDelay: 100,
       };
-      
+
       whatsappService.configure({ retry: mockRetryConfig });
-      
+
       const config = whatsappService.getConfig();
       expect(config.retry?.maxRetries).toBe(3);
       expect(config.retry?.retryDelay).toBe(100);
@@ -226,9 +251,9 @@ describe('WhatsAppBridgeService', () => {
     it('should support config updates', () => {
       whatsappService.updateConfig({
         timeout: 20000,
-        enableLogging: false
+        enableLogging: false,
       });
-      
+
       const config = whatsappService.getConfig();
       expect(config.timeout).toBe(20000);
       expect(config.enableLogging).toBe(false);

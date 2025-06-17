@@ -10,7 +10,7 @@ process.env.LOG_LEVEL = 'error';
 
 // Mock external dependencies
 jest.mock('dotenv', () => ({
-  config: jest.fn()
+  config: jest.fn(),
 }));
 
 // Extend global namespace for test utilities
@@ -40,11 +40,11 @@ declare global {
       auto_reply: true,
       language: 'es',
       timezone: 'UTC',
-      privacy_level: 'normal'
+      privacy_level: 'normal',
     },
     metadata: {},
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   }),
 
   createMockMessage: () => ({
@@ -57,8 +57,8 @@ declare global {
     processed: false,
     metadata: {},
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  })
+    updated_at: new Date().toISOString(),
+  }),
 };
 
 // Setup test database

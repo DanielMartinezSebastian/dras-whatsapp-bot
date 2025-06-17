@@ -1,13 +1,42 @@
 /**
  * Core Types for DrasBot
- * 
+ *
  * Base types and interfaces used throughout the application
  */
 
-export type UserLevel = 'guest' | 'user' | 'premium' | 'admin' | 'super_admin';
+/**
+ * User Level Enum
+ */
+export enum UserLevel {
+  BANNED = 'banned',
+  USER = 'user', 
+  MODERATOR = 'moderator',
+  ADMIN = 'admin',
+  OWNER = 'owner'
+}
 export type UserType = 'normal' | 'block' | 'vip';
-export type MessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'location' | 'contact';
-export type ContextType = 'command' | 'conversation' | 'registration' | 'survey' | 'support' | 'custom';
+export type MessageType =
+  | 'text'
+  | 'image'
+  | 'audio'
+  | 'video'
+  | 'document'
+  | 'location'
+  | 'contact';
+
+/**
+ * Context Type Enum
+ */
+export enum ContextType {
+  COMMAND = 'command',
+  CONVERSATION = 'conversation',
+  REGISTRATION = 'registration',
+  SURVEY = 'survey',
+  SUPPORT = 'support',
+  CUSTOM = 'custom',
+  GENERAL = 'general',
+  CONFIGURATION = 'configuration'
+}
 
 /**
  * Base entity interface
@@ -27,6 +56,7 @@ export interface User extends BaseEntity {
   whatsapp_jid: string;
   display_name: string;
   user_level: UserLevel;
+  level: UserLevel; // Alias for user_level
   user_type: UserType;
   language: string;
   is_registered: boolean;
@@ -98,9 +128,13 @@ export interface ConversationContext extends BaseEntity {
  */
 export interface CommandResult {
   success: boolean;
-  response: string;
+  command?: string;
+  executionTime?: number;
+  response?: ResponseMessage | string;
   context?: Partial<ConversationContext>;
   metadata?: Record<string, any>;
+  data?: Record<string, any>;
+  error?: string;
 }
 
 /**
@@ -182,4 +216,160 @@ export interface ApiResponse<T = any> {
   error?: string;
   timestamp: string;
   request_id?: string;
+}
+
+/**
+ * Processing stages
+ */
+export type ProcessingStage =
+  | 'validation'
+  | 'user_identification'
+  | 'context_detection'
+  | 'command_processing'
+  | 'response_generation'
+  | 'completed'
+  | 'error';
+
+/**
+ * Processing pipeline configuration
+ */
+export interface ProcessingPipelineConfig {
+  maxConcurrentProcessing: number;
+  processingTimeout: number;
+  retryFailedMessages: boolean;
+  maxRetries: number;
+  queueSize: number;
+  enableMetrics: boolean;
+}
+
+/**
+ * Processing result
+ */
+export interface ProcessingResult {
+  success: boolean;
+  processingId: string;
+  processingTime: number;
+  results: CommandResult[];
+  errors?: Error[];
+  user?: User | null;
+  message?: Message | null;
+  context?: ConversationContext | null;
+}
+
+/**
+ * Response types
+ */
+export interface ResponseMessage {
+  type: 'text' | 'media' | 'document' | 'location';
+  content: string;
+  mediaPath?: string;
+  metadata: Record<string, any>;
+}
+
+/**
+ * Enhanced command result with proper response structure
+ */
+export interface EnhancedCommandResult {
+  success: boolean;
+  command: string;
+  executionTime: number;
+  response?: ResponseMessage;
+  data?: Record<string, any>;
+  error?: string;
+}
+
+// Plugin System Types
+export interface PluginInfo {
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  category: 'command' | 'context' | 'middleware' | 'utility';
+  priority: number;
+  dependencies?: string[];
+  config?: Record<string, any>;
+}
+
+export interface PluginContext {
+  user: User;
+  message: Message;
+  conversationContext?: ConversationContext;
+  config: any; // ConfigService
+  database: any; // DatabaseService  
+  logger: any; // Logger
+  whatsappBridge: any; // WhatsAppBridgeService
+}
+
+export interface Plugin {
+  info: PluginInfo;
+  initialize(): Promise<void>;
+  shutdown(): Promise<void>;
+  execute(context: PluginContext): Promise<CommandResult>;
+  validateConfig?(config: Record<string, any>): boolean;
+}
+
+export interface Command {
+  name: string;
+  aliases: string[];
+  description: string;
+  category: string;
+  userLevel: UserLevel;
+  cooldown?: number;
+  parameters?: CommandParameter[];
+  examples?: string[];
+  enabled: boolean;
+  plugin: string;
+}
+
+export interface CommandParameter {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'user' | 'text';
+  required: boolean;
+  description: string;
+  validation?: RegExp;
+  defaultValue?: any;
+}
+
+export interface CommandRegistry {
+  [key: string]: Command;
+}
+
+export interface ContextHandler {
+  name: string;
+  description: string;
+  priority: number;
+  patterns: RegExp[];
+  userLevel: UserLevel;
+  plugin: string;
+  execute(context: PluginContext): Promise<CommandResult>;
+}
+
+export interface ContextRegistry {
+  [key: string]: ContextHandler;
+}
+
+export interface PluginManager {
+  loadPlugin(pluginPath: string): Promise<Plugin>;
+  unloadPlugin(pluginName: string): Promise<void>;
+  getPlugin(name: string): Plugin | null;
+  getAllPlugins(): Plugin[];
+  getEnabledPlugins(): Plugin[];
+  enablePlugin(name: string): Promise<void>;
+  disablePlugin(name: string): Promise<void>;
+  reloadPlugin(name: string): Promise<void>;
+  validateDependencies(plugin: Plugin): boolean;
+}
+
+export interface MiddlewareHandler {
+  name: string;
+  priority: number;
+  execute(context: PluginContext, next: () => Promise<CommandResult>): Promise<CommandResult>;
+}
+
+export interface PluginConfig {
+  pluginsDirectory: string;
+  autoLoad: boolean;
+  enabledPlugins: string[];
+  disabledPlugins: string[];
+  pluginConfigs: Record<string, Record<string, any>>;
 }

@@ -46,7 +46,9 @@ describe('Logger', () => {
 
     it('should accept additional data parameter', () => {
       const testData = { key: 'value' };
-      expect(() => logger.info('test', 'Message with data', testData)).not.toThrow();
+      expect(() =>
+        logger.info('test', 'Message with data', testData)
+      ).not.toThrow();
     });
   });
 

@@ -10,7 +10,7 @@ export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
 }
 
 export interface LogEntry {
@@ -53,7 +53,12 @@ export class Logger {
     }
   }
 
-  private formatMessage(level: LogLevel, category: string, message: string, data?: any): string {
+  private formatMessage(
+    level: LogLevel,
+    category: string,
+    message: string,
+    data?: any
+  ): string {
     const timestamp = new Date().toISOString();
     const levelStr = LogLevel[level];
     const dataStr = data ? ` | Data: ${JSON.stringify(data, null, 2)}` : '';
@@ -65,13 +70,18 @@ export class Logger {
     fs.appendFileSync(logPath, formattedMessage + '\n');
   }
 
-  private log(level: LogLevel, category: string, message: string, data?: any): void {
+  private log(
+    level: LogLevel,
+    category: string,
+    message: string,
+    data?: any
+  ): void {
     if (level < this.logLevel) {
       return;
     }
 
     const formattedMessage = this.formatMessage(level, category, message, data);
-    
+
     // Console output
     switch (level) {
       case LogLevel.DEBUG:
@@ -110,30 +120,32 @@ export class Logger {
 
   public getLogHistory(lines: number = 100): LogEntry[] {
     const logPath = path.join(this.logDir, this.logFile);
-    
+
     if (!fs.existsSync(logPath)) {
       return [];
     }
 
     const content = fs.readFileSync(logPath, 'utf-8');
     const logLines = content.trim().split('\n').slice(-lines);
-    
+
     return logLines.map(line => {
-      const match = line.match(/^\[(.+?)\] \[(.+?)\] \[(.+?)\] (.+?)( \| Data: (.+))?$/);
+      const match = line.match(
+        /^\[(.+?)\] \[(.+?)\] \[(.+?)\] (.+?)( \| Data: (.+))?$/
+      );
       if (match) {
         return {
           timestamp: match[1],
           level: LogLevel[match[2] as keyof typeof LogLevel],
           category: match[3],
           message: match[4],
-          data: match[6] ? JSON.parse(match[6]) : undefined
+          data: match[6] ? JSON.parse(match[6]) : undefined,
         };
       }
       return {
         timestamp: new Date().toISOString(),
         level: LogLevel.INFO,
         category: 'unknown',
-        message: line
+        message: line,
       };
     });
   }

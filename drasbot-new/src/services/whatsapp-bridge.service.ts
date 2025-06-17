@@ -71,7 +71,7 @@ export class BridgeError extends Error {
   constructor(error: any, operation?: string) {
     const message = error.message || 'Unknown bridge error';
     super(message);
-    
+
     this.name = 'BridgeError';
     if (operation) {
       this.operation = operation;
@@ -106,11 +106,11 @@ export class WhatsAppBridgeService {
       timeout: 15000,
       retry: {
         maxRetries: 3,
-        retryDelay: 1000
+        retryDelay: 1000,
       },
-      enableLogging: true
+      enableLogging: true,
     };
-    
+
     this.httpClient = this.createHttpClient();
     this.setupInterceptors();
   }
@@ -124,17 +124,17 @@ export class WhatsAppBridgeService {
 
   private createHttpClient(): any {
     const baseURL = `${this.config.baseURL}:${this.config.port}`;
-    
+
     return axios.create({
       baseURL,
       timeout: this.config.timeout,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         ...(this.config.apiKey && {
           Authorization: `Bearer ${this.config.apiKey}`,
-        })
-      }
+        }),
+      },
     });
   }
 
@@ -143,7 +143,10 @@ export class WhatsAppBridgeService {
     this.httpClient.interceptors.request.use(
       (config: any) => {
         if (this.config.enableLogging) {
-          this.logger.info('WhatsAppBridge', `Request: ${config.method?.toUpperCase()} ${config.url}`);
+          this.logger.info(
+            'WhatsAppBridge',
+            `Request: ${config.method?.toUpperCase()} ${config.url}`
+          );
         }
         return config;
       },
@@ -157,7 +160,10 @@ export class WhatsAppBridgeService {
     this.httpClient.interceptors.response.use(
       (response: any) => {
         if (this.config.enableLogging) {
-          this.logger.info('WhatsAppBridge', `Response: ${response.status} ${response.config.url}`);
+          this.logger.info(
+            'WhatsAppBridge',
+            `Response: ${response.status} ${response.config.url}`
+          );
         }
         return response;
       },
@@ -182,7 +188,9 @@ export class WhatsAppBridgeService {
               `Retrying request (${this.retryCount}/${this.config.retry?.maxRetries})...`
             );
 
-            await this.delay((this.config.retry?.retryDelay || 1000) * this.retryCount);
+            await this.delay(
+              (this.config.retry?.retryDelay || 1000) * this.retryCount
+            );
             return this.httpClient(originalRequest);
           }
         }
@@ -207,20 +215,30 @@ export class WhatsAppBridgeService {
 
   public async initialize(): Promise<void> {
     try {
-      this.logger.info('WhatsAppBridge', 'Initializing WhatsApp Bridge connection...');
-      
+      this.logger.info(
+        'WhatsAppBridge',
+        'Initializing WhatsApp Bridge connection...'
+      );
+
       // Test connection to bridge
       const health = await this.checkBridgeHealth();
-      
+
       if (health.bridge_available) {
         this.connected = true;
-        this.logger.info('WhatsAppBridge', 'Successfully connected to WhatsApp Bridge');
+        this.logger.info(
+          'WhatsAppBridge',
+          'Successfully connected to WhatsApp Bridge'
+        );
       } else {
         throw new Error('WhatsApp Bridge is not available');
       }
     } catch (error) {
       this.connected = false;
-      this.logger.error('WhatsAppBridge', 'Failed to initialize WhatsApp Bridge', error);
+      this.logger.error(
+        'WhatsAppBridge',
+        'Failed to initialize WhatsApp Bridge',
+        error
+      );
       throw error;
     }
   }
@@ -239,23 +257,23 @@ export class WhatsAppBridgeService {
       // Use the same ping strategy as the legacy client
       await this.httpClient.post('/api/send', {
         recipient: 'ping_test_12345@invalid.whatsapp.net',
-        message: 'ping_test'
+        message: 'ping_test',
       });
-      
+
       this.lastHealthCheck = new Date();
-      
+
       return {
         status: 'connected',
         bridge_available: true,
-        last_check: this.lastHealthCheck.toISOString()
+        last_check: this.lastHealthCheck.toISOString(),
       };
     } catch (error: any) {
       this.lastHealthCheck = new Date();
-      
+
       // Analyze error to determine if bridge is available
       if (error instanceof BridgeError) {
         const status = error.code;
-        
+
         // HTTP errors mean bridge is responding
         if (
           status === 'HTTP_400' ||
@@ -265,10 +283,10 @@ export class WhatsAppBridgeService {
           return {
             status: 'connected',
             bridge_available: true,
-            last_check: this.lastHealthCheck.toISOString()
+            last_check: this.lastHealthCheck.toISOString(),
           };
         }
-        
+
         // Network errors mean bridge is not available
         if (
           status === 'NETWORK_ERROR' ||
@@ -279,15 +297,15 @@ export class WhatsAppBridgeService {
             status: 'error',
             bridge_available: false,
             last_check: this.lastHealthCheck.toISOString(),
-            error: error.message
+            error: error.message,
           };
         }
       }
-      
+
       // Fallback error analysis
       const status = error.response?.status;
       const data = error.response?.data;
-      
+
       // Error 400 with validation means bridge is working
       if (status === 400) {
         if (typeof data === 'string') {
@@ -299,45 +317,45 @@ export class WhatsAppBridgeService {
             return {
               status: 'connected',
               bridge_available: true,
-              last_check: this.lastHealthCheck.toISOString()
+              last_check: this.lastHealthCheck.toISOString(),
             };
           }
         }
       }
-      
+
       // Error 500 means bridge is working but WhatsApp might not be connected
       if (status === 500) {
         return {
           status: 'connected',
           bridge_available: true,
-          last_check: this.lastHealthCheck.toISOString()
+          last_check: this.lastHealthCheck.toISOString(),
         };
       }
-      
+
       // Connection errors mean bridge is not available
       if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
         return {
           status: 'error',
           bridge_available: false,
           last_check: this.lastHealthCheck.toISOString(),
-          error: error.message
+          error: error.message,
         };
       }
-      
+
       // Other HTTP errors still mean bridge is responding
       if (status >= 400 && status < 600) {
         return {
           status: 'connected',
           bridge_available: true,
-          last_check: this.lastHealthCheck.toISOString()
+          last_check: this.lastHealthCheck.toISOString(),
         };
       }
-      
+
       return {
         status: 'error',
         bridge_available: false,
         last_check: this.lastHealthCheck.toISOString(),
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -354,12 +372,12 @@ export class WhatsAppBridgeService {
   public async getBridgeStatus(): Promise<BridgeStatus> {
     try {
       const isConnected = await this.ping();
-      
+
       return {
         connected: isConnected,
         uptime: 0, // Not available from bridge
         messagesProcessed: 0, // Not available from bridge
-        lastActivity: new Date().toISOString()
+        lastActivity: new Date().toISOString(),
       };
     } catch (error) {
       throw new BridgeError(error, 'getBridgeStatus');
@@ -399,7 +417,7 @@ export class WhatsAppBridgeService {
   ): Promise<BridgeResponse<T>> {
     try {
       let response: any;
-      
+
       if (method === 'POST') {
         response = await this.httpClient.post(endpoint, data);
       } else {
@@ -422,7 +440,7 @@ export class WhatsAppBridgeService {
     return {
       success: true,
       data: response.data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -457,7 +475,7 @@ export class WhatsAppBridgeService {
       const requestData: SendMessageRequest = {
         recipient: formattedRecipient,
         message: message || '',
-        ...(mediaPath && { media_path: mediaPath })
+        ...(mediaPath && { media_path: mediaPath }),
       };
 
       this.logger.info(
@@ -475,7 +493,7 @@ export class WhatsAppBridgeService {
       // Extract actual response data
       const response: SendMessageResponse = {
         success: bridgeResponse.success,
-        message: bridgeResponse.message || 'Message sent'
+        message: bridgeResponse.message || 'Message sent',
       };
 
       if (bridgeResponse.data?.messageId) {
@@ -484,10 +502,14 @@ export class WhatsAppBridgeService {
 
       if (response.success) {
         this.logger.info('WhatsAppBridge', 'Message sent successfully', {
-          recipient: formattedRecipient
+          recipient: formattedRecipient,
         });
       } else {
-        this.logger.error('WhatsAppBridge', 'Failed to send message', response.message);
+        this.logger.error(
+          'WhatsAppBridge',
+          'Failed to send message',
+          response.message
+        );
       }
 
       return response;
@@ -516,10 +538,13 @@ export class WhatsAppBridgeService {
     try {
       const requestData: DownloadMediaRequest = {
         message_id: messageId,
-        chat_jid: chatJID
+        chat_jid: chatJID,
       };
 
-      this.logger.info('WhatsAppBridge', `Downloading media for message ${messageId}`);
+      this.logger.info(
+        'WhatsAppBridge',
+        `Downloading media for message ${messageId}`
+      );
 
       const bridgeResponse = await this.makeRequest<DownloadMediaResponse>(
         'POST',
@@ -530,7 +555,7 @@ export class WhatsAppBridgeService {
       // Extract actual response data
       const response: DownloadMediaResponse = {
         success: bridgeResponse.success,
-        message: bridgeResponse.message || 'Media download completed'
+        message: bridgeResponse.message || 'Media download completed',
       };
 
       if (bridgeResponse.data?.filename) {
@@ -544,10 +569,14 @@ export class WhatsAppBridgeService {
       if (response.success) {
         this.logger.info('WhatsAppBridge', 'Media downloaded successfully', {
           filename: response.filename,
-          path: response.path
+          path: response.path,
         });
       } else {
-        this.logger.error('WhatsAppBridge', 'Failed to download media', response.message);
+        this.logger.error(
+          'WhatsAppBridge',
+          'Failed to download media',
+          response.message
+        );
       }
 
       return response;
@@ -557,7 +586,10 @@ export class WhatsAppBridgeService {
     }
   }
 
-  public async sendTextMessage(recipient: string, message: string): Promise<boolean> {
+  public async sendTextMessage(
+    recipient: string,
+    message: string
+  ): Promise<boolean> {
     try {
       const response = await this.sendMessage(recipient, message);
       return response.success;
@@ -572,7 +604,11 @@ export class WhatsAppBridgeService {
     caption?: string
   ): Promise<boolean> {
     try {
-      const response = await this.sendMessage(recipient, caption || '', mediaPath);
+      const response = await this.sendMessage(
+        recipient,
+        caption || '',
+        mediaPath
+      );
       return response.success;
     } catch (error) {
       return false;
@@ -587,7 +623,7 @@ export class WhatsAppBridgeService {
     return {
       connected: this.connected,
       config: this.getConfig(),
-      lastHealthCheck: this.lastHealthCheck.toISOString()
+      lastHealthCheck: this.lastHealthCheck.toISOString(),
     };
   }
 
@@ -595,9 +631,9 @@ export class WhatsAppBridgeService {
     // Clear axios interceptors
     this.httpClient.interceptors.request.clear();
     this.httpClient.interceptors.response.clear();
-    
+
     this.connected = false;
-    
+
     if (this.config.enableLogging) {
       this.logger.info('WhatsAppBridge', 'Bridge client destroyed');
     }
