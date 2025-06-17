@@ -210,6 +210,30 @@ pm2 status
 
 ---
 
+## 🔄 **MIGRACIÓN AL REPOSITORIO PRINCIPAL**
+
+**⚠️ IMPORTANTE - CAMBIO DE ESTRUCTURA GIT:**
+
+**PROBLEMA IDENTIFICADO:**
+- Existían dos repositorios git conflictivos:
+  - 🎯 **Principal**: `/drasBot/` (correcto)
+  - ❌ **Subcarpeta**: `/drasBot/whatsapp-chatbot/` (problemático)
+
+**SOLUCIÓN APLICADA:**
+1. ✅ **Repositorio de subcarpeta eliminado** - `rm -rf whatsapp-chatbot/.git`
+2. ✅ **Commits migrados** al repositorio principal en `/drasBot/`
+3. ✅ **Trabajo futuro** debe realizarse desde la raíz del proyecto
+4. ✅ **Commit consolidado** realizado: `fix: Corrección completa getValueByPath`
+
+**RESULTADO:**
+- 🟢 **Estructura git limpia** y unificada
+- 🟢 **Historial preservado** en repositorio principal  
+- 🟢 **Trabajo continuará** desde `/drasBot/` correctamente
+
+**WORKING DIRECTORY CORRECTO:** `/home/dras/Documentos/PROGRAMACION/drasBot`
+
+---
+
 **Fecha de creación**: 17 de junio de 2025  
 **Última actualización**: 17 de junio de 2025 - 02:37 AM  
 **Estado general**: � CASI COMPLETADO - Solo falta commit final
