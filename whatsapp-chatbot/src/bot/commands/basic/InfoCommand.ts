@@ -42,8 +42,14 @@ export class InfoCommand extends Command {
       const uptime = this.formatUptime(Date.now() - startTime.getTime());
 
       // Obtener configuración del sistema
-      const systemInfo = this.getValueByPath(null, "messages.commands.info.system_info");
-      const responseConfig = this.getValueByPath(null, "messages.commands.info.response");
+      const systemInfo = this.getValueByPath(
+        null,
+        "messages.commands.info.system_info"
+      );
+      const responseConfig = this.getValueByPath(
+        null,
+        "messages.commands.info.response"
+      );
 
       // Construir respuesta usando configuración
       let response =
@@ -55,7 +61,8 @@ export class InfoCommand extends Command {
 
       // Sección de estadísticas
       const statsSection = this.getValueByPath(
-        null, "messages.commands.info.response.sections.statistics"
+        null,
+        "messages.commands.info.response.sections.statistics"
       );
       if (statsSection) {
         response += statsSection.title + "\n";
@@ -72,7 +79,8 @@ export class InfoCommand extends Command {
 
       // Sección de arquitectura
       const archSection = this.getValueByPath(
-        null, "messages.commands.info.response.sections.architecture"
+        null,
+        "messages.commands.info.response.sections.architecture"
       );
       if (archSection) {
         response += archSection.title + "\n";
@@ -89,7 +97,8 @@ export class InfoCommand extends Command {
 
       // Sección de funcionalidades
       const featuresSection = this.getValueByPath(
-        null, "messages.commands.info.response.sections.features"
+        null,
+        "messages.commands.info.response.sections.features"
       );
       if (featuresSection) {
         response += featuresSection.title + "\n";
@@ -101,7 +110,8 @@ export class InfoCommand extends Command {
 
       // Footer
       const footerSection = this.getValueByPath(
-        null, "messages.commands.info.response.sections.footer"
+        null,
+        "messages.commands.info.response.sections.footer"
       );
       if (footerSection) {
         for (const item of footerSection.items) {

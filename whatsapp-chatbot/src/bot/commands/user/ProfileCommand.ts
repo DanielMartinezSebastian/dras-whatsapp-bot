@@ -52,7 +52,10 @@ export class ProfileCommand extends Command {
    * Obtiene el emoji correspondiente al tipo de usuario
    */
   private getUserTypeEmoji(userType: UserType): string {
-    const userTypes = this.getValueByPath(null, "messages.commands.profile.user_types");
+    const userTypes = this.getValueByPath(
+      null,
+      "messages.commands.profile.user_types"
+    );
 
     if (userTypes && userTypes[userType]) {
       return userTypes[userType].emoji;
@@ -76,7 +79,10 @@ export class ProfileCommand extends Command {
    * Obtiene la descripción del tipo de usuario
    */
   private getUserTypeDescription(userType: UserType): string {
-    const userTypes = this.getValueByPath(null, "messages.commands.profile.user_types");
+    const userTypes = this.getValueByPath(
+      null,
+      "messages.commands.profile.user_types"
+    );
 
     if (userTypes && userTypes[userType]) {
       return userTypes[userType].description;
@@ -273,9 +279,18 @@ export class ProfileCommand extends Command {
         Math.round(Math.random() * 30 + 70);
 
       // Obtener configuración de respuesta
-      const responseConfig = this.getValueByPath(null, "messages.commands.profile.response");
-      const statusIndicators = this.getValueByPath(null, "messages.commands.profile.status_indicators");
-      const defaultValues = this.getValueByPath(null, "messages.commands.profile.default_values");
+      const responseConfig = this.getValueByPath(
+        null,
+        "messages.commands.profile.response"
+      );
+      const statusIndicators = this.getValueByPath(
+        null,
+        "messages.commands.profile.status_indicators"
+      );
+      const defaultValues = this.getValueByPath(
+        null,
+        "messages.commands.profile.default_values"
+      );
 
       // Variables para plantillas
       const variables = {

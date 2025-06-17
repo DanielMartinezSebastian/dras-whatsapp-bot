@@ -81,18 +81,9 @@ export class StatusCommand extends Command {
       null,
       "messages.commands.status.response.sections.services"
     );
-    console.log(`🔍 DEBUG StatusCommand: servicesSection=`, servicesSection);
 
     if (servicesSection) {
       statusText += servicesSection.title + "\n";
-      console.log(
-        `🔍 DEBUG StatusCommand: servicesSection.items=`,
-        servicesSection.items
-      );
-      console.log(
-        `🔍 DEBUG StatusCommand: servicesSection.items is array?=`,
-        Array.isArray(servicesSection.items)
-      );
 
       if (Array.isArray(servicesSection.items)) {
         for (const item of servicesSection.items) {
@@ -108,14 +99,10 @@ export class StatusCommand extends Command {
               logsStatus: systemDefaults?.logs || "✅ Activo",
             }) + "\n";
         }
-      } else {
-        console.log(
-          `🔍 DEBUG StatusCommand: servicesSection.items no es un array o es undefined`
-        );
       }
       statusText += "\n";
     } else {
-      console.log(`🔍 DEBUG StatusCommand: servicesSection es undefined`);
+      // No hay sección de servicios configurada
     }
 
     // Sección de actividad
@@ -263,23 +250,11 @@ export class StatusCommand extends Command {
       return config;
     }
     const config = this.configService.getConfiguration();
-    console.log(
-      `🔍 DEBUG StatusCommand getValueByPath: path=${path}, config existe=${!!config}`
-    );
 
     const result = path.split(".").reduce((current, key) => {
-      console.log(
-        `🔍 DEBUG StatusCommand getValueByPath: navegando key=${key}, current=${!!current}, tiene key=${
-          current && current[key] !== undefined
-        }`
-      );
       return current?.[key];
     }, config as any);
 
-    console.log(
-      `🔍 DEBUG StatusCommand getValueByPath: resultado final=`,
-      result
-    );
     return result;
   }
 

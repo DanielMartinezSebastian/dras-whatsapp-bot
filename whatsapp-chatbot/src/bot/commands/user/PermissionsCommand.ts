@@ -153,7 +153,7 @@ export class PermissionsCommand extends Command {
       block: 0,
     };
 
-    const userLevels = this.getValueByPath("permissions.user_levels") || {
+    const userLevels = this.getValueByPath(null, "messages.commands.permissions.user_levels") || {
       0: { name: "Bloqueado", emoji: "🚫" },
       1: { name: "Básico", emoji: "📚" },
       2: { name: "Estándar", emoji: "⭐" },
@@ -167,7 +167,7 @@ export class PermissionsCommand extends Command {
 
     // Obtener comandos por nivel desde configuración
     const commandsByLevelConfig =
-      this.getValueByPath("permissions.commands_by_level") || {};
+      this.getValueByPath(null, "messages.commands.permissions.commands_by_level") || {};
     const commandsByLevel: Record<
       number,
       Array<{ command: string; description: string }>
@@ -204,7 +204,7 @@ export class PermissionsCommand extends Command {
     commandLimit: string | number;
     timeRestriction?: { start: number; end: number };
   } {
-    const restrictionsConfig = this.getValueByPath("permissions.restrictions");
+    const restrictionsConfig = this.getValueByPath(null, "messages.commands.permissions.restrictions");
 
     if (restrictionsConfig && restrictionsConfig[userType]) {
       const userRestriction = restrictionsConfig[userType];
@@ -294,8 +294,8 @@ export class PermissionsCommand extends Command {
       const usageStats = this.getUserUsageStats(user.whatsapp_jid);
 
       // Obtener configuración de respuesta
-      const responseConfig = this.getValueByPath("permissions.response");
-      const userLevels = this.getValueByPath("permissions.user_levels");
+      const responseConfig = this.getValueByPath(null, "messages.commands.permissions.response");
+      const userLevels = this.getValueByPath(null, "messages.commands.permissions.user_levels");
 
       // Construir texto límite de comandos
       let commandLimitText = "";
