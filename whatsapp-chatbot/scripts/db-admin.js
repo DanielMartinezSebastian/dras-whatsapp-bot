@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const UserService = require("../src/services/userService");
-const { logInfo, logError } = require("../src/utils/logger");
+const { UserService } = require("../dist/services/userService");
+const logger = require("../dist/utils/logger");
 
 class DatabaseAdmin {
   constructor() {
@@ -9,35 +9,38 @@ class DatabaseAdmin {
   }
 
   async init() {
-    await this.userService.initializeService();
+    await this.userService.init();
   }
 
   async showStats() {
     try {
-      const stats = await this.userService.getServiceStats();
+      const stats = await this.userService.getUserStats();
 
       console.log("\n📊 ESTADÍSTICAS DE BASE DE DATOS:");
       console.log("═".repeat(50));
       console.log(`👥 Total usuarios: ${stats.totalUsers}`);
-      console.log(`💬 Conversaciones activas: ${stats.activeConversations}`);
-      console.log(`📈 Interacciones hoy: ${stats.todayInteractions}`);
+      console.log(`✅ Usuarios activos: ${stats.activeUsers}`);
+      console.log(`💤 Usuarios inactivos: ${stats.inactiveUsers}`);
+      console.log(`� Total mensajes: ${stats.totalMessages}`);
+      console.log(`📊 Promedio mensajes/usuario: ${stats.averageMessagesPerUser.toFixed(1)}`);
+      
       console.log("\n👤 Usuarios por tipo:");
-
-      if (stats.usersByType && stats.usersByType.length > 0) {
-        stats.usersByType.forEach((type) => {
-          console.log(`   • ${type.user_type}: ${type.count}`);
-        });
-      } else {
-        console.log("   • No hay datos disponibles");
+      for (const [type, count] of Object.entries(stats.usersByType)) {
+        console.log(`   • ${type}: ${count}`);
       }
+      
+      console.log("\n📈 Actividad reciente:");
+      console.log(`   • Últimas 24h: ${stats.recentActivity.last24h}`);
+      console.log(`   • Última semana: ${stats.recentActivity.lastWeek}`);
+      console.log(`   • Último mes: ${stats.recentActivity.lastMonth}`);
     } catch (error) {
-      logError(`❌ Error obteniendo estadísticas: ${error.message}`);
+      logger.error(`❌ Error obteniendo estadísticas: ${error.message}`);
     }
   }
 
   async listUsers(limit = 10) {
     try {
-      const users = await this.userService.getAllUsers({ limit });
+      const users = await this.userService.getAllUsers(limit);
 
       console.log(`\n👥 ÚLTIMOS ${users.length} USUARIOS:`);
       console.log("═".repeat(80));
@@ -52,7 +55,7 @@ class DatabaseAdmin {
         console.log(`   📞 ${user.phone_number || "Sin teléfono"}`);
         console.log(`   👤 ${user.display_name || "Sin nombre"}`);
         console.log(
-          `   🏷️  ${user.user_type} | 📊 ${user.total_messages} mensajes`
+          `   🏷️  ${user.user_type} | 📊 ${user.total_messages || 0} mensajes`
         );
         console.log(
           `   📅 ${new Date(user.first_interaction).toLocaleString()}`
@@ -60,7 +63,7 @@ class DatabaseAdmin {
         console.log("─".repeat(40));
       });
     } catch (error) {
-      logError(`❌ Error listando usuarios: ${error.message}`);
+      logger.error(`❌ Error listando usuarios: ${error.message}`);
     }
   }
 
@@ -86,7 +89,7 @@ class DatabaseAdmin {
       console.log(`   📁 Archivo: ${filename}`);
       console.log(`   👥 Usuarios exportados: ${users.length}`);
     } catch (error) {
-      logError(`❌ Error exportando usuarios: ${error.message}`);
+      logger.error(`❌ Error exportando usuarios: ${error.message}`);
     }
   }
 
@@ -108,7 +111,7 @@ class DatabaseAdmin {
         console.log(`❌ Error vinculando usuario ${jid}`);
       }
     } catch (error) {
-      logError(`❌ Error vinculando usuario: ${error.message}`);
+      logger.error(`❌ Error vinculando usuario: ${error.message}`);
     }
   }
 
@@ -138,7 +141,7 @@ class DatabaseAdmin {
         console.log(`❌ No se encontró usuario con teléfono: ${phone}`);
       }
     } catch (error) {
-      logError(`❌ Error buscando usuario: ${error.message}`);
+      logger.error(`❌ Error buscando usuario: ${error.message}`);
     }
   }
 
@@ -147,7 +150,7 @@ class DatabaseAdmin {
       await this.userService.userModel.cleanupExpiredStates();
       console.log("✅ Limpieza de estados expirados completada");
     } catch (error) {
-      logError(`❌ Error en limpieza: ${error.message}`);
+      logger.error(`❌ Error en limpieza: ${error.message}`);
     }
   }
 
@@ -177,7 +180,7 @@ class DatabaseAdmin {
         console.log("─".repeat(40));
       });
     } catch (error) {
-      logError(`❌ Error listando usuarios por tipo: ${error.message}`);
+      logger.error(`❌ Error listando usuarios por tipo: ${error.message}`);
     }
   }
 
@@ -215,7 +218,7 @@ class DatabaseAdmin {
         )})`
       );
     } catch (error) {
-      logError(`❌ Error cambiando tipo de usuario: ${error.message}`);
+      logger.error(`❌ Error cambiando tipo de usuario: ${error.message}`);
     }
   }
 
@@ -240,7 +243,7 @@ class DatabaseAdmin {
       console.log(`   Tipo anterior: ${oldType}`);
       console.log(`   Razón: ${reason}`);
     } catch (error) {
-      logError(`❌ Error bloqueando usuario: ${error.message}`);
+      logger.error(`❌ Error bloqueando usuario: ${error.message}`);
     }
   }
 
@@ -265,7 +268,7 @@ class DatabaseAdmin {
       console.log(`   JID: ${jid}`);
       console.log(`   Nuevo tipo: ${newType}`);
     } catch (error) {
-      logError(`❌ Error desbloqueando usuario: ${error.message}`);
+      logger.error(`❌ Error desbloqueando usuario: ${error.message}`);
     }
   }
 
@@ -291,7 +294,7 @@ class DatabaseAdmin {
         console.log(`${type.padEnd(12)}: ${users.length} usuarios`);
       }
     } catch (error) {
-      logError(`❌ Error obteniendo estadísticas por tipo: ${error.message}`);
+      logger.error(`❌ Error obteniendo estadísticas por tipo: ${error.message}`);
     }
   }
 
@@ -432,9 +435,13 @@ EJEMPLOS:
           break;
       }
     } catch (error) {
-      logError(`❌ Error ejecutando comando: ${error.message}`);
+      logger.error(`❌ Error ejecutando comando: ${error.message}`);
     } finally {
-      await this.userService.close();
+      try {
+        await this.userService.close();
+      } catch (closeError) {
+        // Ignorar errores de cierre
+      }
       process.exit(0);
     }
   }
