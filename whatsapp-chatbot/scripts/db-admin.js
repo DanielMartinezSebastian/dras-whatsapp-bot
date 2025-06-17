@@ -22,13 +22,17 @@ class DatabaseAdmin {
       console.log(`✅ Usuarios activos: ${stats.activeUsers}`);
       console.log(`💤 Usuarios inactivos: ${stats.inactiveUsers}`);
       console.log(`� Total mensajes: ${stats.totalMessages}`);
-      console.log(`📊 Promedio mensajes/usuario: ${stats.averageMessagesPerUser.toFixed(1)}`);
-      
+      console.log(
+        `📊 Promedio mensajes/usuario: ${stats.averageMessagesPerUser.toFixed(
+          1
+        )}`
+      );
+
       console.log("\n👤 Usuarios por tipo:");
       for (const [type, count] of Object.entries(stats.usersByType)) {
         console.log(`   • ${type}: ${count}`);
       }
-      
+
       console.log("\n📈 Actividad reciente:");
       console.log(`   • Últimas 24h: ${stats.recentActivity.last24h}`);
       console.log(`   • Última semana: ${stats.recentActivity.lastWeek}`);
@@ -186,37 +190,29 @@ class DatabaseAdmin {
 
   async changeUserType(jid, newType) {
     try {
-      const UserModel = require("../src/database/models/user");
-
-      if (!UserModel.isValidUserType(newType)) {
+      // Validar tipos válidos
+      const validTypes = ['admin', 'customer', 'friend', 'familiar', 'employee', 'provider', 'block'];
+      
+      if (!validTypes.includes(newType)) {
         console.log(`❌ Tipo de usuario inválido: ${newType}`);
-        console.log(
-          `Tipos válidos: ${UserModel.getValidUserTypes().join(", ")}`
-        );
+        console.log(`Tipos válidos: ${validTypes.join(", ")}`);
         return;
       }
 
-      const user = await this.userService.userModel.getUserByJid(jid);
+      const user = await this.userService.getUserByJid(jid);
       if (!user) {
         console.log(`❌ Usuario no encontrado: ${jid}`);
         return;
       }
 
       const oldType = user.user_type;
-      await this.userService.reclassifyUser(jid, newType, "admin_change");
+      const updatedUser = await this.userService.updateUserType(jid, newType);
 
       console.log(`✅ Usuario reclasificado:`);
       console.log(`   JID: ${jid}`);
-      console.log(
-        `   Tipo anterior: ${oldType} (${UserModel.getUserTypeDescription(
-          oldType
-        )})`
-      );
-      console.log(
-        `   Tipo nuevo: ${newType} (${UserModel.getUserTypeDescription(
-          newType
-        )})`
-      );
+      console.log(`   Tipo anterior: ${oldType}`);
+      console.log(`   Tipo nuevo: ${newType}`);
+      console.log(`   👤 Usuario: ${updatedUser.display_name || jid}`);
     } catch (error) {
       logger.error(`❌ Error cambiando tipo de usuario: ${error.message}`);
     }
@@ -294,7 +290,9 @@ class DatabaseAdmin {
         console.log(`${type.padEnd(12)}: ${users.length} usuarios`);
       }
     } catch (error) {
-      logger.error(`❌ Error obteniendo estadísticas por tipo: ${error.message}`);
+      logger.error(
+        `❌ Error obteniendo estadísticas por tipo: ${error.message}`
+      );
     }
   }
 
