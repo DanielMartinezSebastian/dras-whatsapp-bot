@@ -1,18 +1,52 @@
 # Configuración de seguridad para DrasBot
 # Generado automáticamente el vie 13 jun 2025 17:59:30 CEST
+# Actualizado: 18 jun 2025 - Configuración optimizada para VPS
 
-# Restricciones de red
-DRASBOT_LOCALHOST_ONLY=true
-DRASBOT_BRIDGE_HOST=127.0.0.1
-DRASBOT_CHATBOT_HOST=127.0.0.1
+# === CONFIGURACIÓN DE RED Y ACCESO ===
 
-# Puertos seguros
-DRASBOT_BRIDGE_PORT=8080
-DRASBOT_CHATBOT_PORT=3000
+# Restricciones de acceso externo
+DRASBOT_EXTERNAL_ACCESS=false          # No permitir acceso desde fuera del VPS
+DRASBOT_LOCALHOST_ONLY=true           # Solo localhost para servicios internos
+DRASBOT_ALLOW_INTERNAL_NETWORKS=true  # Permitir comunicación entre servicios
+
+# Configuración de hosts para servicios
+DRASBOT_BRIDGE_HOST=127.0.0.1         # Bridge solo accesible localmente
+DRASBOT_CHATBOT_HOST=127.0.0.1        # Bot solo accesible localmente
+DRASBOT_WEBHOOK_HOST=0.0.0.0          # Webhook accesible desde bridge (interno)
+
+# === PUERTOS DE SERVICIOS ===
+
+# Puertos principales (solo localhost)
+DRASBOT_BRIDGE_PORT=8080              # Puerto del bridge WhatsApp (Go)
+DRASBOT_CHATBOT_PORT=3000             # Puerto del webhook del bot (TypeScript)
+
+# Puerto administrativo (opcional - solo local)
+DRASBOT_ADMIN_PORT=3001               # Puerto para admin/monitoreo (futuro)
+
+# === CONFIGURACIÓN DE SEGURIDAD ===
+
+# Firewall y access control
+DRASBOT_FIREWALL_ENABLED=true         # Activar reglas de firewall
+DRASBOT_RATE_LIMITING=true            # Activar rate limiting
+DRASBOT_MAX_REQUESTS_PER_MINUTE=60    # Máximo 60 requests por minuto
+
+# === LOGS Y MONITOREO ===
 
 # Configuración de logs
-DRASBOT_LOG_LEVEL=INFO
-DRASBOT_SECURITY_LOGS=true
+DRASBOT_LOG_LEVEL=INFO                # Nivel de logs (DEBUG, INFO, WARN, ERROR)
+DRASBOT_SECURITY_LOGS=true            # Activar logs de seguridad
+DRASBOT_ACCESS_LOGS=true              # Logs de acceso HTTP
+DRASBOT_LOG_RETENTION_DAYS=7          # Retener logs por 7 días
+
+# === CONFIGURACIÓN DE CONEXIONES ===
+
+# Timeouts y límites
+DRASBOT_CONNECTION_TIMEOUT=30000      # Timeout de conexión (30s)
+DRASBOT_REQUEST_TIMEOUT=15000         # Timeout de request (15s)
+DRASBOT_MAX_CONNECTIONS=100           # Máximo conexiones simultáneas
+
+# === METADATOS ===
 
 # Timestamp de configuración
-DRASBOT_SECURITY_SETUP=2025-06-13 17:59:30
+DRASBOT_SECURITY_SETUP="2025-06-18 21:45:00"
+DRASBOT_CONFIG_VERSION="2.0"

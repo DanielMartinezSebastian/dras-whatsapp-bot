@@ -9,6 +9,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRASBOT_DIR="$SCRIPT_DIR/drasbot"
 BRIDGE_DIR="$SCRIPT_DIR/whatsapp-bridge"
+SECURITY_CONFIG="$SCRIPT_DIR/.security-config"
 
 # Colores para output
 RED='\033[0;31m'
@@ -53,6 +54,10 @@ show_help() {
     echo -e "${GREEN}🧹 MANTENIMIENTO${NC}"
     echo -e "  ${CYAN}clean${NC}           - Limpiar procesos colgados y tmux"
     echo -e "  ${CYAN}reset${NC}           - Reset completo del sistema"
+    echo ""
+    echo -e "${GREEN}🔒 SEGURIDAD${NC}"
+    echo -e "  ${CYAN}security${NC}        - Mostrar configuración de seguridad actual"
+    echo -e "  ${CYAN}check-ports${NC}     - Verificar puertos y accesibilidad"
     echo ""
     echo -e "${GREEN}📋 SERVICIOS GESTIONADOS${NC}"
     echo -e "  ${YELLOW}drasbot${NC}     - Bot principal (TypeScript, puerto 3000)"
@@ -312,9 +317,116 @@ reset_system() {
     log_success "Reset completo terminado"
 }
 
+# === CONFIGURACIÓN DE SEGURIDAD ===
+
+# Función para cargar configuración de seguridad
+load_security_config() {
+    if [[ -f "$SECURITY_CONFIG" ]]; then
+        log_info "Cargando configuración de seguridad..."
+        source "$SECURITY_CONFIG"
+        
+        # Validar configuración crítica
+        if [[ "$DRASBOT_EXTERNAL_ACCESS" == "true" ]]; then
+            log_warning "⚠️  ACCESO EXTERNO HABILITADO - Revisa la configuración de seguridad"
+        fi
+        
+        if [[ "$DRASBOT_LOCALHOST_ONLY" == "true" ]]; then
+            log_success "🔒 Modo localhost activado - Servicios protegidos"
+        fi
+        
+        log_success "Configuración de seguridad cargada (v$DRASBOT_CONFIG_VERSION)"
+    else
+        log_warning "Archivo de configuración de seguridad no encontrado en: $SECURITY_CONFIG"
+        log_info "Usando configuración por defecto..."
+        
+        # Configuración por defecto (segura)
+        export DRASBOT_EXTERNAL_ACCESS=false
+        export DRASBOT_LOCALHOST_ONLY=true
+        export DRASBOT_BRIDGE_HOST=127.0.0.1
+        export DRASBOT_CHATBOT_HOST=127.0.0.1
+        export DRASBOT_BRIDGE_PORT=8080
+        export DRASBOT_CHATBOT_PORT=3000
+        export DRASBOT_WEBHOOK_HOST=127.0.0.1
+    fi
+}
+
+# Función para mostrar configuración actual
+show_security_status() {
+    echo -e "${CYAN}🔒 CONFIGURACIÓN DE SEGURIDAD ACTUAL${NC}"
+    echo "══════════════════════════════════════════"
+    echo -e "Acceso externo:     ${YELLOW}$DRASBOT_EXTERNAL_ACCESS${NC}"
+    echo -e "Solo localhost:     ${GREEN}$DRASBOT_LOCALHOST_ONLY${NC}"
+    echo -e "Host Bridge:        ${BLUE}$DRASBOT_BRIDGE_HOST:$DRASBOT_BRIDGE_PORT${NC}"
+    echo -e "Host Bot:          ${BLUE}$DRASBOT_CHATBOT_HOST:$DRASBOT_CHATBOT_PORT${NC}"
+    echo -e "Host Webhook:      ${BLUE}$DRASBOT_WEBHOOK_HOST${NC}"
+    echo "══════════════════════════════════════════"
+}
+
+# Función para verificar puertos y accesibilidad
+check_ports() {
+    echo -e "${CYAN}🔍 VERIFICACIÓN DE PUERTOS Y ACCESIBILIDAD${NC}"
+    echo "════════════════════════════════════════════════"
+    
+    local bridge_port=${DRASBOT_BRIDGE_PORT:-8080}
+    local bot_port=${DRASBOT_CHATBOT_PORT:-3000}
+    
+    # Verificar si los puertos están en uso
+    echo -e "\n${YELLOW}📊 Estado de puertos:${NC}"
+    
+    if lsof -ti:$bridge_port &> /dev/null; then
+        local bridge_pid=$(lsof -ti:$bridge_port)
+        local bridge_process=$(ps -p $bridge_pid -o comm= 2>/dev/null || echo "desconocido")
+        echo -e "  Puerto $bridge_port: ${GREEN}EN USO${NC} (PID: $bridge_pid, Proceso: $bridge_process)"
+    else
+        echo -e "  Puerto $bridge_port: ${RED}LIBRE${NC}"
+    fi
+    
+    if lsof -ti:$bot_port &> /dev/null; then
+        local bot_pid=$(lsof -ti:$bot_port)
+        local bot_process=$(ps -p $bot_pid -o comm= 2>/dev/null || echo "desconocido")
+        echo -e "  Puerto $bot_port: ${GREEN}EN USO${NC} (PID: $bot_pid, Proceso: $bot_process)"
+    else
+        echo -e "  Puerto $bot_port: ${RED}LIBRE${NC}"
+    fi
+    
+    # Verificar conectividad local
+    echo -e "\n${YELLOW}🔗 Conectividad local:${NC}"
+    
+    if curl -s "http://127.0.0.1:$bridge_port/api/info" &> /dev/null; then
+        echo -e "  Bridge (127.0.0.1:$bridge_port): ${GREEN}ACCESIBLE${NC}"
+    else
+        echo -e "  Bridge (127.0.0.1:$bridge_port): ${RED}NO ACCESIBLE${NC}"
+    fi
+    
+    if curl -s "http://127.0.0.1:$bot_port/health" &> /dev/null; then
+        echo -e "  Bot (127.0.0.1:$bot_port): ${GREEN}ACCESIBLE${NC}"
+    else
+        echo -e "  Bot (127.0.0.1:$bot_port): ${RED}NO ACCESIBLE${NC}"
+    fi
+    
+    # Verificar acceso externo (si está habilitado)
+    echo -e "\n${YELLOW}🌐 Acceso externo:${NC}"
+    local external_ip=$(curl -s ifconfig.me 2>/dev/null || echo "No disponible")
+    
+    if [[ "$DRASBOT_EXTERNAL_ACCESS" == "true" ]]; then
+        echo -e "  ${RED}⚠️  ACCESO EXTERNO HABILITADO${NC}"
+        echo -e "  IP Externa: $external_ip"
+        echo -e "  Bridge: http://$external_ip:$bridge_port"
+        echo -e "  Bot: http://$external_ip:$bot_port"
+    else
+        echo -e "  ${GREEN}🔒 ACCESO EXTERNO DESHABILITADO${NC} (Recomendado)"
+        echo -e "  IP Externa: $external_ip (servicios no expuestos)"
+    fi
+    
+    echo "════════════════════════════════════════════════"
+}
+
 # Proceso principal
 main() {
     local command=${1:-"help"}
+    
+    # Cargar configuración de seguridad para todos los comandos
+    load_security_config
     
     case $command in
         "help"|"-h"|"--help")
@@ -355,6 +467,13 @@ main() {
             ;;
         "reset")
             reset_system
+            ;;
+        "security"|"sec")
+            show_security_status
+            check_ports
+            ;;
+        "check-ports"|"ports")
+            check_ports
             ;;
         *)
             log_error "Comando desconocido: $command"
