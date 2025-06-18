@@ -461,3 +461,32 @@ live-test-*
 
 # Para limpiar el historial de archivos sensibles:
 # git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch archivo-sensible' --prune-empty --tag-name-filter cat -- --all
+
+# ==================== DRASBOT-NEW ESPECÍFICAS ====================
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Test coverage específico
+.nyc_output
+*.lcov
+
+# Plugin development específico
+src/plugins/dev/
+plugins-dev/
+
+# Configuración local específica de drasbot-new
+drasbot-new/config/local/
+drasbot-new/config/*.local.json
+
+# ==================== NOTIFICACIONES DE SEGURIDAD ====================
+
+# Si accidentalmente añades alguno de estos archivos:
+# 1. Elimínalo inmediatamente del repositorio
+# 2. Usa: git rm --cached archivo-sensible
+# 3. Añádelo a .gitignore
+# 4. Haz commit del .gitignore actualizado
+# 5. Considera cambiar credenciales expuestas
+
+# Para limpiar el historial de archivos sensibles:
+# git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch archivo-sensible' --prune-empty --tag-name-filter cat -- --all
