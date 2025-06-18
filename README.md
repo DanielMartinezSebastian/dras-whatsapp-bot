@@ -119,7 +119,7 @@ users {
   whatsapp_jid: TEXT UNIQUE
   phone_number: TEXT
   display_name: TEXT
-  user_type: TEXT DEFAULT 'customer'
+  user_level: TEXT DEFAULT 'user'  -- 'banned'|'user'|'moderator'|'admin'|'owner'
   status: TEXT DEFAULT 'active'
   created_at: DATETIME
   updated_at: DATETIME
@@ -271,13 +271,13 @@ go mod download
 
 ```typescript
 // Jerarquía de usuarios (de mayor a menor acceso)
-admin      // Acceso completo al sistema
-employee   // Funciones de trabajo y gestión
-provider   // Acceso de proveedor/colaborador  
-friend     // Comandos de usuario extendidos
-familiar   // Acceso familiar cómodo
-customer   // Usuario básico (default)
-block      // Usuario bloqueado
+export enum UserLevel {
+  BANNED = 'banned',      // Usuario bloqueado
+  USER = 'user',          // Usuario básico (default)
+  MODERATOR = 'moderator', // Moderador con permisos extendidos
+  ADMIN = 'admin',        // Administrador del sistema
+  OWNER = 'owner',        // Propietario con acceso completo
+}
 ```
 
 ### 📊 Sistema de Monitoreo
@@ -498,7 +498,7 @@ import { CommandHandler } from '../interfaces/command-handler.interface';
 export const nuevoComandoHandler: CommandHandler = {
   name: 'nuevo',
   description: 'Descripción del comando',
-  permissions: ['customer'],
+  permissions: [UserLevel.USER], // o UserLevel.ADMIN, etc.
   execute: async (context) => {
     // Implementación del comando
     return { success: true, response: 'Respuesta' };
