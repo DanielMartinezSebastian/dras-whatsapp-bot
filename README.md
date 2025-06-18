@@ -397,9 +397,9 @@ El sistema ha sido completamente migrado del legacy tmux/whatsapp-chatbot a la n
 
 ### 📚 Documentación de Migración
 
-- **[NUEVA_ARQUITECTURA_PM2.md](NUEVA_ARQUITECTURA_PM2.md)** - Arquitectura completa
-- **[FIX_PERSISTENCIA_USUARIOS.md](FIX_PERSISTENCIA_USUARIOS.md)** - Fix técnico persistencia
-- **[CLEANUP_WHATSAPP_CHATBOT.md](CLEANUP_WHATSAPP_CHATBOT.md)** - Documentación limpieza
+- **[ARQUITECTURA_PM2.md](ARCHITECTURE.md)** - Arquitectura completa
+- **[FIX_PERSISTENCIA_USUARIOS.md](PERSISTENCE_FIX.md)** - Fix técnico persistencia
+- **[CLEANUP_WHATSAPP_CHATBOT.md](LEGACY_CLEANUP.md)** - Documentación limpieza
 
 ## 🔐 Seguridad
 
