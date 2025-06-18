@@ -8,6 +8,7 @@
 import { Logger } from '../utils/logger';
 import { ConfigService } from './config.service';
 import { PluginManagerService } from './plugin-manager.service';
+import { commandHandlers } from '../commands/basic.handlers';
 import {
   Command,
   CommandRegistry,
@@ -228,7 +229,23 @@ export class CommandRegistryService {
     _message: Message,
     pluginContext: PluginContext
   ): Promise<CommandResult> {
+    this.logger.info(
+      'CommandRegistry',
+      `Attempting to execute command '${commandName}'`
+    );
+
     const command = this.getCommand(commandName);
+
+    this.logger.info(
+      'CommandRegistry',
+      `Command lookup result for '${commandName}'`,
+      {
+        found: !!command,
+        commandName,
+        availableCommands: Object.keys(this.commands),
+      }
+    );
+
     if (!command) {
       return {
         success: false,
@@ -289,11 +306,43 @@ export class CommandRegistryService {
         };
       }
 
-      // Execute command via plugin
-      const result = await this.pluginManager.executePlugin(
-        command.plugin,
-        pluginContext
-      );
+      // Execute command based on plugin type
+      let result: CommandResult;
+
+      if (command.plugin === 'basic') {
+        // Handle basic commands through direct handlers
+        const handler =
+          commandHandlers[commandName as keyof typeof commandHandlers];
+
+        if (handler) {
+          this.logger.info(
+            'CommandRegistry',
+            `Executing basic command '${commandName}' through handler`
+          );
+
+          result = await handler(_message, pluginContext);
+
+          this.logger.info(
+            'CommandRegistry',
+            `Command '${commandName}' handler result`,
+            {
+              success: result.success,
+              hasMessage: !!result.message,
+              messageLength: result.message ? result.message.length : 0,
+            }
+          );
+        } else {
+          throw new Error(
+            `No handler found for basic command '${commandName}'`
+          );
+        }
+      } else {
+        // Execute command via plugin manager for other plugins
+        result = await this.pluginManager.executePlugin(
+          command.plugin,
+          pluginContext
+        );
+      }
 
       const executionTime = Date.now() - startTime;
 
@@ -388,12 +437,37 @@ export class CommandRegistryService {
   private async discoverCommands(): Promise<void> {
     // This would typically scan plugins for commands
     // For now, we'll implement a basic discovery mechanism
-    this.logger.debug(
-      'CommandRegistry',
-      'Discovering commands from plugins...'
-    );
+    this.logger.info('CommandRegistry', 'Discovering commands from plugins...');
 
-    // TODO: Implement command discovery from plugins
+    // Register basic commands from the basic commands module
+    try {
+      const { basicCommands } = await import('../commands/basic.commands');
+
+      this.logger.info(
+        'CommandRegistry',
+        `Found ${basicCommands.length} basic commands to register`
+      );
+
+      basicCommands.forEach(command => {
+        this.logger.info(
+          'CommandRegistry',
+          `Registering basic command: ${command.name}`
+        );
+        this.registerCommand(command);
+      });
+
+      this.logger.info(
+        'CommandRegistry',
+        `Successfully registered ${basicCommands.length} basic commands`
+      );
+    } catch (error) {
+      this.logger.error('CommandRegistry', 'Failed to load basic commands', {
+        error,
+      });
+      throw error;
+    }
+
+    // TODO: Implement command discovery from other plugins
     // This would involve scanning plugin metadata and extracting command definitions
   }
 
@@ -602,8 +676,8 @@ export class CommandRegistryService {
    * Get available commands for a specific user (respects user level and permissions)
    */
   public getAvailableCommands(user: User): Command[] {
-    return Object.values(this.commands).filter(command => 
-      command.enabled && this.canUserExecute(command.name, user)
+    return Object.values(this.commands).filter(
+      command => command.enabled && this.canUserExecute(command.name, user)
     );
   }
 

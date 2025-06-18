@@ -6,7 +6,7 @@
 - **TODO SE EJECUTA POR PM2** - NO más tmux
 - **drasBot-new** es TypeScript y necesita compilación antes de restart
 - **whatsapp-bridge** es Go compilado, restart directo
-- **whatsapp-chatbot** es legacy, se puede ignorar
+- **Sistema legacy eliminado** - Solo drasbot-new + bridge
 
 ### ✅ SCRIPT DE#### **Reinicio Rápido (Método Recomendado para producción)**
 ```bash
@@ -47,10 +47,6 @@ El script anterior `manage.sh` está obsoleto porque:
    - Puerto: 3000 (webhook)
    - **REQUIERE COMPILACIÓN**: `npm run build` antes de restart
    - Proceso: compile → restart → verify
-
-3. **whatsapp-chatbot** (id: 4)
-   - Tipo: Legacy system
-   - Estado: Stopped (ignorar)
 
 ### Flujo de Trabajo Correcto
 
@@ -257,14 +253,12 @@ drasBot/
 ├── whatsapp-bridge/            # Bridge WhatsApp (Go)
 │   ├── main.go
 │   └── store/
-└── whatsapp-chatbot/           # Legacy (ignorar)
 ```
 
 ### Puertos
 
 - **8080**: WhatsApp Bridge (API REST)
 - **3000**: DrasBot webhook server
-- **Otros**: Legacy (ignorar)
 
 ---
 **ÚLTIMA ACTUALIZACIÓN**: 18 Junio 2025 - Arquitectura PM2 pura

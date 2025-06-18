@@ -55,11 +55,11 @@ export const handleHelpCommand = async (
       // Build detailed help for specific command
       let helpText = `📖 **Ayuda para: \`!${command.name}\`**\n\n`;
       helpText += `**Descripción:** ${command.description}\n\n`;
-      
+
       if (command.aliases && command.aliases.length > 0) {
         helpText += `**Alias:** ${command.aliases.map(alias => `\`!${alias}\``).join(', ')}\n\n`;
       }
-      
+
       if (command.examples && command.examples.length > 0) {
         helpText += `**Ejemplos:**\n`;
         command.examples.forEach(example => {
@@ -67,7 +67,7 @@ export const handleHelpCommand = async (
         });
         helpText += `\n`;
       }
-      
+
       helpText += `**Categoría:** ${command.category}\n`;
       helpText += `**Nivel requerido:** ${command.userLevel}\n`;
       helpText += `**Estado:** ${command.enabled ? '✅ Activo' : '❌ Deshabilitado'}\n\n`;
@@ -83,7 +83,7 @@ export const handleHelpCommand = async (
     // Show general help with commands from registry
     const userCommands = commandRegistry.getAvailableCommands(context.user);
     const userLevel = context.user.userLevel;
-    
+
     if (userCommands.length === 0) {
       return {
         success: true,
@@ -93,13 +93,16 @@ export const handleHelpCommand = async (
     }
 
     // Group commands by category
-    const commandsByCategory = userCommands.reduce((acc: Record<string, Command[]>, command: Command) => {
-      if (!acc[command.category]) {
-        acc[command.category] = [];
-      }
-      acc[command.category].push(command);
-      return acc;
-    }, {} as Record<string, Command[]>);
+    const commandsByCategory = userCommands.reduce(
+      (acc: Record<string, Command[]>, command: Command) => {
+        if (!acc[command.category]) {
+          acc[command.category] = [];
+        }
+        acc[command.category].push(command);
+        return acc;
+      },
+      {} as Record<string, Command[]>
+    );
 
     let helpText = `🤖 **DrasBot v2.0 - Comandos Disponibles**\n\n`;
     helpText += `👤 **Usuario:** ${context.user.name || 'Usuario'} (${userLevel})\n`;
@@ -107,14 +110,14 @@ export const handleHelpCommand = async (
 
     // Category names and emojis mapping
     const categoryIcons: Record<string, string> = {
-      'general': '📋',
-      'user': '👤', 
-      'moderation': '🛡️',
-      'admin': '⚙️',
-      'bridge': '🌉',
-      'system': '🔧',
-      'fun': '🎮',
-      'utility': '🔧'
+      general: '📋',
+      user: '👤',
+      moderation: '🛡️',
+      admin: '⚙️',
+      bridge: '🌉',
+      system: '🔧',
+      fun: '🎮',
+      utility: '🔧',
     };
 
     // Display commands by category
@@ -122,17 +125,18 @@ export const handleHelpCommand = async (
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([category, commands]) => {
         const icon = categoryIcons[category] || '📄';
-        const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-        
+        const categoryName =
+          category.charAt(0).toUpperCase() + category.slice(1);
+
         helpText += `**${icon} ${categoryName}:**\n`;
-        
+
         commands
           .sort((a: Command, b: Command) => a.name.localeCompare(b.name))
           .forEach((command: Command) => {
             const status = command.enabled ? '' : ' ⚠️';
             helpText += `• \`!${command.name}\`${status} - ${command.description}\n`;
           });
-        
+
         helpText += `\n`;
       });
 
@@ -144,11 +148,11 @@ export const handleHelpCommand = async (
     return {
       success: true,
       message: helpText,
-      data: { 
-        type: 'general_help', 
-        userLevel, 
+      data: {
+        type: 'general_help',
+        userLevel,
         commandCount: userCommands.length,
-        categories: Object.keys(commandsByCategory)
+        categories: Object.keys(commandsByCategory),
       },
     };
   } catch (error) {
