@@ -35,6 +35,9 @@ custom-config.js
 *.sqlite
 *.sqlite3
 *.db-journal
+# SQLite WAL and shared memory files
+*.db-shm
+*.db-wal
 
 # Específicamente para WhatsApp
 /whatsapp-bridge/store/*.db

@@ -20,6 +20,9 @@ build/
 data/*.db
 data/*.db-journal
 data/backups/
+# SQLite WAL and shared memory files
+*.db-shm
+*.db-wal
 
 # Logs
 logs/
