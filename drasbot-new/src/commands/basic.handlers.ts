@@ -8,90 +8,154 @@
 import { Logger } from '../utils/logger';
 import { WhatsAppBridgeService } from '../services/whatsapp-bridge.service';
 import { ContextManagerService } from '../services/context-manager.service';
+import { CommandRegistryService } from '../services/command-registry.service';
 import {
   PluginContext,
   CommandResult,
   UserLevel,
   Message,
   ContextType,
+  Command,
 } from '../types';
 
 /**
- * Help Command Handler - Shows available commands
+ * Help Command Handler - Shows available commands with dynamic registry integration
  */
 export const handleHelpCommand = async (
   message: Message,
   context: PluginContext
 ): Promise<CommandResult> => {
   const logger = Logger.getInstance();
+  const commandRegistry = CommandRegistryService.getInstance();
   const args = message.content.split(' ').slice(1);
 
   try {
     if (args.length > 0) {
       // Show help for specific command
       const commandName = args[0].toLowerCase();
+      const command = commandRegistry.getCommand(commandName);
 
-      // TODO: Get command details from CommandRegistry
+      if (!command) {
+        return {
+          success: false,
+          message: `❌ **Comando no encontrado:** \`${commandName}\`\n\nUsa \`!help\` para ver todos los comandos disponibles.`,
+          data: { commandName, type: 'command_not_found' },
+        };
+      }
+
+      // Check if user has permission to see this command
+      if (!commandRegistry.canUserExecute(command.name, context.user)) {
+        return {
+          success: false,
+          message: `🚫 **Sin permisos:** No tienes acceso al comando \`${commandName}\`\n\nUsa \`!help\` para ver comandos disponibles para ti.`,
+          data: { commandName, type: 'permission_denied' },
+        };
+      }
+
+      // Build detailed help for specific command
+      let helpText = `📖 **Ayuda para: \`!${command.name}\`**\n\n`;
+      helpText += `**Descripción:** ${command.description}\n\n`;
+      
+      if (command.aliases && command.aliases.length > 0) {
+        helpText += `**Alias:** ${command.aliases.map(alias => `\`!${alias}\``).join(', ')}\n\n`;
+      }
+      
+      if (command.examples && command.examples.length > 0) {
+        helpText += `**Ejemplos:**\n`;
+        command.examples.forEach(example => {
+          helpText += `• \`${example}\`\n`;
+        });
+        helpText += `\n`;
+      }
+      
+      helpText += `**Categoría:** ${command.category}\n`;
+      helpText += `**Nivel requerido:** ${command.userLevel}\n`;
+      helpText += `**Estado:** ${command.enabled ? '✅ Activo' : '❌ Deshabilitado'}\n\n`;
+      helpText += `💡 **Tip:** Usa \`!help\` para ver todos los comandos disponibles.`;
+
       return {
         success: true,
-        message:
-          `📖 **Ayuda para el comando: ${commandName}**\n\n` +
-          `Información detallada del comando aquí.\n\n` +
-          `Usa \`!help\` para ver todos los comandos disponibles.`,
-        data: { commandName, type: 'specific_help' },
+        message: helpText,
+        data: { commandName, command, type: 'specific_help' },
       };
     }
 
-    // Show general help
+    // Show general help with commands from registry
+    const userCommands = commandRegistry.getAvailableCommands(context.user);
     const userLevel = context.user.userLevel;
-    let helpText = `🤖 **DrasBot - Comandos Disponibles**\n\n`;
-
-    // Basic commands for all users
-    helpText += `**📋 Comandos Generales:**\n`;
-    helpText += `• \`!help\` - Muestra esta ayuda\n`;
-    helpText += `• \`!status\` - Estado del bot\n`;
-    helpText += `• \`!config\` - Configuración personal\n`;
-    helpText += `• \`!registro\` - Registrarse en el sistema\n\n`;
-
-    // Bridge commands for all users
-    helpText += `**🌉 Comandos del Bridge:**\n`;
-    helpText += `• \`!bridge\` - Estado del bridge de WhatsApp\n`;
-    helpText += `• \`!chats\` - Lista de chats recientes\n`;
-    helpText += `• \`!history\` - Historial de mensajes\n\n`;
-
-    // Moderator commands
-    if (
-      userLevel === UserLevel.MODERATOR ||
-      userLevel === UserLevel.ADMIN ||
-      userLevel === UserLevel.OWNER
-    ) {
-      helpText += `**🛡️ Comandos de Moderación:**\n`;
-      helpText += `• \`!users\` - Gestión de usuarios\n`;
-      helpText += `• \`!stats\` - Estadísticas del bot\n\n`;
+    
+    if (userCommands.length === 0) {
+      return {
+        success: true,
+        message: `🤖 **DrasBot v2.0**\n\n❗ No tienes comandos disponibles. Contacta con un administrador para obtener permisos.`,
+        data: { type: 'no_commands_available', userLevel },
+      };
     }
 
-    // Admin commands
-    if (userLevel === UserLevel.ADMIN || userLevel === UserLevel.OWNER) {
-      helpText += `**⚙️ Comandos de Administración:**\n`;
-      helpText += `• \`!admin\` - Panel de administración\n`;
-      helpText += `• \`!plugins\` - Gestión de plugins\n`;
-      helpText += `• \`!backup\` - Backup del sistema\n`;
-      helpText += `• \`!qr\` - Código QR para conectar WhatsApp\n`;
-      helpText += `• \`!bridgehealth\` - Verificar salud del bridge\n\n`;
-    }
+    // Group commands by category
+    const commandsByCategory = userCommands.reduce((acc: Record<string, Command[]>, command: Command) => {
+      if (!acc[command.category]) {
+        acc[command.category] = [];
+      }
+      acc[command.category].push(command);
+      return acc;
+    }, {} as Record<string, Command[]>);
 
-    helpText += `💡 **Tip:** Usa \`!help [comando]\` para más información sobre un comando específico.`;
+    let helpText = `🤖 **DrasBot v2.0 - Comandos Disponibles**\n\n`;
+    helpText += `👤 **Usuario:** ${context.user.name || 'Usuario'} (${userLevel})\n`;
+    helpText += `📊 **Total de comandos:** ${userCommands.length}\n\n`;
+
+    // Category names and emojis mapping
+    const categoryIcons: Record<string, string> = {
+      'general': '📋',
+      'user': '👤', 
+      'moderation': '🛡️',
+      'admin': '⚙️',
+      'bridge': '🌉',
+      'system': '🔧',
+      'fun': '🎮',
+      'utility': '🔧'
+    };
+
+    // Display commands by category
+    Object.entries(commandsByCategory)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([category, commands]) => {
+        const icon = categoryIcons[category] || '📄';
+        const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+        
+        helpText += `**${icon} ${categoryName}:**\n`;
+        
+        commands
+          .sort((a: Command, b: Command) => a.name.localeCompare(b.name))
+          .forEach((command: Command) => {
+            const status = command.enabled ? '' : ' ⚠️';
+            helpText += `• \`!${command.name}\`${status} - ${command.description}\n`;
+          });
+        
+        helpText += `\n`;
+      });
+
+    helpText += `💡 **Tips:**\n`;
+    helpText += `• Usa \`!help [comando]\` para información detallada\n`;
+    helpText += `• Los comandos con ⚠️ están temporalmente deshabilitados\n`;
+    helpText += `• Escribe \`!status\` para ver el estado del bot`;
 
     return {
       success: true,
       message: helpText,
-      data: { type: 'general_help', userLevel },
+      data: { 
+        type: 'general_help', 
+        userLevel, 
+        commandCount: userCommands.length,
+        categories: Object.keys(commandsByCategory)
+      },
     };
   } catch (error) {
     logger.error('HelpCommand', 'Error executing help command', { error });
     return {
       success: false,
-      message: 'Error al mostrar la ayuda. Inténtalo de nuevo.',
+      message: '❌ Error al mostrar la ayuda. Inténtalo de nuevo.',
       data: { error: error instanceof Error ? error.message : String(error) },
     };
   }

@@ -597,4 +597,31 @@ export class CommandRegistryService {
       .sort((a, b) => b.usage - a.usage)
       .slice(0, limit);
   }
+
+  /**
+   * Get available commands for a specific user (respects user level and permissions)
+   */
+  public getAvailableCommands(user: User): Command[] {
+    return Object.values(this.commands).filter(command => 
+      command.enabled && this.canUserExecute(command.name, user)
+    );
+  }
+
+  /**
+   * Check if a user can execute a specific command
+   */
+  public canUserExecute(commandName: string, user: User): boolean {
+    const command = this.getCommand(commandName);
+    if (!command) {
+      return false;
+    }
+
+    // Check if command is enabled
+    if (!command.enabled) {
+      return false;
+    }
+
+    // Check user level permissions
+    return this.isUserLevelSufficient(user.userLevel, command.userLevel);
+  }
 }
