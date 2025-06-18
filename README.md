@@ -1,6 +1,6 @@
 # 🤖 DrasBot - Sistema WhatsApp Moderno PM2
 
-![DrasBot Banner](https://img.shields.io/badge/DrasBot-v2.0-brightgreen)
+![DrasBot Banner](https://img.shields.io/badge/DrasBot-v3.0-brightgreen)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-blue)
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
@@ -9,13 +9,13 @@
 
 ## 📋 Descripción General
 
-**DrasBot v2.0** es un sistema WhatsApp chatbot moderno con arquitectura PM2, completamente refactorizado en TypeScript con persistencia real SQLite. Eliminando el sistema legacy tmux, ahora opera exclusivamente con PM2 para una gestión profesional de procesos.
+**DrasBot v3.0** es un sistema WhatsApp chatbot moderno con arquitectura PM2, completamente refactorizado en TypeScript con persistencia real SQLite. Eliminando el sistema legacy tmux, ahora opera exclusivamente con PM2 para una gestión profesional de procesos.
 
 ### 🏗️ Arquitectura Actual (Junio 2025)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    🤖 DrasBot v2.0 - Arquitectura PM2                       │
+│                    🤖 DrasBot v3.0 - Arquitectura PM2                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  📱 WhatsApp                                                                │
@@ -553,7 +553,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 ### 📧 Contacto y Soporte
 
 - **Desarrollador**: Daniel Martinez Sebastian
-- **Proyecto**: DrasBot v2.0 - Sistema WhatsApp Moderno PM2
+- **Proyecto**: DrasBot v3.0 - Sistema WhatsApp Moderno PM2
 - **Repositorio**: https://github.com/DanielMartinezSebastian/dras-whatsapp-bot
 - **Rama Actual**: `feature/new-architecture-implementation`
 
@@ -568,7 +568,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 ---
 
-**🎉 ¡DrasBot v2.0 está listo para producción!**
+**🎉 ¡DrasBot v3.0 está listo para producción!**
 
 Para iniciar el sistema: `./manage.sh start && ./manage.sh health`
 

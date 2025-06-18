@@ -1,6 +1,6 @@
-# 🧪 Scripts de Prueba DrasBot v2.0
+# 🧪 Scripts de Prueba DrasBot v3.0
 
-Este directorio contiene scripts de prueba unificados para DrasBot v2.0 con configuración centralizada.
+Este directorio contiene scripts de prue2. **Bot DrasBot v3.0 (TypeScript)**a unificados para DrasBot v3.0 con configuración centralizada.
 
 ## 📋 Configuración
 

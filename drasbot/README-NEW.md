@@ -1,6 +1,6 @@
-# DrasBot v2.0 - Modern TypeScript WhatsApp Chatbot
+# DrasBot v3.0 - Modern TypeScript WhatsApp Chatbot
 
-![DrasBot Logo](https://img.shields.io/badge/DrasBot-v2.0-blue.svg)
+![DrasBot Logo](https://img.shields.io/badge/DrasBot-v3.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
 ![Tests](https://img.shields.io/badge/Tests-15%20passing-green.svg)

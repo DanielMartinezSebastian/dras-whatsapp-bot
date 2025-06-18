@@ -1,4 +1,4 @@
-# Progreso de Desarrollo - DrasBot Nueva Arquitectura v2.0
+# Progreso de Desarrollo - DrasBot Nueva Arquitectura v3.0
 
 **Última actualización**: 17 de junio de 2025
 

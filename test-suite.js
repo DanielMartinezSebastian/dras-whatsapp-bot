@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Script maestro de pruebas para DrasBot v2.0
+ * Script maestro de pruebas para Dra🔧 Script maestro de pruebas DrasBot v3.0Bot v3.0
  * Ejecuta todas las pruebas con configuración centralizada
  */
 
@@ -9,7 +9,7 @@ const config = require("./test-config");
 const { header, log, sleep } = config;
 
 async function runAllTests() {
-  header("🚀 INICIANDO SUITE COMPLETA DE PRUEBAS DRASBOT v2.0");
+  header("🚀 INICIANDO SUITE COMPLETA DE PRUEBAS DRASBOT v3.0");
 
   log(`📞 Número de prueba configurado: ${config.TEST_PHONE}`, "cyan");
   log(`🌉 Bridge URL: ${config.BRIDGE_URL}`, "blue");

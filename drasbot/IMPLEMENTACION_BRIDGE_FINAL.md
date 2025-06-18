@@ -1,4 +1,4 @@
-# 🎉 DrasBot v2.0 - Implementación WhatsApp Bridge COMPLETADA
+# 🎉 DrasBot v3.0 - Implementación WhatsApp Bridge COMPLETADA
 
 ## 📋 Resumen Ejecutivo
 
