@@ -105,12 +105,13 @@ export class MessageProcessorService {
     };
 
     // Initialize processing options with default values
+    // Note: Disabling typing indicators and read receipts as bridge doesn't support /api/typing and /api/read endpoints
     this.processingOptions = {
-      enableTypingIndicators: true,
-      enableReadReceipts: true,
+      enableTypingIndicators: false,
+      enableReadReceipts: false,
       enableBridgeIntegration: true,
       typingDelay: 1000,
-      autoMarkAsRead: true,
+      autoMarkAsRead: false,
     };
   }
 
