@@ -7,6 +7,8 @@ import { Logger } from '../utils/logger';
 import { ConfigService } from '../services/config.service';
 import { DatabaseService } from '../services/database.service';
 import { WhatsAppBridgeService } from '../services/whatsapp-bridge.service';
+import { WebhookServer } from '../services/webhook.service';
+import { MessageProcessorService } from '../services/message-processor.service';
 import { BotConfig } from '../types';
 
 export interface BotStatus {
@@ -22,6 +24,8 @@ export class DrasBot {
   private configService: ConfigService;
   private databaseService: DatabaseService;
   private whatsappService: WhatsAppBridgeService;
+  private webhookServer: WebhookServer;
+  private messageProcessor: MessageProcessorService;
   private isInitialized: boolean = false;
   private isRunning: boolean = false;
   private startTime: Date | undefined;
@@ -31,6 +35,8 @@ export class DrasBot {
     this.configService = ConfigService.getInstance();
     this.databaseService = DatabaseService.getInstance();
     this.whatsappService = WhatsAppBridgeService.getInstance();
+    this.webhookServer = WebhookServer.getInstance();
+    this.messageProcessor = MessageProcessorService.getInstance();
   }
 
   public static getInstance(): DrasBot {
@@ -67,6 +73,10 @@ export class DrasBot {
         );
       }
 
+      // Initialize message processor with plugins
+      await this.messageProcessor.initialize();
+      this.logger.info('DrasBot', 'Message processor initialized with plugins');
+
       this.isInitialized = true;
       this.logger.info('DrasBot', 'DrasBot initialized successfully');
     } catch (error) {
@@ -91,6 +101,10 @@ export class DrasBot {
       this.startTime = new Date();
       this.isRunning = true;
 
+      // Start webhook server for receiving messages from bridge
+      await this.webhookServer.start(3000);
+      this.logger.info('DrasBot', 'Webhook server started for bridge integration');
+
       // TODO: Initialize WhatsApp client
       // TODO: Initialize message processor
       // TODO: Initialize plugin loader
@@ -112,6 +126,9 @@ export class DrasBot {
 
     try {
       this.logger.info('DrasBot', 'Stopping DrasBot...');
+
+      // Stop webhook server
+      await this.webhookServer.stop();
 
       // TODO: Stop WhatsApp client
       // TODO: Stop message processor

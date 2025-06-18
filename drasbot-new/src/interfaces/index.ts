@@ -218,3 +218,46 @@ export interface IPluginRegistry {
   getAll(): (ICommand | IContextHandler)[];
   getByCategory(category: string): (ICommand | IContextHandler)[];
 }
+
+/**
+ * Message Handler interface
+ * For handling non-command messages (auto-responses, AI responses, etc.)
+ */
+export interface IMessageHandler {
+  readonly metadata: PluginMetadata;
+  readonly config: MessageHandlerConfig;
+
+  canHandle(message: Message, user: User): Promise<boolean>;
+  handle(message: Message, user: User): Promise<CommandResult>;
+  getPriority(): number; // Higher number = higher priority
+}
+
+/**
+ * Message Handler configuration
+ */
+export interface MessageHandlerConfig {
+  name: string;
+  description: string;
+  priority: number;
+  triggers: {
+    keywords?: string[];
+    patterns?: RegExp[];
+    sentiment?: 'positive' | 'negative' | 'neutral';
+    messageTypes?: string[]; // Use string array instead of specific MessageType
+  };
+  responses: {
+    templates: string[];
+    personalized?: boolean;
+    includeUserName?: boolean;
+    includeTime?: boolean;
+  };
+  conditions?: {
+    userLevels?: User['userLevel'][];
+    timeRestrictions?: {
+      start: string; // HH:MM format
+      end: string;
+    };
+    cooldown?: number; // milliseconds between responses for same user
+  };
+  enabled: boolean;
+}
