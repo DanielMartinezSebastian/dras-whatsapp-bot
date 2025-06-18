@@ -78,8 +78,12 @@ describe('MessageProcessorService (Fixed)', () => {
 
     // Setup getInstance mocks
     jest.spyOn(Logger, 'getInstance').mockReturnValue(mockLogger as any);
-    jest.spyOn(ConfigService, 'getInstance').mockReturnValue(mockConfigService as any);
-    jest.spyOn(WhatsAppBridgeService, 'getInstance').mockReturnValue(mockWhatsAppBridge as any);
+    jest
+      .spyOn(ConfigService, 'getInstance')
+      .mockReturnValue(mockConfigService as any);
+    jest
+      .spyOn(WhatsAppBridgeService, 'getInstance')
+      .mockReturnValue(mockWhatsAppBridge as any);
 
     messageProcessor = MessageProcessorService.getInstance();
   });
@@ -119,7 +123,7 @@ describe('MessageProcessorService (Fixed)', () => {
 
       // Should not throw an error when processing
       const result = await messageProcessor.processMessage(message);
-      
+
       expect(result).toBeDefined();
       expect(result.processingId).toBeDefined();
     });
@@ -128,16 +132,18 @@ describe('MessageProcessorService (Fixed)', () => {
       const invalidMessage = createTestMessage({ from: '' });
 
       const result = await messageProcessor.processMessage(invalidMessage);
-      
+
       expect(result.success).toBe(false);
       expect(result.errors && result.errors.length > 0).toBe(true);
     });
 
     it('should handle content trimming', async () => {
-      const messageWithSpaces = createTestMessage({ content: '  test content  ' });
+      const messageWithSpaces = createTestMessage({
+        content: '  test content  ',
+      });
 
       const result = await messageProcessor.processMessage(messageWithSpaces);
-      
+
       expect(result.message?.content).toBe('test content');
     });
 
@@ -145,7 +151,7 @@ describe('MessageProcessorService (Fixed)', () => {
       const message = createTestMessage({ from: '1234567890@s.whatsapp.net' });
 
       const result = await messageProcessor.processMessage(message);
-      
+
       expect(result.user).toBeDefined();
       expect(result.user?.id).toBe('1234567890');
       expect(result.user?.user_level).toBe(UserLevel.USER);
@@ -155,14 +161,14 @@ describe('MessageProcessorService (Fixed)', () => {
   describe('Configuration', () => {
     it('should return configuration object', () => {
       const config = messageProcessor.getConfig();
-      
+
       expect(config).toBeDefined();
       expect(typeof config).toBe('object');
     });
 
     it('should return status information', () => {
       const status = messageProcessor.getStatus();
-      
+
       expect(status).toBeDefined();
       expect(status.isProcessing).toBeDefined();
       expect(status.queueSize).toBeDefined();

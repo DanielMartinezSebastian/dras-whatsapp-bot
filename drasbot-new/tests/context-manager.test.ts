@@ -111,7 +111,7 @@ describe('ContextManagerService', () => {
     it('should load configuration during initialization', async () => {
       // Reset the mock to track calls
       mockConfigService.getValue.mockClear();
-      
+
       await contextManager.initialize();
 
       expect(mockConfigService.getValue).toHaveBeenCalledWith('context', {});
@@ -164,11 +164,13 @@ describe('ContextManagerService', () => {
 
     it('should unregister a handler successfully', () => {
       contextManager.registerHandler(mockHandler);
-      
+
       // The test_handler will be assigned to CONVERSATION type by default
-      const assignedHandler = contextManager.getHandler(ContextType.CONVERSATION);
+      const assignedHandler = contextManager.getHandler(
+        ContextType.CONVERSATION
+      );
       expect(assignedHandler).toBeDefined();
-      
+
       const result = contextManager.unregisterHandler(ContextType.CONVERSATION);
 
       expect(result).toBe(true);
@@ -427,14 +429,16 @@ describe('ContextManagerService', () => {
     it('should get user context info', async () => {
       // Clear any existing contexts first
       await contextManager.clearUserContexts(mockUser.id.toString());
-      
+
       await contextManager.createContext(
         mockUser.id.toString(),
         ContextType.REGISTRATION,
         { step: 'start' }
       );
 
-      const info = await contextManager.getUserContextInfo(mockUser.id.toString());
+      const info = await contextManager.getUserContextInfo(
+        mockUser.id.toString()
+      );
 
       expect(info.hasContext).toBe(true);
       expect(info.contextType).toBe(ContextType.REGISTRATION);

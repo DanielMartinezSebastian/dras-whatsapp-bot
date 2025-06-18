@@ -99,7 +99,9 @@ describe('MessageProcessor Integration', () => {
 
   it('should create and process a basic message flow without errors', async () => {
     // Import after mocks are set up
-    const { MessageProcessorService } = await import('../src/services/message-processor.service');
+    const { MessageProcessorService } = await import(
+      '../src/services/message-processor.service'
+    );
 
     // Reset singleton
     (MessageProcessorService as any).instance = undefined;
@@ -123,7 +125,9 @@ describe('MessageProcessor Integration', () => {
   });
 
   it('should handle invalid message gracefully', async () => {
-    const { MessageProcessorService } = await import('../src/services/message-processor.service');
+    const { MessageProcessorService } = await import(
+      '../src/services/message-processor.service'
+    );
 
     (MessageProcessorService as any).instance = undefined;
     const processor = MessageProcessorService.getInstance();
@@ -144,7 +148,9 @@ describe('MessageProcessor Integration', () => {
   });
 
   it('should create proper user objects from JID', async () => {
-    const { MessageProcessorService } = await import('../src/services/message-processor.service');
+    const { MessageProcessorService } = await import(
+      '../src/services/message-processor.service'
+    );
 
     (MessageProcessorService as any).instance = undefined;
     const processor = MessageProcessorService.getInstance();
@@ -170,7 +176,9 @@ describe('MessageProcessor Integration', () => {
   });
 
   it('should provide configuration and status', async () => {
-    const { MessageProcessorService } = await import('../src/services/message-processor.service');
+    const { MessageProcessorService } = await import(
+      '../src/services/message-processor.service'
+    );
 
     (MessageProcessorService as any).instance = undefined;
     const processor = MessageProcessorService.getInstance();

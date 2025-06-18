@@ -59,14 +59,14 @@ describe('UserManagerService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset all mock implementations
     Object.values(mockDatabaseService).forEach(mock => {
       if (jest.isMockFunction(mock)) {
         mock.mockClear();
       }
     });
-    
+
     Object.values(mockLogger).forEach(mock => {
       if (jest.isMockFunction(mock)) {
         mock.mockClear();
@@ -88,16 +88,22 @@ describe('UserManagerService', () => {
     it('should return user when found', async () => {
       mockDatabaseService.getUserByJid.mockResolvedValue(mockUser);
 
-      const result = await userManagerService.getUserByJid('test@s.whatsapp.net');
+      const result = await userManagerService.getUserByJid(
+        'test@s.whatsapp.net'
+      );
 
       expect(result).toEqual(mockUser);
-      expect(mockDatabaseService.getUserByJid).toHaveBeenCalledWith('test@s.whatsapp.net');
+      expect(mockDatabaseService.getUserByJid).toHaveBeenCalledWith(
+        'test@s.whatsapp.net'
+      );
     });
 
     it('should return null when user not found', async () => {
       mockDatabaseService.getUserByJid.mockResolvedValue(null);
 
-      const result = await userManagerService.getUserByJid('nonexistent@s.whatsapp.net');
+      const result = await userManagerService.getUserByJid(
+        'nonexistent@s.whatsapp.net'
+      );
 
       expect(result).toBeNull();
     });
@@ -106,8 +112,14 @@ describe('UserManagerService', () => {
       const error = new Error('Database error');
       mockDatabaseService.getUserByJid.mockRejectedValue(error);
 
-      await expect(userManagerService.getUserByJid('test@s.whatsapp.net')).rejects.toThrow('Database error');
-      expect(mockLogger.error).toHaveBeenCalledWith('UserManager', 'Failed to get user by JID', expect.any(Object));
+      await expect(
+        userManagerService.getUserByJid('test@s.whatsapp.net')
+      ).rejects.toThrow('Database error');
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'UserManager',
+        'Failed to get user by JID',
+        expect.any(Object)
+      );
     });
   });
 
@@ -115,16 +127,20 @@ describe('UserManagerService', () => {
     it('should return user when found', async () => {
       mockDatabaseService.getUserByPhone.mockResolvedValue(mockUser);
 
-      const result = await userManagerService.getUserByPhoneNumber('1234567890');
+      const result =
+        await userManagerService.getUserByPhoneNumber('1234567890');
 
       expect(result).toEqual(mockUser);
-      expect(mockDatabaseService.getUserByPhone).toHaveBeenCalledWith('1234567890');
+      expect(mockDatabaseService.getUserByPhone).toHaveBeenCalledWith(
+        '1234567890'
+      );
     });
 
     it('should return null when user not found', async () => {
       mockDatabaseService.getUserByPhone.mockResolvedValue(null);
 
-      const result = await userManagerService.getUserByPhoneNumber('9999999999');
+      const result =
+        await userManagerService.getUserByPhoneNumber('9999999999');
 
       expect(result).toBeNull();
     });
@@ -155,17 +171,23 @@ describe('UserManagerService', () => {
       const result = await userManagerService.createUser(userData);
 
       expect(result).toEqual(mockUser);
-      expect(mockDatabaseService.createUser).toHaveBeenCalledWith(expect.objectContaining({
-        jid: 'new@s.whatsapp.net',
-        phoneNumber: '9876543210',
-        name: 'New User',
-        userLevel: UserLevel.USER,
-        isRegistered: false,
-        messageCount: 0,
-        banned: false,
-        preferences: {},
-      }));
-      expect(mockLogger.info).toHaveBeenCalledWith('UserManager', 'User created successfully', expect.any(Object));
+      expect(mockDatabaseService.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jid: 'new@s.whatsapp.net',
+          phoneNumber: '9876543210',
+          name: 'New User',
+          userLevel: UserLevel.USER,
+          isRegistered: false,
+          messageCount: 0,
+          banned: false,
+          preferences: {},
+        })
+      );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'UserManager',
+        'User created successfully',
+        expect.any(Object)
+      );
     });
 
     it('should create user with default values', async () => {
@@ -175,16 +197,18 @@ describe('UserManagerService', () => {
       const result = await userManagerService.createUser(userData);
 
       expect(result).toEqual(mockUser);
-      expect(mockDatabaseService.createUser).toHaveBeenCalledWith(expect.objectContaining({
-        jid: '',
-        phoneNumber: '',
-        name: '',
-        userLevel: UserLevel.USER,
-        isRegistered: false,
-        messageCount: 0,
-        banned: false,
-        preferences: {},
-      }));
+      expect(mockDatabaseService.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jid: '',
+          phoneNumber: '',
+          name: '',
+          userLevel: UserLevel.USER,
+          isRegistered: false,
+          messageCount: 0,
+          banned: false,
+          preferences: {},
+        })
+      );
     });
   });
 
@@ -192,14 +216,18 @@ describe('UserManagerService', () => {
     it('should update user and return updated user', async () => {
       const updates = { name: 'Updated Name', messageCount: 10 };
       const updatedUser = { ...mockUser, ...updates };
-      
+
       mockDatabaseService.updateUser.mockResolvedValue(updatedUser);
 
       const result = await userManagerService.updateUser(1, updates);
 
       expect(result).toEqual(updatedUser);
       expect(mockDatabaseService.updateUser).toHaveBeenCalledWith('1', updates);
-      expect(mockLogger.info).toHaveBeenCalledWith('UserManager', 'User updated successfully', expect.any(Object));
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'UserManager',
+        'User updated successfully',
+        expect.any(Object)
+      );
     });
   });
 
@@ -211,7 +239,9 @@ describe('UserManagerService', () => {
       const result = await userManagerService.getUsersByLevel(UserLevel.ADMIN);
 
       expect(result).toEqual(mockUsers);
-      expect(mockDatabaseService.getUsersByLevel).toHaveBeenCalledWith(UserLevel.ADMIN);
+      expect(mockDatabaseService.getUsersByLevel).toHaveBeenCalledWith(
+        UserLevel.ADMIN
+      );
     });
   });
 
@@ -228,13 +258,21 @@ describe('UserManagerService', () => {
       const result = await userManagerService.getUserStats();
 
       expect(result).toEqual(mockStats);
-      expect(mockLogger.info).toHaveBeenCalledWith('UserManager', 'Retrieved user stats', mockStats);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'UserManager',
+        'Retrieved user stats',
+        mockStats
+      );
     });
   });
 
   describe('registerUser', () => {
     it('should register user and update registration status', async () => {
-      const registeredUser = { ...mockUser, isRegistered: true, registrationDate: new Date() };
+      const registeredUser = {
+        ...mockUser,
+        isRegistered: true,
+        registrationDate: new Date(),
+      };
       mockDatabaseService.updateUser.mockResolvedValue(registeredUser);
 
       const result = await userManagerService.registerUser(1);
@@ -244,7 +282,11 @@ describe('UserManagerService', () => {
         isRegistered: true,
         registrationDate: expect.any(Date),
       });
-      expect(mockLogger.info).toHaveBeenCalledWith('UserManager', 'User registered successfully', { userId: 1 });
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'UserManager',
+        'User registered successfully',
+        { userId: 1 }
+      );
     });
   });
 
@@ -256,8 +298,14 @@ describe('UserManagerService', () => {
       const result = await userManagerService.banUser(1, true);
 
       expect(result).toEqual(bannedUser);
-      expect(mockDatabaseService.updateUser).toHaveBeenCalledWith('1', { banned: true });
-      expect(mockLogger.info).toHaveBeenCalledWith('UserManager', 'User ban status updated', { userId: 1, banned: true });
+      expect(mockDatabaseService.updateUser).toHaveBeenCalledWith('1', {
+        banned: true,
+      });
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'UserManager',
+        'User ban status updated',
+        { userId: 1, banned: true }
+      );
     });
 
     it('should unban user when banned=false', async () => {
@@ -267,48 +315,69 @@ describe('UserManagerService', () => {
       const result = await userManagerService.banUser(1, false);
 
       expect(result).toEqual(unbannedUser);
-      expect(mockDatabaseService.updateUser).toHaveBeenCalledWith('1', { banned: false });
+      expect(mockDatabaseService.updateUser).toHaveBeenCalledWith('1', {
+        banned: false,
+      });
     });
   });
 
   describe('hasPermission', () => {
     it('should return true for user with sufficient level', () => {
       const adminUser = { ...mockUser, userLevel: UserLevel.ADMIN };
-      
-      const result = userManagerService.hasPermission(adminUser, UserLevel.USER);
-      
+
+      const result = userManagerService.hasPermission(
+        adminUser,
+        UserLevel.USER
+      );
+
       expect(result).toBe(true);
     });
 
     it('should return false for user with insufficient level', () => {
       const regularUser = { ...mockUser, userLevel: UserLevel.USER };
-      
-      const result = userManagerService.hasPermission(regularUser, UserLevel.ADMIN);
-      
+
+      const result = userManagerService.hasPermission(
+        regularUser,
+        UserLevel.ADMIN
+      );
+
       expect(result).toBe(false);
     });
 
     it('should return false for banned user even with sufficient level', () => {
-      const bannedAdmin = { ...mockUser, userLevel: UserLevel.ADMIN, banned: true };
-      
-      const result = userManagerService.hasPermission(bannedAdmin, UserLevel.USER);
-      
+      const bannedAdmin = {
+        ...mockUser,
+        userLevel: UserLevel.ADMIN,
+        banned: true,
+      };
+
+      const result = userManagerService.hasPermission(
+        bannedAdmin,
+        UserLevel.USER
+      );
+
       expect(result).toBe(false);
     });
 
     it('should handle OWNER level correctly', () => {
       const ownerUser = { ...mockUser, userLevel: UserLevel.OWNER };
-      
-      const result = userManagerService.hasPermission(ownerUser, UserLevel.ADMIN);
-      
+
+      const result = userManagerService.hasPermission(
+        ownerUser,
+        UserLevel.ADMIN
+      );
+
       expect(result).toBe(true);
     });
 
     it('should handle BANNED level correctly', () => {
       const bannedUserLevel = { ...mockUser, userLevel: UserLevel.BANNED };
-      
-      const result = userManagerService.hasPermission(bannedUserLevel, UserLevel.USER);
-      
+
+      const result = userManagerService.hasPermission(
+        bannedUserLevel,
+        UserLevel.USER
+      );
+
       expect(result).toBe(false);
     });
   });
@@ -320,8 +389,14 @@ describe('UserManagerService', () => {
 
       await userManagerService.updateLastActivity(1);
 
-      expect(mockDatabaseService.updateUser).toHaveBeenCalledWith('1', { lastActivity: expect.any(Date) });
-      expect(mockLogger.debug).toHaveBeenCalledWith('UserManager', 'User last activity updated', { userId: 1 });
+      expect(mockDatabaseService.updateUser).toHaveBeenCalledWith('1', {
+        lastActivity: expect.any(Date),
+      });
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        'UserManager',
+        'User last activity updated',
+        { userId: 1 }
+      );
     });
   });
 });

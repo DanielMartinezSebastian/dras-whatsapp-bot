@@ -88,7 +88,7 @@ export const DB_SCHEMAS = {
       installed_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
-  `
+  `,
 };
 
 export const DB_INDEXES = {
@@ -98,30 +98,30 @@ export const DB_INDEXES = {
     'CREATE INDEX IF NOT EXISTS idx_users_user_level ON users (user_level)',
     'CREATE INDEX IF NOT EXISTS idx_users_last_activity ON users (last_activity)',
   ],
-  
+
   contexts: [
     'CREATE INDEX IF NOT EXISTS idx_contexts_user_id ON contexts (user_id)',
     'CREATE INDEX IF NOT EXISTS idx_contexts_type ON contexts (context_type)',
     'CREATE INDEX IF NOT EXISTS idx_contexts_active ON contexts (active)',
     'CREATE INDEX IF NOT EXISTS idx_contexts_expires_at ON contexts (expires_at)',
   ],
-  
+
   messages: [
     'CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages (user_id)',
     'CREATE INDEX IF NOT EXISTS idx_messages_whatsapp_id ON messages (whatsapp_message_id)',
     'CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages (created_at)',
     'CREATE INDEX IF NOT EXISTS idx_messages_processed ON messages (processed)',
   ],
-  
+
   command_logs: [
     'CREATE INDEX IF NOT EXISTS idx_command_logs_user_id ON command_logs (user_id)',
     'CREATE INDEX IF NOT EXISTS idx_command_logs_command ON command_logs (command_name)',
     'CREATE INDEX IF NOT EXISTS idx_command_logs_created_at ON command_logs (created_at)',
   ],
-  
+
   configurations: [
     'CREATE INDEX IF NOT EXISTS idx_configurations_category ON configurations (category)',
-  ]
+  ],
 };
 
 export const DB_TRIGGERS = {
@@ -133,7 +133,7 @@ export const DB_TRIGGERS = {
       UPDATE users SET updated_at = datetime('now') WHERE id = NEW.id;
     END
   `,
-  
+
   configurations_updated_at: `
     CREATE TRIGGER IF NOT EXISTS trigger_configurations_updated_at
     AFTER UPDATE ON configurations
@@ -142,7 +142,7 @@ export const DB_TRIGGERS = {
       UPDATE configurations SET updated_at = datetime('now') WHERE key = NEW.key;
     END
   `,
-  
+
   plugins_updated_at: `
     CREATE TRIGGER IF NOT EXISTS trigger_plugins_updated_at
     AFTER UPDATE ON plugins
@@ -151,7 +151,7 @@ export const DB_TRIGGERS = {
       UPDATE plugins SET updated_at = datetime('now') WHERE id = NEW.id;
     END
   `,
-  
+
   messages_updated_at: `
     CREATE TRIGGER IF NOT EXISTS trigger_messages_updated_at
     AFTER UPDATE ON messages
@@ -159,5 +159,5 @@ export const DB_TRIGGERS = {
     BEGIN
       UPDATE messages SET updated_at = datetime('now') WHERE id = NEW.id;
     END
-  `
+  `,
 };

@@ -73,14 +73,17 @@ describe('MessageProcessorService', () => {
 
     // Mock the getInstance methods
     jest.spyOn(ConfigService, 'getInstance').mockReturnValue(mockConfigService);
-    jest.spyOn(WhatsAppBridgeService, 'getInstance').mockReturnValue(mockWhatsAppBridge);
+    jest
+      .spyOn(WhatsAppBridgeService, 'getInstance')
+      .mockReturnValue(mockWhatsAppBridge);
     jest.spyOn(Logger, 'getInstance').mockReturnValue(mockLogger);
 
     // Get service instances after setting up mocks
     messageProcessor = MessageProcessorService.getInstance();
 
     // Setup ConfigService mocks with proper implementation
-    mockConfigService.getValue.mockImplementation((key: string, defaultValue?: any) => {
+    mockConfigService.getValue.mockImplementation(
+      (key: string, defaultValue?: any) => {
         const config = {
           bot: {
             prefix: '!',
@@ -94,7 +97,8 @@ describe('MessageProcessorService', () => {
           },
         };
         return config[key as keyof typeof config] || defaultValue;
-      });
+      }
+    );
 
     // Setup WhatsApp Bridge mocks
     mockWhatsAppBridge.sendMessage = jest.fn().mockResolvedValue(true);

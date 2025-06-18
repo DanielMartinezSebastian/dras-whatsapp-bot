@@ -35,9 +35,8 @@ export interface MessageQueryParams {
 }
 
 export class DatabaseQueries {
-  
   // ========== USER QUERIES ==========
-  
+
   static getUserById(_userId: string): string {
     // Parameter will be bound to ? placeholder
     return `
@@ -82,23 +81,25 @@ export class DatabaseQueries {
         created_at, updated_at
       FROM users
     `;
-    
+
     const conditions: string[] = [];
-    
-    if (params.user_level) conditions.push(`user_level = '${params.user_level}'`);
-    if (params.is_registered !== undefined) conditions.push(`is_registered = ${params.is_registered ? 1 : 0}`);
-    
+
+    if (params.user_level)
+      conditions.push(`user_level = '${params.user_level}'`);
+    if (params.is_registered !== undefined)
+      conditions.push(`is_registered = ${params.is_registered ? 1 : 0}`);
+
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
-    
+
     query += ` ORDER BY last_activity DESC`;
-    
+
     if (params.limit) {
       query += ` LIMIT ${params.limit}`;
       if (params.offset) query += ` OFFSET ${params.offset}`;
     }
-    
+
     return query;
   }
 
@@ -168,24 +169,26 @@ export class DatabaseQueries {
       SELECT id, user_id, context_type, data, created_at, last_interaction, expires_at, active
       FROM contexts
     `;
-    
+
     const conditions: string[] = [];
-    
+
     if (params.user_id) conditions.push(`user_id = '${params.user_id}'`);
-    if (params.context_type) conditions.push(`context_type = '${params.context_type}'`);
-    if (params.active !== undefined) conditions.push(`active = ${params.active ? 1 : 0}`);
-    
+    if (params.context_type)
+      conditions.push(`context_type = '${params.context_type}'`);
+    if (params.active !== undefined)
+      conditions.push(`active = ${params.active ? 1 : 0}`);
+
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
-    
+
     query += ` ORDER BY last_interaction DESC`;
-    
+
     if (params.limit) {
       query += ` LIMIT ${params.limit}`;
       if (params.offset) query += ` OFFSET ${params.offset}`;
     }
-    
+
     return query;
   }
 
@@ -258,26 +261,29 @@ export class DatabaseQueries {
              is_from_bot, processed, created_at, updated_at
       FROM messages
     `;
-    
+
     const conditions: string[] = [];
-    
+
     if (params.user_id) conditions.push(`user_id = '${params.user_id}'`);
-    if (params.is_from_bot !== undefined) conditions.push(`is_from_bot = ${params.is_from_bot ? 1 : 0}`);
-    if (params.processed !== undefined) conditions.push(`processed = ${params.processed ? 1 : 0}`);
-    if (params.start_date) conditions.push(`created_at >= '${params.start_date}'`);
+    if (params.is_from_bot !== undefined)
+      conditions.push(`is_from_bot = ${params.is_from_bot ? 1 : 0}`);
+    if (params.processed !== undefined)
+      conditions.push(`processed = ${params.processed ? 1 : 0}`);
+    if (params.start_date)
+      conditions.push(`created_at >= '${params.start_date}'`);
     if (params.end_date) conditions.push(`created_at <= '${params.end_date}'`);
-    
+
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
-    
+
     query += ` ORDER BY created_at DESC`;
-    
+
     if (params.limit) {
       query += ` LIMIT ${params.limit}`;
       if (params.offset) query += ` OFFSET ${params.offset}`;
     }
-    
+
     return query;
   }
 
@@ -319,22 +325,26 @@ export class DatabaseQueries {
     `;
   }
 
-  static getCommandLogs(userId?: string, commandName?: string, limit = 100): string {
+  static getCommandLogs(
+    userId?: string,
+    commandName?: string,
+    limit = 100
+  ): string {
     let query = `
       SELECT id, user_id, command_name, arguments, execution_result, success, execution_time_ms, created_at
       FROM command_logs
     `;
-    
+
     const conditions: string[] = [];
     if (userId) conditions.push(`user_id = '${userId}'`);
     if (commandName) conditions.push(`command_name = '${commandName}'`);
-    
+
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
-    
+
     query += ` ORDER BY created_at DESC LIMIT ${limit}`;
-    
+
     return query;
   }
 
@@ -347,13 +357,13 @@ export class DatabaseQueries {
 
   static getAllConfigurations(category?: string): string {
     let query = `SELECT key, value, description, category, created_at, updated_at FROM configurations`;
-    
+
     if (category) {
       query += ` WHERE category = '${category}'`;
     }
-    
+
     query += ` ORDER BY category, key`;
-    
+
     return query;
   }
 

@@ -4,7 +4,54 @@
 
 El WhatsApp Bridge Service ha sido mejorado con características robustas basadas en la implementación del sistema legacy, incluyendo mejor manejo de errores, reintentos automáticos, y una API más completa.
 
-## Key Features
+## 🔌 NUEVAS FUNCIONALIDADES IMPLEMENTADAS (Junio 2025)
+
+### Nuevas Interfaces y Tipos
+
+1. **QRCodeResponse** - Para manejo de códigos QR
+2. **ConnectionStatusResponse** - Estado de conexión y información del usuario
+3. **ChatListResponse** - Lista de chats disponibles
+4. **MessageHistoryRequest/Response** - Historial de mensajes
+5. **ContactInfo** - Información de contactos
+6. **GroupInfo** - Información de grupos
+
+### Nuevos Métodos del Bridge Service
+
+#### Gestión de Conexión
+- `getQRCode()` - Obtener código QR para conexión
+- `getConnectionStatus()` - Estado de conexión y datos del usuario
+- `disconnectFromBridge()` - Desconectar del bridge
+- `performHealthCheck()` - Verificación completa de salud
+
+#### Gestión de Chats y Mensajes
+- `getChatList()` - Obtener lista de chats
+- `getMessageHistory(request)` - Historial de mensajes de un chat
+- `sendTyping(jid, isTyping)` - Indicador de escritura
+- `markAsRead(jid, messageId)` - Marcar mensajes como leídos
+
+#### Información del Bridge
+- `getBridgeInfo()` - Información y versión del bridge
+
+### Endpoints Añadidos al Bridge Go
+
+1. **GET /api/status** - Estado de conexión
+2. **GET /api/qr** - Código QR
+3. **GET /api/info** - Información del bridge
+4. **POST /api/disconnect** - Desconectar
+
+### Scripts de Construcción
+
+1. **build-bridge.sh** - Script para construir y ejecutar el bridge Go
+2. **npm run bridge:build** - Comando npm para construir el bridge
+3. **npm run bridge:dev** - Comando npm para ejecutar en desarrollo
+
+### Tests Implementados
+
+- **16 tests nuevos** cubriendo todas las funcionalidades del bridge
+- **100% de cobertura** en las nuevas funcionalidades
+- **Mocking apropiado** de estados de conexión y respuestas
+
+## Key Features (Funcionalidades Originales)
 
 ### 1. Robust Error Handling
 - Custom `BridgeError` class with detailed error information

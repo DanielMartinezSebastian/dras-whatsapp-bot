@@ -3,29 +3,33 @@
  */
 
 import { UserLevel } from '../src/types';
-import { registerBasicCommands, getCommandHandler, getCommandDefinition } from '../src/commands/registry';
+import {
+  registerBasicCommands,
+  getCommandHandler,
+  getCommandDefinition,
+} from '../src/commands/registry';
 
 describe('Basic Commands Integration', () => {
   beforeAll(() => {
     // Mock all services
     jest.doMock('../src/utils/logger', () => ({
-      Logger: { 
+      Logger: {
         getInstance: () => ({
           info: jest.fn(),
           error: jest.fn(),
           warn: jest.fn(),
           debug: jest.fn(),
-        })
+        }),
       },
     }));
 
     jest.doMock('../src/services/command-registry.service', () => ({
-      CommandRegistryService: { 
+      CommandRegistryService: {
         getInstance: () => ({
           registerCommand: jest.fn(),
           initialize: jest.fn(),
           shutdown: jest.fn(),
-        })
+        }),
       },
     }));
   });
@@ -43,7 +47,7 @@ describe('Basic Commands Integration', () => {
   describe('Command Discovery', () => {
     it('should find help command by name', () => {
       const command = getCommandDefinition('help');
-      
+
       expect(command).toBeDefined();
       expect(command?.name).toBe('help');
       expect(command?.aliases).toContain('ayuda');
@@ -52,14 +56,14 @@ describe('Basic Commands Integration', () => {
 
     it('should find help command by alias', () => {
       const command = getCommandDefinition('ayuda');
-      
+
       expect(command).toBeDefined();
       expect(command?.name).toBe('help');
     });
 
     it('should find status command', () => {
       const command = getCommandDefinition('status');
-      
+
       expect(command).toBeDefined();
       expect(command?.name).toBe('status');
       expect(command?.category).toBe('general');
@@ -67,7 +71,7 @@ describe('Basic Commands Integration', () => {
 
     it('should find config command', () => {
       const command = getCommandDefinition('config');
-      
+
       expect(command).toBeDefined();
       expect(command?.name).toBe('config');
       expect(command?.category).toBe('user');
@@ -75,7 +79,7 @@ describe('Basic Commands Integration', () => {
 
     it('should not find non-existent command', () => {
       const command = getCommandDefinition('nonexistent');
-      
+
       expect(command).toBeNull();
     });
   });
@@ -83,35 +87,35 @@ describe('Basic Commands Integration', () => {
   describe('Command Handlers', () => {
     it('should find handler for help command', () => {
       const handler = getCommandHandler('help');
-      
+
       expect(handler).toBeDefined();
       expect(typeof handler).toBe('function');
     });
 
     it('should find handler for status command', () => {
       const handler = getCommandHandler('status');
-      
+
       expect(handler).toBeDefined();
       expect(typeof handler).toBe('function');
     });
 
     it('should find handler for config command', () => {
       const handler = getCommandHandler('config');
-      
+
       expect(handler).toBeDefined();
       expect(typeof handler).toBe('function');
     });
 
     it('should find handler for registration command', () => {
       const handler = getCommandHandler('registro');
-      
+
       expect(handler).toBeDefined();
       expect(typeof handler).toBe('function');
     });
 
     it('should return null for non-existent command handler', () => {
       const handler = getCommandHandler('nonexistent');
-      
+
       expect(handler).toBeNull();
     });
   });
@@ -162,10 +166,10 @@ describe('Basic Commands Integration', () => {
 
     it('should execute help command successfully', async () => {
       const handler = getCommandHandler('help');
-      
+
       if (handler) {
         const result = await handler(mockMessage, mockContext);
-        
+
         expect(result).toBeDefined();
         expect(result.success).toBe(true);
         expect(result.message).toContain('DrasBot - Comandos Disponibles');
@@ -199,10 +203,10 @@ describe('Basic Commands Integration', () => {
       }));
 
       const handler = getCommandHandler('status');
-      
+
       if (handler) {
         const result = await handler(mockMessage, mockContext);
-        
+
         expect(result).toBeDefined();
         expect(result.success).toBe(true);
         expect(result.message).toContain('Estado del DrasBot');

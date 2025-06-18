@@ -405,109 +405,112 @@ export interface PluginConfig {
 }
 
 /**
- * Database Types - Raw database entity representations
+ * Additional enums for database compatibility
  */
+export enum PermissionLevel {
+  USER = 'user',
+  MODERATOR = 'moderator',
+  ADMIN = 'admin',
+  OWNER = 'owner',
+}
 
-// Database User Types
+export enum UserStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+  BANNED = 'banned',
+}
+
+/**
+ * Database-compatible User interface
+ */
 export interface DatabaseUser {
   id: number;
+  phoneNumber: string;
   jid: string;
-  phone_number: string;
-  name: string;
-  user_level: UserLevel;
-  is_registered: boolean;
-  registration_date: Date | null;
-  last_activity: Date;
-  message_count: number;
-  banned: boolean;
-  preferences: string; // JSON string
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface DatabaseUserInsert {
-  jid: string;
-  phone_number: string;
-  name: string;
-  user_level: UserLevel;
-  is_registered: boolean;
-  registration_date: Date | null;
-  last_activity: Date;
-  message_count: number;
-  banned: boolean;
-  preferences: string;
-}
-
-export interface DatabaseUserUpdate {
-  jid?: string;
-  phone_number?: string;
   name?: string;
-  user_level?: UserLevel;
-  is_registered?: boolean;
-  registration_date?: Date | null;
-  last_activity?: Date;
-  message_count?: number;
-  banned?: boolean;
-  preferences?: string;
-  updated_at?: Date;
+  nickname?: string;
+  language: string;
+  userLevel: UserLevel;
+  permissionLevel: PermissionLevel;
+  status: UserStatus;
+  isRegistered: boolean;
+  registrationDate?: string;
+  lastInteraction?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Database Context Types
-export interface DatabaseContext {
-  id: number;
-  user_id: number;
-  context_type: ContextType;
-  context_data: string; // JSON string
-  is_active: boolean;
-  expires_at: Date | null;
-  step_index: number;
-  metadata: string; // JSON string
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface DatabaseContextInsert {
-  user_id: number;
-  context_type: ContextType;
-  context_data: string;
-  is_active: boolean;
-  expires_at: Date | null;
-  step_index: number;
-  metadata: string;
-}
-
-export interface DatabaseContextUpdate {
-  context_type?: ContextType;
-  context_data?: string;
-  is_active?: boolean;
-  expires_at?: Date | null;
-  step_index?: number;
-  metadata?: string;
-  updated_at?: Date;
-}
-
-// Database Message Types
+/**
+ * Database-compatible Message interface
+ */
 export interface DatabaseMessage {
   id: number;
   user_id: number;
-  whatsapp_message_id: string;
   content: string;
   message_type: MessageType;
-  is_from_bot: boolean;
-  processed: boolean;
-  response_to: string | null;
-  metadata: string; // JSON string
-  created_at: Date;
-  updated_at: Date;
+  direction: 'incoming' | 'outgoing';
+  timestamp: string;
+  context_data?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface DatabaseMessageInsert {
+/**
+ * Database-compatible Context interface
+ */
+export interface DatabaseContext {
+  userId: string;
+  currentState: string;
+  conversationData: Record<string, any>;
+  lastUpdated: string;
+  expiresAt?: string;
+}
+
+/**
+ * SQLite-compatible User interface (snake_case columns)
+ */
+export interface SQLiteUser {
+  id: number;
+  jid: string;
+  phone_number: string;
+  name: string;
+  user_level: string;
+  is_registered: number;
+  registration_date: string | null;
+  last_activity: string;
+  message_count: number;
+  banned: number;
+  preferences: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * SQLite User insert data
+ */
+export interface SQLiteUserInsert {
+  jid: string;
+  phone_number: string;
+  name: string;
+  user_level: string;
+  is_registered: number;
+  registration_date: string | null;
+  last_activity: string;
+  message_count: number;
+  banned: number;
+  preferences: string;
+}
+
+/**
+ * SQLite Context interface
+ */
+export interface SQLiteContext {
+  id: number;
   user_id: number;
-  whatsapp_message_id: string;
-  content: string;
-  message_type: MessageType;
-  is_from_bot: boolean;
-  processed: boolean;
-  response_to: string | null;
-  metadata: string;
+  context_type: string;
+  context_data: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
 }

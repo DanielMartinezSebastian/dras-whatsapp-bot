@@ -6,10 +6,7 @@
 
 import { Logger } from '../utils/logger';
 import { DatabaseService } from './database.service';
-import {
-  User,
-  UserLevel,
-} from '../types';
+import { User, UserLevel } from '../types';
 
 export class UserManagerService {
   private static instance: UserManagerService;
@@ -33,7 +30,10 @@ export class UserManagerService {
       const user = await this.db.getUserByJid(jid);
       return user;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to get user by JID', { jid, error });
+      this.logger.error('UserManager', 'Failed to get user by JID', {
+        jid,
+        error,
+      });
       throw error;
     }
   }
@@ -43,7 +43,10 @@ export class UserManagerService {
       const user = await this.db.getUserByPhone(phoneNumber);
       return user;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to get user by phone number', { phoneNumber, error });
+      this.logger.error('UserManager', 'Failed to get user by phone number', {
+        phoneNumber,
+        error,
+      });
       throw error;
     }
   }
@@ -53,7 +56,10 @@ export class UserManagerService {
       const user = await this.db.getUserById(userId);
       return user;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to get user by ID', { userId, error });
+      this.logger.error('UserManager', 'Failed to get user by ID', {
+        userId,
+        error,
+      });
       throw error;
     }
   }
@@ -75,21 +81,37 @@ export class UserManagerService {
       };
 
       const user = await this.db.createUser(userToCreate);
-      this.logger.info('UserManager', 'User created successfully', { userId: user.id, jid: userData.jid });
+      this.logger.info('UserManager', 'User created successfully', {
+        userId: user.id,
+        jid: userData.jid,
+      });
       return user;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to create user', { userData, error });
+      this.logger.error('UserManager', 'Failed to create user', {
+        userData,
+        error,
+      });
       throw error;
     }
   }
 
-  public async updateUser(userId: number, updates: Partial<User>): Promise<User> {
+  public async updateUser(
+    userId: number,
+    updates: Partial<User>
+  ): Promise<User> {
     try {
       const user = await this.db.updateUser(userId.toString(), updates);
-      this.logger.info('UserManager', 'User updated successfully', { userId, updates: Object.keys(updates) });
+      this.logger.info('UserManager', 'User updated successfully', {
+        userId,
+        updates: Object.keys(updates),
+      });
       return user;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to update user', { userId, updates, error });
+      this.logger.error('UserManager', 'Failed to update user', {
+        userId,
+        updates,
+        error,
+      });
       throw error;
     }
   }
@@ -99,7 +121,10 @@ export class UserManagerService {
       const users = await this.db.getUsersByLevel(userLevel);
       return users;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to get users by level', { userLevel, error });
+      this.logger.error('UserManager', 'Failed to get users by level', {
+        userLevel,
+        error,
+      });
       throw error;
     }
   }
@@ -123,9 +148,14 @@ export class UserManagerService {
   public async updateLastActivity(userId: number): Promise<void> {
     try {
       await this.updateUser(userId, { lastActivity: new Date() });
-      this.logger.debug('UserManager', 'User last activity updated', { userId });
+      this.logger.debug('UserManager', 'User last activity updated', {
+        userId,
+      });
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to update last activity', { userId, error });
+      this.logger.error('UserManager', 'Failed to update last activity', {
+        userId,
+        error,
+      });
       throw error;
     }
   }
@@ -136,10 +166,15 @@ export class UserManagerService {
         isRegistered: true,
         registrationDate: new Date(),
       });
-      this.logger.info('UserManager', 'User registered successfully', { userId });
+      this.logger.info('UserManager', 'User registered successfully', {
+        userId,
+      });
       return user;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to register user', { userId, error });
+      this.logger.error('UserManager', 'Failed to register user', {
+        userId,
+        error,
+      });
       throw error;
     }
   }
@@ -147,10 +182,17 @@ export class UserManagerService {
   public async banUser(userId: number, banned: boolean = true): Promise<User> {
     try {
       const user = await this.updateUser(userId, { banned });
-      this.logger.info('UserManager', 'User ban status updated', { userId, banned });
+      this.logger.info('UserManager', 'User ban status updated', {
+        userId,
+        banned,
+      });
       return user;
     } catch (error) {
-      this.logger.error('UserManager', 'Failed to ban/unban user', { userId, banned, error });
+      this.logger.error('UserManager', 'Failed to ban/unban user', {
+        userId,
+        banned,
+        error,
+      });
       throw error;
     }
   }
@@ -158,7 +200,7 @@ export class UserManagerService {
   public hasPermission(user: User, requiredLevel: UserLevel): boolean {
     const userLevelValue = this.getUserLevelValue(user.userLevel);
     const requiredLevelValue = this.getUserLevelValue(requiredLevel);
-    
+
     return userLevelValue >= requiredLevelValue && !user.banned;
   }
 
@@ -170,7 +212,7 @@ export class UserManagerService {
       [UserLevel.ADMIN]: 4,
       [UserLevel.OWNER]: 5,
     };
-    
+
     return levelValues[level] || 0;
   }
 }

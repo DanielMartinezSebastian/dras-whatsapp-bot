@@ -55,6 +55,14 @@ export interface ProcessingContext {
   metadata: Record<string, any>;
 }
 
+export interface ProcessingOptions {
+  enableTypingIndicators?: boolean;
+  enableReadReceipts?: boolean;
+  enableBridgeIntegration?: boolean;
+  typingDelay?: number;
+  autoMarkAsRead?: boolean;
+}
+
 export class MessageProcessorService {
   private static instance: MessageProcessorService;
   private logger: Logger;
@@ -66,8 +74,12 @@ export class MessageProcessorService {
   private _commandRegistry: CommandRegistryService; // TODO: Use when implementing command execution
   private contextManager: ContextManagerService; // Full integration with context management
   private isProcessing: boolean = false;
-  private processingQueue: IncomingMessage[] = [];
   private pipelineConfig: ProcessingPipelineConfig;
+
+  // New bridge integration properties
+  private processingOptions: ProcessingOptions;
+  private bridgeHealthy: boolean = false;
+  private lastBridgeCheck: Date = new Date();
 
   private constructor() {
     this.logger = Logger.getInstance();
@@ -85,6 +97,15 @@ export class MessageProcessorService {
       maxRetries: 3,
       queueSize: 100,
       enableMetrics: true,
+    };
+
+    // Initialize processing options with default values
+    this.processingOptions = {
+      enableTypingIndicators: true,
+      enableReadReceipts: true,
+      enableBridgeIntegration: true,
+      typingDelay: 1000,
+      autoMarkAsRead: true,
     };
   }
 
@@ -115,10 +136,35 @@ export class MessageProcessorService {
       this.pipelineConfig = { ...this.pipelineConfig, ...pipelineConfig };
     }
 
+    // Load processing options from config
+    const processingOptionsConfig = this.config.getValue(
+      'processing_options',
+      {}
+    );
+    if (processingOptionsConfig) {
+      this.processingOptions = {
+        ...this.processingOptions,
+        ...processingOptionsConfig,
+      };
+    }
+
+    // Check bridge health on initialization
+    if (this.processingOptions.enableBridgeIntegration) {
+      await this.checkBridgeHealth();
+      this.logger.info('MessageProcessor', 'Bridge health check completed', {
+        healthy: this.bridgeHealthy,
+        lastCheck: this.lastBridgeCheck,
+      });
+    }
+
     this.logger.info(
       'MessageProcessor',
       '✅ Message Processing Pipeline initialized',
-      this.pipelineConfig
+      {
+        ...this.pipelineConfig,
+        processingOptions: this.processingOptions,
+        bridgeHealthy: this.bridgeHealthy,
+      }
     );
   }
 
@@ -156,6 +202,14 @@ export class MessageProcessorService {
     );
 
     try {
+      // Mark message as read at the beginning of processing
+      if (this.processingOptions.autoMarkAsRead) {
+        await this.markMessageAsRead(incomingMessage.id, incomingMessage.from);
+      }
+
+      // Send typing indicator before processing starts
+      await this.sendTypingIndicator(incomingMessage.from);
+
       // Stage 1: Validation and Parsing
       await this.validateAndParseMessage(context);
 
@@ -170,6 +224,9 @@ export class MessageProcessorService {
 
       // Stage 5: Response Generation
       await this.generateResponse(context);
+
+      // Stop typing indicator after processing
+      await this.stopTypingIndicator(incomingMessage.from);
 
       const processingTime = Date.now() - startTime;
 
@@ -193,6 +250,9 @@ export class MessageProcessorService {
         context: context.conversationContext,
       };
     } catch (error) {
+      // Ensure typing indicator is stopped even on error
+      await this.stopTypingIndicator(incomingMessage.from);
+
       const processingTime = Date.now() - startTime;
 
       this.logger.error('MessageProcessor', `❌ Message processing failed`, {
@@ -625,7 +685,7 @@ export class MessageProcessorService {
       banned: false,
       preferences: {},
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     return user;
@@ -654,16 +714,174 @@ export class MessageProcessorService {
     );
   }
 
-  public getStatus(): {
-    isProcessing: boolean;
-    queueSize: number;
-    config: ProcessingPipelineConfig;
+  /**
+   * Configure processing options for bridge integration
+   */
+  public setProcessingOptions(options: Partial<ProcessingOptions>): void {
+    this.processingOptions = { ...this.processingOptions, ...options };
+    this.logger.info('MessageProcessor', 'Processing options updated', options);
+  }
+
+  /**
+   * Get current processing options
+   */
+  public getProcessingOptions(): ProcessingOptions {
+    return { ...this.processingOptions };
+  }
+
+  /**
+   * Check bridge health and update status
+   */
+  private async checkBridgeHealth(): Promise<boolean> {
+    if (!this.processingOptions.enableBridgeIntegration) {
+      return false;
+    }
+
+    try {
+      const healthStatus = await this.whatsappBridge.performHealthCheck();
+      this.bridgeHealthy = healthStatus.bridge_available;
+      this.lastBridgeCheck = new Date();
+
+      if (!this.bridgeHealthy) {
+        this.logger.warn(
+          'MessageProcessor',
+          'Bridge health check failed',
+          healthStatus
+        );
+      }
+
+      return this.bridgeHealthy;
+    } catch (error) {
+      this.bridgeHealthy = false;
+      this.lastBridgeCheck = new Date();
+      this.logger.error('MessageProcessor', 'Bridge health check error', error);
+      return false;
+    }
+  }
+
+  /**
+   * Start periodic bridge health monitoring
+   */
+  public startBridgeHealthMonitoring(intervalMinutes: number = 5): void {
+    if (!this.processingOptions.enableBridgeIntegration) {
+      return;
+    }
+
+    const intervalMs = intervalMinutes * 60 * 1000;
+
+    setInterval(async () => {
+      await this.checkBridgeHealth();
+    }, intervalMs);
+
+    this.logger.info(
+      'MessageProcessor',
+      `Bridge health monitoring started (interval: ${intervalMinutes}min)`
+    );
+  }
+
+  /**
+   * Get bridge integration status
+   */
+  public getBridgeStatus(): {
+    healthy: boolean;
+    lastCheck: Date;
+    options: ProcessingOptions;
   } {
     return {
-      isProcessing: this.isProcessing,
-      queueSize: this.processingQueue.length,
-      config: this.getConfig(),
+      healthy: this.bridgeHealthy,
+      lastCheck: this.lastBridgeCheck,
+      options: this.processingOptions,
     };
+  }
+
+  /**
+   * Send typing indicator if enabled and bridge is healthy
+   */
+  private async sendTypingIndicator(recipient: string): Promise<void> {
+    if (
+      !this.processingOptions.enableBridgeIntegration ||
+      !this.processingOptions.enableTypingIndicators ||
+      !this.bridgeHealthy
+    ) {
+      return;
+    }
+
+    try {
+      await this.whatsappBridge.sendTyping(recipient, true);
+      this.logger.debug('MessageProcessor', 'Typing indicator sent', {
+        recipient,
+      });
+
+      // Add configured delay to simulate natural typing
+      if (
+        this.processingOptions.typingDelay &&
+        this.processingOptions.typingDelay > 0
+      ) {
+        await new Promise(resolve =>
+          setTimeout(resolve, this.processingOptions.typingDelay)
+        );
+      }
+    } catch (error) {
+      this.logger.warn('MessageProcessor', 'Failed to send typing indicator', {
+        recipient,
+        error,
+      });
+    }
+  }
+
+  /**
+   * Stop typing indicator if enabled and bridge is healthy
+   */
+  private async stopTypingIndicator(recipient: string): Promise<void> {
+    if (
+      !this.processingOptions.enableBridgeIntegration ||
+      !this.processingOptions.enableTypingIndicators ||
+      !this.bridgeHealthy
+    ) {
+      return;
+    }
+
+    try {
+      await this.whatsappBridge.sendTyping(recipient, false);
+      this.logger.debug('MessageProcessor', 'Typing indicator stopped', {
+        recipient,
+      });
+    } catch (error) {
+      this.logger.warn('MessageProcessor', 'Failed to stop typing indicator', {
+        recipient,
+        error,
+      });
+    }
+  }
+
+  /**
+   * Mark message as read if enabled and bridge is healthy
+   */
+  private async markMessageAsRead(
+    messageId: string,
+    chatJid: string
+  ): Promise<void> {
+    if (
+      !this.processingOptions.enableBridgeIntegration ||
+      !this.processingOptions.enableReadReceipts ||
+      !this.bridgeHealthy
+    ) {
+      return;
+    }
+
+    try {
+      await this.whatsappBridge.markAsRead(messageId, chatJid);
+      this.logger.debug('MessageProcessor', 'Message marked as read', {
+        messageId,
+        chatJid,
+      });
+    } catch (error) {
+      this.logger.warn('MessageProcessor', 'Failed to mark message as read', {
+        messageId,
+        chatJid,
+        error,
+      });
+    }
   }
 
   /**
@@ -679,9 +897,6 @@ export class MessageProcessorService {
     while (this.isProcessing) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-
-    // Clear queue
-    this.processingQueue = [];
 
     this.logger.info(
       'MessageProcessor',

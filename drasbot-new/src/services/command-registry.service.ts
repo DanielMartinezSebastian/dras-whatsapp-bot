@@ -260,7 +260,10 @@ export class CommandRegistryService {
 
     // Check cooldown
     if (!this.checkCooldown(command.name, user.id.toString())) {
-      const remainingTime = this.getRemainingCooldown(command.name, user.id.toString());
+      const remainingTime = this.getRemainingCooldown(
+        command.name,
+        user.id.toString()
+      );
       return {
         success: false,
         command: commandName,

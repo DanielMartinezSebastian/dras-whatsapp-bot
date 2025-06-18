@@ -2,7 +2,10 @@
  * MessageProcessor Service Test - Clean Version
  */
 
-import { MessageProcessorService, IncomingMessage } from '../src/services/message-processor.service';
+import {
+  MessageProcessorService,
+  IncomingMessage,
+} from '../src/services/message-processor.service';
 import { ConfigService } from '../src/services/config.service';
 import { WhatsAppBridgeService } from '../src/services/whatsapp-bridge.service';
 import { PluginManagerService } from '../src/services/plugin-manager.service';
@@ -72,7 +75,9 @@ describe('MessageProcessorService - Clean Tests', () => {
       initialize: jest.fn().mockResolvedValue(undefined),
       cleanup: jest.fn(),
     };
-    jest.spyOn(ConfigService, 'getInstance').mockReturnValue(mockConfigService as any);
+    jest
+      .spyOn(ConfigService, 'getInstance')
+      .mockReturnValue(mockConfigService as any);
 
     // Mock WhatsAppBridge
     const mockWhatsAppBridge = {
@@ -85,7 +90,9 @@ describe('MessageProcessorService - Clean Tests', () => {
       initialize: jest.fn().mockResolvedValue(undefined),
       disconnect: jest.fn().mockResolvedValue(undefined),
     };
-    jest.spyOn(WhatsAppBridgeService, 'getInstance').mockReturnValue(mockWhatsAppBridge as any);
+    jest
+      .spyOn(WhatsAppBridgeService, 'getInstance')
+      .mockReturnValue(mockWhatsAppBridge as any);
 
     // Mock PluginManagerService
     const mockPluginManager = {
@@ -96,7 +103,9 @@ describe('MessageProcessorService - Clean Tests', () => {
       getAllPlugins: jest.fn().mockReturnValue([]),
       getEnabledPlugins: jest.fn().mockReturnValue([]),
     };
-    jest.spyOn(PluginManagerService, 'getInstance').mockReturnValue(mockPluginManager as any);
+    jest
+      .spyOn(PluginManagerService, 'getInstance')
+      .mockReturnValue(mockPluginManager as any);
 
     // Mock CommandRegistryService
     const mockCommandRegistry = {
@@ -106,7 +115,9 @@ describe('MessageProcessorService - Clean Tests', () => {
       getRegisteredCommands: jest.fn().mockReturnValue([]),
       executeCommand: jest.fn(),
     };
-    jest.spyOn(CommandRegistryService, 'getInstance').mockReturnValue(mockCommandRegistry as any);
+    jest
+      .spyOn(CommandRegistryService, 'getInstance')
+      .mockReturnValue(mockCommandRegistry as any);
 
     // Mock ContextManagerService
     const mockContextManager = {
@@ -116,7 +127,9 @@ describe('MessageProcessorService - Clean Tests', () => {
       getActiveContext: jest.fn(),
       executeContext: jest.fn(),
     };
-    jest.spyOn(ContextManagerService, 'getInstance').mockReturnValue(mockContextManager as any);
+    jest
+      .spyOn(ContextManagerService, 'getInstance')
+      .mockReturnValue(mockContextManager as any);
 
     // Get service instance
     messageProcessor = MessageProcessorService.getInstance();
@@ -151,7 +164,7 @@ describe('MessageProcessorService - Clean Tests', () => {
 
     it('should create processing result', async () => {
       const result = await messageProcessor.processMessage(testMessage);
-      
+
       expect(result).toHaveProperty('success');
       expect(result).toHaveProperty('processingId');
       expect(result).toHaveProperty('user');
@@ -160,20 +173,23 @@ describe('MessageProcessorService - Clean Tests', () => {
 
     it('should handle user lookup through message processing', async () => {
       const result = await messageProcessor.processMessage(testMessage);
-      
+
       expect(result.user).toHaveProperty('id');
-      expect(result.user).toHaveProperty('user_level');
+      expect(result.user).toHaveProperty('userLevel');
     });
 
     it('should process different message types', async () => {
       const commandMessage = { ...testMessage, content: '!help' };
       const contextMessage = { ...testMessage, content: 'registro' };
       const generalMessage = { ...testMessage, content: 'hello world' };
-      
-      const commandResult = await messageProcessor.processMessage(commandMessage);
-      const contextResult = await messageProcessor.processMessage(contextMessage);
-      const generalResult = await messageProcessor.processMessage(generalMessage);
-      
+
+      const commandResult =
+        await messageProcessor.processMessage(commandMessage);
+      const contextResult =
+        await messageProcessor.processMessage(contextMessage);
+      const generalResult =
+        await messageProcessor.processMessage(generalMessage);
+
       expect(commandResult).toHaveProperty('success');
       expect(contextResult).toHaveProperty('success');
       expect(generalResult).toHaveProperty('success');
@@ -193,7 +209,7 @@ describe('MessageProcessorService - Clean Tests', () => {
         maxConcurrentProcessing: 5,
         processingTimeout: 30000,
       };
-      
+
       messageProcessor.updateConfig(newConfig);
       const config = messageProcessor.getConfig();
       expect(config.maxConcurrentProcessing).toBe(5);
@@ -204,7 +220,7 @@ describe('MessageProcessorService - Clean Tests', () => {
   describe('Status', () => {
     it('should return processing status', () => {
       const status = messageProcessor.getStatus();
-      
+
       expect(status).toHaveProperty('isProcessing');
       expect(status).toHaveProperty('queueSize');
       expect(status).toHaveProperty('config');

@@ -7,12 +7,7 @@ import { ConfigService } from '../src/services/config.service';
 import { DatabaseService } from '../src/services/database.service';
 import { PluginManagerService } from '../src/services/plugin-manager.service';
 import { Logger } from '../src/utils/logger';
-import {
-  ContextType,
-  UserLevel,
-  User,
-  ContextHandler,
-} from '../src/types';
+import { ContextType, UserLevel, User, ContextHandler } from '../src/types';
 
 // Mock all dependencies
 jest.mock('../src/services/config.service');
@@ -61,21 +56,27 @@ describe('ContextManagerService - Clean Tests', () => {
       initialize: jest.fn(),
       shutdown: jest.fn(),
     };
-    jest.spyOn(ConfigService, 'getInstance').mockReturnValue(mockConfigService as any);
+    jest
+      .spyOn(ConfigService, 'getInstance')
+      .mockReturnValue(mockConfigService as any);
 
     // Mock DatabaseService
     const mockDatabaseService = {
       initialize: jest.fn(),
       shutdown: jest.fn(),
     };
-    jest.spyOn(DatabaseService, 'getInstance').mockReturnValue(mockDatabaseService as any);
+    jest
+      .spyOn(DatabaseService, 'getInstance')
+      .mockReturnValue(mockDatabaseService as any);
 
     // Mock PluginManagerService
     const mockPluginManagerService = {
       initialize: jest.fn(),
       shutdown: jest.fn(),
     };
-    jest.spyOn(PluginManagerService, 'getInstance').mockReturnValue(mockPluginManagerService as any);
+    jest
+      .spyOn(PluginManagerService, 'getInstance')
+      .mockReturnValue(mockPluginManagerService as any);
 
     // Get service instance
     contextManager = ContextManagerService.getInstance();
@@ -102,7 +103,7 @@ describe('ContextManagerService - Clean Tests', () => {
     it('should update configuration', () => {
       const newConfig = { timeout: 600000 };
       contextManager.updateConfig(newConfig);
-      
+
       const config = contextManager.getConfig();
       expect(config.timeout).toBe(600000);
     });
@@ -140,7 +141,7 @@ describe('ContextManagerService - Clean Tests', () => {
       contextManager.registerHandler(testHandler);
       const result = contextManager.unregisterHandler(ContextType.CONVERSATION);
       expect(result).toBe(true);
-      
+
       const handler = contextManager.getHandler(ContextType.CONVERSATION);
       expect(handler).toBeNull();
     });
@@ -148,16 +149,16 @@ describe('ContextManagerService - Clean Tests', () => {
 
   describe('Context Detection', () => {
     const testUser: User = {
-      id: 'user_123',
-      phone: '+1234567890',
-      whatsapp_jid: 'user@s.whatsapp.net',
-      display_name: 'Test User',
-      user_level: UserLevel.USER,
-      level: UserLevel.USER,
-      user_type: 'normal',
-      language: 'es',
-      is_registered: true,
-      last_activity: new Date().toISOString(),
+      id: 123,
+      jid: 'user@s.whatsapp.net',
+      phoneNumber: '+1234567890',
+      name: 'Test User',
+      userLevel: UserLevel.USER,
+      isRegistered: true,
+      registrationDate: new Date(),
+      lastActivity: new Date(),
+      messageCount: 0,
+      banned: false,
       preferences: {
         notifications: true,
         auto_reply: false,
@@ -165,9 +166,8 @@ describe('ContextManagerService - Clean Tests', () => {
         timezone: 'UTC',
         privacy_level: 'normal',
       },
-      metadata: {},
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const testHandler: ContextHandler = {
@@ -182,9 +182,12 @@ describe('ContextManagerService - Clean Tests', () => {
 
     it('should detect context when keywords match', async () => {
       contextManager.registerHandler(testHandler);
-      
-      const result = await contextManager.detectContext('I need help', testUser);
-      
+
+      const result = await contextManager.detectContext(
+        'I need help',
+        testUser
+      );
+
       expect(result.detected).toBe(true);
       expect(result.handler).toBe(testHandler);
       expect(result.confidence).toBeGreaterThan(0);
@@ -192,9 +195,12 @@ describe('ContextManagerService - Clean Tests', () => {
 
     it('should not detect context when no keywords match', async () => {
       contextManager.registerHandler(testHandler);
-      
-      const result = await contextManager.detectContext('random message', testUser);
-      
+
+      const result = await contextManager.detectContext(
+        'random message',
+        testUser
+      );
+
       expect(result.detected).toBe(false);
       expect(result.handler).toBeNull();
       expect(result.confidence).toBe(0);
@@ -212,9 +218,12 @@ describe('ContextManagerService - Clean Tests', () => {
       };
 
       contextManager.registerHandler(adminHandler);
-      
-      const result = await contextManager.detectContext('admin command', testUser);
-      
+
+      const result = await contextManager.detectContext(
+        'admin command',
+        testUser
+      );
+
       expect(result.detected).toBe(false);
     });
   });
@@ -253,7 +262,9 @@ describe('ContextManagerService - Clean Tests', () => {
         { step: 'start' }
       );
 
-      const result = await contextManager.updateContext(context.id, { step: 'email' });
+      const result = await contextManager.updateContext(context.id, {
+        step: 'email',
+      });
 
       expect(result).toBe(true);
       expect(context.data.step).toBe('email');
@@ -268,7 +279,7 @@ describe('ContextManagerService - Clean Tests', () => {
       const result = await contextManager.expireContext(context.id);
 
       expect(result).toBe(true);
-      
+
       const activeContext = await contextManager.getActiveContext(userId);
       expect(activeContext).toBeNull();
     });
@@ -280,7 +291,7 @@ describe('ContextManagerService - Clean Tests', () => {
       const result = await contextManager.clearUserContexts(userId);
 
       expect(result).toBe(true);
-      
+
       const activeContext = await contextManager.getActiveContext(userId);
       expect(activeContext).toBeNull();
     });
@@ -289,7 +300,7 @@ describe('ContextManagerService - Clean Tests', () => {
   describe('Statistics and Status', () => {
     it('should return statistics', () => {
       const stats = contextManager.getStats();
-      
+
       expect(stats).toHaveProperty('activeContexts');
       expect(stats).toHaveProperty('totalHandlers');
       expect(stats).toHaveProperty('totalDetections');

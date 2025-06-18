@@ -192,7 +192,7 @@ export class ContextManagerService {
   ): Promise<ContextDetectionResult> {
     try {
       this.detectionCounter++;
-      
+
       let bestMatch: ContextHandler | null = null;
       let bestConfidence = 0;
       let bestMetadata: Record<string, any> = {};
@@ -434,9 +434,10 @@ export class ContextManagerService {
   ): Promise<CommandResult> {
     try {
       this.executionCounter++;
-      
+
       // Check if user has an active context
-      let context = contextState || (await this.getActiveContext(user.id.toString()));
+      let context =
+        contextState || (await this.getActiveContext(user.id.toString()));
 
       if (!context) {
         // Try to detect new context
@@ -795,7 +796,7 @@ export class ContextManagerService {
     if ('userLevel' in handler) {
       return handler.userLevel as UserLevel;
     }
-    
+
     // Also check metadata.userLevel
     if (
       'metadata' in handler &&
@@ -807,7 +808,7 @@ export class ContextManagerService {
         return metadata.userLevel as UserLevel;
       }
     }
-    
+
     return UserLevel.USER;
   }
 

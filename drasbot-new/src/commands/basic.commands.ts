@@ -1,14 +1,11 @@
 /**
  * Basic Bot Commands Definition
- * 
+ *
  * This file defines the fundamental commands for the DrasBot system.
  * Includes help, status, user configuration, and administrative commands.
  */
 
-import {
-  Command,
-  UserLevel,
-} from '../types';
+import { Command, UserLevel } from '../types';
 
 /**
  * Help Command Definition

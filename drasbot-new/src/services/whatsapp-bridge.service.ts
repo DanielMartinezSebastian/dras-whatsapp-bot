@@ -639,6 +639,335 @@ export class WhatsAppBridgeService {
     }
   }
 
+  /**
+   * Get QR code for WhatsApp connection
+   */
+  public async getQRCode(): Promise<QRCodeResponse> {
+    try {
+      this.logger.info('WhatsAppBridge', 'Requesting QR code...');
+
+      const bridgeResponse = await this.makeRequest<QRCodeResponse>(
+        'GET',
+        '/api/qr'
+      );
+
+      const result: QRCodeResponse = {
+        success: bridgeResponse.success,
+        message: bridgeResponse.message || 'QR code request completed',
+      };
+
+      if (bridgeResponse.data?.qr_code) {
+        result.qr_code = bridgeResponse.data.qr_code;
+      }
+
+      if (result.success) {
+        this.logger.info('WhatsAppBridge', 'QR code retrieved successfully');
+      } else {
+        this.logger.warn(
+          'WhatsAppBridge',
+          'Failed to get QR code',
+          result.message
+        );
+      }
+
+      return result;
+    } catch (error: any) {
+      this.logger.error('WhatsAppBridge', 'Error getting QR code', error);
+      throw new BridgeError(error, 'getQRCode');
+    }
+  }
+
+  /**
+   * Get connection status and user info
+   */
+  public async getConnectionStatus(): Promise<ConnectionStatusResponse> {
+    try {
+      this.logger.info('WhatsAppBridge', 'Checking connection status...');
+
+      const bridgeResponse = await this.makeRequest<ConnectionStatusResponse>(
+        'GET',
+        '/api/status'
+      );
+
+      const result: ConnectionStatusResponse = {
+        success: bridgeResponse.success,
+        connected: bridgeResponse.data?.connected || false,
+      };
+
+      if (bridgeResponse.data?.user_info) {
+        result.user_info = bridgeResponse.data.user_info;
+      }
+
+      if (bridgeResponse.data?.last_seen) {
+        result.last_seen = bridgeResponse.data.last_seen;
+      }
+
+      if (result.success) {
+        this.connected = result.connected;
+        this.logger.info('WhatsAppBridge', 'Connection status retrieved', {
+          connected: this.connected,
+        });
+      }
+
+      return result;
+    } catch (error: any) {
+      this.logger.error(
+        'WhatsAppBridge',
+        'Error getting connection status',
+        error
+      );
+      this.connected = false;
+      throw new BridgeError(error, 'getConnectionStatus');
+    }
+  }
+
+  /**
+   * Get list of chats
+   */
+  public async getChatList(): Promise<ChatListResponse> {
+    if (!this.connected) {
+      throw new Error('WhatsApp Bridge is not connected');
+    }
+
+    try {
+      this.logger.info('WhatsAppBridge', 'Fetching chat list...');
+
+      const bridgeResponse = await this.makeRequest<ChatListResponse>(
+        'GET',
+        '/api/chats'
+      );
+
+      const result: ChatListResponse = {
+        success: bridgeResponse.success,
+        chats: bridgeResponse.data?.chats || [],
+      };
+
+      if (result.success) {
+        this.logger.info('WhatsAppBridge', 'Chat list retrieved successfully', {
+          chatCount: result.chats.length,
+        });
+      }
+
+      return result;
+    } catch (error: any) {
+      this.logger.error('WhatsAppBridge', 'Error getting chat list', error);
+      throw new BridgeError(error, 'getChatList');
+    }
+  }
+
+  /**
+   * Get message history for a specific chat
+   */
+  public async getMessageHistory(
+    request: MessageHistoryRequest
+  ): Promise<MessageHistoryResponse> {
+    if (!this.connected) {
+      throw new Error('WhatsApp Bridge is not connected');
+    }
+
+    if (!request.chat_jid) {
+      throw new Error('Chat JID is required');
+    }
+
+    try {
+      this.logger.info('WhatsAppBridge', 'Fetching message history', {
+        chatJid: request.chat_jid,
+        limit: request.limit || 50,
+      });
+
+      const bridgeResponse = await this.makeRequest<MessageHistoryResponse>(
+        'POST',
+        '/api/messages/history',
+        request
+      );
+
+      const result: MessageHistoryResponse = {
+        success: bridgeResponse.success,
+        messages: bridgeResponse.data?.messages || [],
+        total_count: bridgeResponse.data?.total_count || 0,
+      };
+
+      if (result.success) {
+        this.logger.info(
+          'WhatsAppBridge',
+          'Message history retrieved successfully',
+          {
+            messageCount: result.messages.length,
+          }
+        );
+      }
+
+      return result;
+    } catch (error: any) {
+      this.logger.error(
+        'WhatsAppBridge',
+        'Error getting message history',
+        error
+      );
+      throw new BridgeError(error, 'getMessageHistory');
+    }
+  }
+
+  /**
+   * Send typing indicator
+   */
+  public async sendTyping(
+    jid: string,
+    isTyping: boolean = true
+  ): Promise<boolean> {
+    if (!this.connected) {
+      throw new Error('WhatsApp Bridge is not connected');
+    }
+
+    if (!jid) {
+      throw new Error('JID is required');
+    }
+
+    try {
+      this.logger.info('WhatsAppBridge', 'Sending typing indicator', {
+        jid,
+        isTyping,
+      });
+
+      const bridgeResponse = await this.makeRequest<{ success: boolean }>(
+        'POST',
+        '/api/typing',
+        { jid, isTyping }
+      );
+
+      return bridgeResponse.success;
+    } catch (error: any) {
+      this.logger.error(
+        'WhatsAppBridge',
+        'Error sending typing indicator',
+        error
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Mark message as read
+   */
+  public async markAsRead(jid: string, messageId: string): Promise<boolean> {
+    if (!this.connected) {
+      throw new Error('WhatsApp Bridge is not connected');
+    }
+
+    if (!jid || !messageId) {
+      throw new Error('JID and message ID are required');
+    }
+
+    try {
+      this.logger.info('WhatsAppBridge', 'Marking message as read', {
+        jid,
+        messageId,
+      });
+
+      const bridgeResponse = await this.makeRequest<{ success: boolean }>(
+        'POST',
+        '/api/read',
+        { jid, messageId }
+      );
+
+      return bridgeResponse.success;
+    } catch (error: any) {
+      this.logger.error(
+        'WhatsAppBridge',
+        'Error marking message as read',
+        error
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Disconnect from WhatsApp (via bridge)
+   */
+  public async disconnectFromBridge(): Promise<boolean> {
+    try {
+      this.logger.info(
+        'WhatsAppBridge',
+        'Disconnecting from WhatsApp via bridge...'
+      );
+
+      const bridgeResponse = await this.makeRequest<{ success: boolean }>(
+        'POST',
+        '/api/disconnect'
+      );
+
+      if (bridgeResponse.success) {
+        this.connected = false;
+        this.logger.info('WhatsAppBridge', 'Disconnected successfully');
+      }
+
+      return bridgeResponse.success;
+    } catch (error: any) {
+      this.logger.error('WhatsAppBridge', 'Error during disconnection', error);
+      this.connected = false;
+      return false;
+    }
+  }
+
+  /**
+   * Get bridge version and info
+   */
+  public async getBridgeInfo(): Promise<any> {
+    try {
+      this.logger.info('WhatsAppBridge', 'Getting bridge info...');
+
+      const bridgeResponse = await this.makeRequest<any>('GET', '/api/info');
+
+      return bridgeResponse.data || { success: bridgeResponse.success };
+    } catch (error: any) {
+      this.logger.error('WhatsAppBridge', 'Error getting bridge info', error);
+      throw new BridgeError(error, 'getBridgeInfo');
+    }
+  }
+
+  /**
+   * Health check with comprehensive status
+   */
+  public async performHealthCheck(): Promise<HealthStatus> {
+    const startTime = Date.now();
+
+    try {
+      const status = await this.checkBridgeHealth();
+      const responseTime = Date.now() - startTime;
+
+      this.logger.info('WhatsAppBridge', 'Health check completed', {
+        status: status.status,
+        responseTime: `${responseTime}ms`,
+      });
+
+      const healthStatus: HealthStatus = {
+        status: status.status,
+        bridge_available: status.bridge_available,
+        last_check: new Date().toISOString(),
+      };
+
+      if (status.error) {
+        healthStatus.error = status.error;
+      }
+
+      return healthStatus;
+    } catch (error: any) {
+      const responseTime = Date.now() - startTime;
+
+      this.logger.error('WhatsAppBridge', 'Health check failed', {
+        error: error.message,
+        responseTime: `${responseTime}ms`,
+      });
+
+      return {
+        status: 'error',
+        bridge_available: false,
+        last_check: new Date().toISOString(),
+        error: error.message,
+      };
+    }
+  }
+
   public updateConfig(newConfig: Partial<WhatsAppBridgeConfig>): void {
     this.config = { ...this.config, ...newConfig };
 
@@ -651,3 +980,74 @@ export class WhatsAppBridgeService {
 }
 
 export default WhatsAppBridgeService;
+
+// Extended interfaces for advanced bridge functionality
+export interface QRCodeResponse {
+  success: boolean;
+  qr_code?: string;
+  message: string;
+}
+
+export interface ConnectionStatusResponse {
+  success: boolean;
+  connected: boolean;
+  user_info?: {
+    phone: string;
+    name: string;
+    jid: string;
+  };
+  last_seen?: string;
+}
+
+export interface ChatListResponse {
+  success: boolean;
+  chats: Array<{
+    jid: string;
+    name: string;
+    last_message?: string;
+    last_message_time?: string;
+    unread_count?: number;
+  }>;
+}
+
+export interface MessageHistoryRequest {
+  chat_jid: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface MessageHistoryResponse {
+  success: boolean;
+  messages: Array<{
+    id: string;
+    content: string;
+    timestamp: string;
+    sender: string;
+    is_from_me: boolean;
+    media_type?: string;
+    filename?: string;
+  }>;
+  total_count: number;
+}
+
+export interface ContactInfo {
+  success: boolean;
+  jid: string;
+  name: string;
+  phone?: string;
+  avatar_url?: string;
+  status?: string;
+}
+
+export interface GroupInfo {
+  success: boolean;
+  jid: string;
+  name: string;
+  description?: string;
+  participants: Array<{
+    jid: string;
+    name: string;
+    is_admin: boolean;
+  }>;
+  created_at?: string;
+}
