@@ -11,6 +11,7 @@
 
 import { Logger } from '../utils/logger';
 import { DatabaseService } from './database.service';
+import { UserManagerService } from './user-manager.service';
 import { WhatsAppBridgeService } from './whatsapp-bridge.service';
 import { ConfigService } from './config.service';
 import { PluginManagerService } from './plugin-manager.service';
@@ -70,6 +71,7 @@ export class MessageProcessorService {
   private logger: Logger;
   // @ts-ignore - Will be used in future database implementations
   private _database: DatabaseService; // TODO: Use when implementing database queries
+  private userManager: UserManagerService;
   private whatsappBridge: WhatsAppBridgeService;
   private config: ConfigService;
   private _pluginManager: PluginManagerService; // TODO: Use when implementing plugin integration
@@ -89,6 +91,7 @@ export class MessageProcessorService {
   private constructor() {
     this.logger = Logger.getInstance();
     this._database = DatabaseService.getInstance();
+    this.userManager = UserManagerService.getInstance();
     this.whatsappBridge = WhatsAppBridgeService.getInstance();
     this.config = ConfigService.getInstance();
     this._pluginManager = PluginManagerService.getInstance();
@@ -474,25 +477,103 @@ export class MessageProcessorService {
       userId: context.user?.id,
     });
 
-    // For now, create a simple result
-    // TODO: Integrate with Command Registry when implemented
-    const result: CommandResult = {
-      success: true,
-      command: commandName,
-      executionTime: 0,
-      response: {
-        type: 'text',
-        content: `Command "${commandName}" received. Implementation pending.`,
-        metadata: {},
-      },
-      data: {
-        command: commandName,
+    try {
+      // Execute command through CommandRegistry
+      const commandResult = await this._commandRegistry.executeCommand(
+        commandName,
         args,
-        user: context.user,
-      },
-    };
+        context.user!,
+        context.parsedMessage!,
+        {
+          user: context.user!,
+          message: context.parsedMessage!,
+          database: this._database,
+          whatsappBridge: this.whatsappBridge,
+          config: this.config,
+          logger: this.logger,
+        }
+      );
 
-    context.results.push(result);
+      this.logger.info('MessageProcessor', 'Command execution result', {
+        command: commandName,
+        success: commandResult.success,
+        hasMessage: !!commandResult.message,
+        messageLength: commandResult.message ? commandResult.message.length : 0,
+        error: commandResult.error || null,
+      });
+
+      // Convert CommandResult to expected format
+      let result: CommandResult;
+
+      if (commandResult.success && commandResult.message) {
+        // Command executed successfully and returned a message
+        result = {
+          success: true,
+          command: commandName,
+          executionTime: commandResult.executionTime || 0,
+          response:
+            typeof commandResult.message === 'string'
+              ? commandResult.message
+              : commandResult.message,
+          data: commandResult.data || {
+            command: commandName,
+            args,
+            user: context.user,
+          },
+        };
+      } else if (commandResult.success) {
+        // Command executed successfully but no message
+        result = {
+          success: true,
+          command: commandName,
+          executionTime: commandResult.executionTime || 0,
+          response: `✅ Comando "${commandName}" ejecutado correctamente.`,
+          data: commandResult.data || {
+            command: commandName,
+            args,
+            user: context.user,
+          },
+        };
+      } else {
+        // Command execution failed
+        result = {
+          success: false,
+          command: commandName,
+          executionTime: commandResult.executionTime || 0,
+          response: `❌ Error: ${commandResult.error || 'Error desconocido'}`,
+          error: commandResult.error || 'Error desconocido',
+          data: commandResult.data || {
+            command: commandName,
+            args,
+            user: context.user,
+          },
+        };
+      }
+
+      context.results.push(result);
+    } catch (error) {
+      this.logger.error('MessageProcessor', 'Error executing command', {
+        command: commandName,
+        error,
+        userId: context.user?.id,
+      });
+
+      // Fallback error result
+      const result: CommandResult = {
+        success: false,
+        command: commandName,
+        executionTime: 0,
+        response: `❌ Error interno al ejecutar el comando "${commandName}". Inténtalo de nuevo.`,
+        error: error instanceof Error ? error.message : String(error),
+        data: {
+          command: commandName,
+          args,
+          user: context.user,
+        },
+      };
+
+      context.results.push(result);
+    }
   }
 
   /**
@@ -668,7 +749,24 @@ export class MessageProcessorService {
     context: ProcessingContext,
     result: CommandResult
   ): Promise<void> {
-    if (!result.response || !context.user) return;
+    this.logger.info('MessageProcessor', 'Attempting to send response', {
+      hasResponse: !!result.response,
+      hasUser: !!context.user,
+      responseType: typeof result.response,
+      command: result.command,
+    });
+
+    if (!result.response || !context.user) {
+      this.logger.warn(
+        'MessageProcessor',
+        'Cannot send response - missing data',
+        {
+          hasResponse: !!result.response,
+          hasUser: !!context.user,
+        }
+      );
+      return;
+    }
 
     const recipient = context.incomingMessage.from;
 
@@ -725,19 +823,15 @@ export class MessageProcessorService {
   /**
    * Database helper methods - using the database service
    */
-  private async findUserByPhone(_phone: string): Promise<User | null> {
-    // TODO: Implement with actual database query
-    // Example: return await this._database.query('SELECT * FROM users WHERE phone = ?', [phone]);
-    return null;
+  private async findUserByPhone(phone: string): Promise<User | null> {
+    return await this.userManager.getUserByPhoneNumber(phone);
   }
 
   private async createNewUser(
     phone: string,
     whatsappJid: string
   ): Promise<User> {
-    // TODO: Implement with actual database insertion
-    const user: User = {
-      id: Date.now(), // Simple numeric ID
+    const userData: Partial<User> = {
       jid: whatsappJid,
       phoneNumber: phone,
       name: phone, // Default name
@@ -748,15 +842,16 @@ export class MessageProcessorService {
       messageCount: 0,
       banned: false,
       preferences: {},
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
-    return user;
+    return await this.userManager.createUser(userData);
   }
 
   private async updateUserLastActivity(userId: string): Promise<void> {
-    // TODO: Implement with actual database update
+    const numericUserId = parseInt(userId, 10);
+    await this.userManager.updateUser(numericUserId, {
+      lastActivity: new Date(),
+    });
     this.logger.debug('MessageProcessor', 'User last activity updated', {
       userId,
     });
