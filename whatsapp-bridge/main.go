@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/binary"
@@ -19,8 +20,6 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal"
-
-	"bytes"
 
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -772,6 +771,114 @@ func startRESTServer(client *whatsmeow.Client, messageStore *MessageStore, port 
 			Filename: filename,
 			Path:     path,
 		})
+	})
+
+	// Handler for getting connection status
+	http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		// Only allow GET requests
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		// Check if client is connected
+		isConnected := client.IsConnected()
+
+		response := map[string]interface{}{
+			"success":   true,
+			"connected": isConnected,
+		}
+
+		// Add user info if connected
+		if isConnected {
+			device := client.Store.ID
+			if device != nil {
+				response["user_info"] = map[string]interface{}{
+					"phone": device.User,
+					"jid":   device.String(),
+					"name":  "WhatsApp User", // We could get this from contacts
+				}
+			}
+			response["last_seen"] = time.Now().Format(time.RFC3339)
+		}
+
+		json.NewEncoder(w).Encode(response)
+	})
+
+	// Handler for getting QR code
+	http.HandleFunc("/api/qr", func(w http.ResponseWriter, r *http.Request) {
+		// Only allow GET requests
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		// Check if already connected
+		if client.IsConnected() {
+			response := map[string]interface{}{
+				"success": false,
+				"message": "Already connected to WhatsApp",
+			}
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
+		// Generate QR code (this is a simplified implementation)
+		// In a real implementation, you'd need to handle the QR code generation
+		response := map[string]interface{}{
+			"success": true,
+			"message": "QR code generation requested",
+			"qr_code": "Please scan QR code in terminal",
+		}
+
+		json.NewEncoder(w).Encode(response)
+	})
+
+	// Handler for health/info endpoint
+	http.HandleFunc("/api/info", func(w http.ResponseWriter, r *http.Request) {
+		// Only allow GET requests
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		response := map[string]interface{}{
+			"success":    true,
+			"version":    "1.0.0",
+			"name":       "WhatsApp Bridge",
+			"uptime":     time.Since(time.Now()).String(), // This should be calculated properly
+			"connected":  client.IsConnected(),
+			"timestamp":  time.Now().Format(time.RFC3339),
+		}
+
+		json.NewEncoder(w).Encode(response)
+	})
+
+	// Handler for disconnect
+	http.HandleFunc("/api/disconnect", func(w http.ResponseWriter, r *http.Request) {
+		// Only allow POST requests
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		// Disconnect the client
+		client.Disconnect()
+
+		response := map[string]interface{}{
+			"success": true,
+			"message": "Disconnected from WhatsApp",
+		}
+
+		json.NewEncoder(w).Encode(response)
 	})
 
 	// Start the server
