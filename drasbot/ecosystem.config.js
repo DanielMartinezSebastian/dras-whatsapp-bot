@@ -1,7 +1,8 @@
 module.exports = {
   apps: [
-    {
-      name: 'drasbot-bridge',
+        {
+      name: 'drasbot',
+      script: 'dist/index.js',     name: 'drasbot-bridge',
       script: 'go',
       args: ['run', 'main.go'],
       cwd: '../whatsapp-bridge',
@@ -32,7 +33,7 @@ module.exports = {
       listen_timeout: 10000,
     },
     {
-      name: 'drasbot-new',
+      name: 'drasbot',
       script: './dist/index.js',
       instances: 1,
       exec_mode: 'fork',

@@ -182,7 +182,7 @@
 ## 🏗️ Arquitectura Implementada
 
 ```
-drasbot-new/
+drasbot/
 ├── src/
 │   ├── core/
 │   │   └── bot.ts                     ✅ DrasBot orchestrator

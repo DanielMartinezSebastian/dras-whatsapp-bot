@@ -35,7 +35,7 @@ rm -rf whatsapp-chatbot/       # Directorio eliminado completamente
 #### Arquitectura Simplificada
 ```
 DrasBot/
-├── drasbot-new/               # ✅ Sistema principal TypeScript
+├── drasbot/               # ✅ Sistema principal TypeScript
 │   ├── src/                   # Código fuente
 │   ├── data/drasbot.db        # Base de datos SQLite
 │   └── dist/                  # Compilado
@@ -49,7 +49,7 @@ DrasBot/
 │ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
 ├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
 │ 0  │ drasbot-bridge     │ fork     │ 9    │ online    │ 0%       │ 24.7mb   │
-│ 1  │ drasbot-new        │ fork     │ 24   │ online    │ 0%       │ 88.1mb   │
+│ 1  │ drasbot        │ fork     │ 24   │ online    │ 0%       │ 88.1mb   │
 └────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
 ```
 

@@ -23,7 +23,7 @@
 │       │ QR Auth / Session                                                   │
 │       ▼                                                                     │
 │  ┌─────────────────┐    HTTP/JSON    ┌─────────────────────────────────┐    │
-│  │  drasbot-bridge │◄───────────────►│        drasbot-new              │    │
+│  │  drasbot-bridge │◄───────────────►│             drasbot             │    │
 │  │     (Go)        │    Webhook      │    (TypeScript/Node.js)         │    │
 │  │                 │   Port 3000     │                                 │    │
 │  │  • PM2 ID: 0    │                 │  • PM2 ID: 1                    │    │
@@ -62,7 +62,7 @@ Servidor de conexión WhatsApp que maneja el protocolo de comunicación.
 - **Puerto**: 8080 (localhost only)
 - **Gestión**: PM2 directo
 - **Reinicio**: Inmediato (sin compilación)
-- **API**: REST para comunicación con drasbot-new
+- **API**: REST para comunicación con drasbot
 
 #### Funcionalidades:
 - Conexión directa WhatsApp Web
@@ -71,8 +71,8 @@ Servidor de conexión WhatsApp que maneja el protocolo de comunicación.
 - Gestión de medios
 - Persistencia de sesiones
 
-### 2. 🤖 drasbot-new (TypeScript) - PM2 ID: 1
-**Ubicación**: `/drasbot-new/`
+### 2. 🤖 drasbot (TypeScript) - PM2 ID: 1
+**Ubicación**: `/drasbot/`
 
 Sistema principal de procesamiento con arquitectura moderna TypeScript.
 
@@ -92,7 +92,7 @@ Sistema principal de procesamiento con arquitectura moderna TypeScript.
 
 #### Estructura del Proyecto:
 ```
-drasbot-new/
+drasbot/
 ├── src/
 │   ├── services/          # Servicios principales
 │   │   ├── message-processor.service.ts
@@ -116,7 +116,7 @@ drasbot-new/
 
 ### 📊 SQLite - Persistencia Real Verificada
 
-**Archivo**: `drasbot-new/data/drasbot.db`
+**Archivo**: `drasbot/data/drasbot.db`
 
 #### Características de Persistencia:
 - ✅ **Usuarios persisten tras reinicio**: Los usuarios registrados se mantienen
@@ -172,7 +172,7 @@ system_stats {
 ./manage.sh monitor         # Monitor avanzado PM2
 
 # 🔧 Gestión Individual
-./manage.sh dev             # Solo drasbot-new (desarrollo)
+./manage.sh dev             # Solo drasbot (desarrollo)
 ./manage.sh bridge-restart  # Solo bridge
 ./manage.sh compile         # Solo compilar TypeScript
 
@@ -195,18 +195,18 @@ system_stats {
 pm2 status
 
 # Logs individuales
-pm2 logs drasbot-new
+pm2 logs drasbot
 pm2 logs drasbot-bridge
 
 # Reinicio manual
-pm2 restart drasbot-new
+pm2 restart drasbot
 pm2 restart drasbot-bridge
 
 # Monitor avanzado
 pm2 monit
 
 # Información detallada
-pm2 show drasbot-new
+pm2 show drasbot
 ```
 
 ## 📦 Instalación
@@ -247,8 +247,8 @@ pm2 --version    # >= 5.0.0
 
 #### Dependencias del Proyecto:
 ```bash
-# Dependencias drasbot-new
-cd drasbot-new
+# Dependencias drasbot
+cd drasbot
 npm install
 npm run build
 
@@ -297,7 +297,7 @@ export enum UserLevel {
 
 #### Ubicaciones de Logs:
 ```
-drasbot-new/logs/
+drasbot/logs/
 ├── application.log        # Logs principales de la aplicación
 ├── error.log             # Errores del sistema
 ├── debug.log             # Información de debug
@@ -313,7 +313,7 @@ whatsapp-bridge/
 ./manage.sh monitor
 
 # Logs específicos
-./manage.sh logs drasbot-new
+./manage.sh logs drasbot
 ./manage.sh logs drasbot-bridge
 
 # Health check completo
@@ -326,7 +326,7 @@ whatsapp-bridge/
 
 ```bash
 # Testing completo
-cd drasbot-new
+cd drasbot
 npm test
 
 # Testing específico
@@ -350,7 +350,7 @@ node ../test-bridge-functionality.js
 LOG_LEVEL=debug ./manage.sh start
 
 # Compilación manual
-cd drasbot-new
+cd drasbot
 npm run build
 ```
 
@@ -389,7 +389,7 @@ El sistema ha sido completamente migrado del legacy tmux/whatsapp-chatbot a la n
 - ❌ Configuración legacy
 
 #### ✅ Implementado:
-- ✅ `drasbot-new/` con TypeScript moderno
+- ✅ `drasbot/` con TypeScript moderno
 - ✅ `manage.sh` para gestión PM2
 - ✅ Persistencia real SQLite
 - ✅ Sistema de comandos dinámico
@@ -438,22 +438,22 @@ El sistema ha sido completamente migrado del legacy tmux/whatsapp-chatbot a la n
 #### DrasBot no responde:
 ```bash
 # Verificar compilación
-cd drasbot-new && npm run build
+cd drasbot && npm run build
 
 # Reiniciar con compilación
 ./manage.sh restart
 
 # Ver logs detallados
-./manage.sh logs drasbot-new
+./manage.sh logs drasbot
 ```
 
 #### Usuarios no persisten:
 ```bash
 # Verificar base de datos
-ls -la drasbot-new/data/drasbot.db
+ls -la drasbot/data/drasbot.db
 
 # Verificar permisos
-chmod 644 drasbot-new/data/drasbot.db
+chmod 644 drasbot/data/drasbot.db
 
 # Reset completo si es necesario
 ./manage.sh reset
@@ -475,7 +475,7 @@ ps aux | grep -E "(whatsapp|drasbot)"
 ./manage.sh health
 
 # Estado detallado PM2
-pm2 status && pm2 show drasbot-new && pm2 show drasbot-bridge
+pm2 status && pm2 show drasbot && pm2 show drasbot-bridge
 
 # Verificar puertos
 netstat -tulpn | grep -E "(3000|8080)"
@@ -488,24 +488,24 @@ netstat -tulpn | grep -E "(3000|8080)"
 
 ### 🔗 Archivos de Configuración
 
-- **PM2 Config**: `drasbot-new/ecosystem.config.js`
-- **TypeScript Config**: `drasbot-new/tsconfig.json`
-- **Environment**: `drasbot-new/.env`
-- **Package Config**: `drasbot-new/package.json`
+- **PM2 Config**: `drasbot/ecosystem.config.js`
+- **TypeScript Config**: `drasbot/tsconfig.json`
+- **Environment**: `drasbot/.env`
+- **Package Config**: `drasbot/package.json`
 
 ### 📖 Documentos de Referencia
 
 - [Nueva Arquitectura PM2](NUEVA_ARQUITECTURA_PM2.md)
-- [Documentación Bridge](drasbot-new/BRIDGE_INTEGRATION_COMPLETED.md)
-- [Guía de Desarrollo](drasbot-new/README-NEW.md)
-- [Implementación Bridge](drasbot-new/IMPLEMENTACION_BRIDGE_FINAL.md)
+- [Documentación Bridge](drasbot/BRIDGE_INTEGRATION_COMPLETED.md)
+- [Guía de Desarrollo](drasbot/README-NEW.md)
+- [Implementación Bridge](drasbot/IMPLEMENTACION_BRIDGE_FINAL.md)
 
 ## 🤝 Contribución y Desarrollo
 
 ### 📝 Añadir Nuevos Comandos
 
 ```typescript
-// drasbot-new/src/commands/nuevo-comando.handlers.ts
+// drasbot/src/commands/nuevo-comando.handlers.ts
 import { CommandHandler } from '../interfaces/command-handler.interface';
 
 export const nuevoComandoHandler: CommandHandler = {
@@ -522,7 +522,7 @@ export const nuevoComandoHandler: CommandHandler = {
 ### 🔧 Añadir Nuevos Servicios
 
 ```typescript
-// drasbot-new/src/services/nuevo.service.ts
+// drasbot/src/services/nuevo.service.ts
 import { Logger } from '../utils/logger';
 
 export class NuevoService {
@@ -574,7 +574,7 @@ Para iniciar el sistema: `./manage.sh start && ./manage.sh health`
 
 ## 🏗️ Arquitectura Detallada
 
-### 📊 Flujo Interno de drasbot-new
+### 📊 Flujo Interno de drasbot
 
 ```mermaid
 graph TD
@@ -718,7 +718,7 @@ graph LR
                 BR --> API
             end
             
-            subgraph "🤖 drasbot-new (TypeScript)"
+            subgraph "🤖 drasbot (TypeScript)"
                 direction TB
                 WH[Webhook Server :3000]
                 MP[Message Processor]

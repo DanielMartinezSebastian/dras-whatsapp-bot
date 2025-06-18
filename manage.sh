@@ -7,7 +7,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DRASBOT_DIR="$SCRIPT_DIR/drasbot-new"
+DRASBOT_DIR="$SCRIPT_DIR/drasbot"
 BRIDGE_DIR="$SCRIPT_DIR/whatsapp-bridge"
 
 # Colores para output
@@ -41,7 +41,7 @@ show_help() {
     echo -e "  ${CYAN}start${NC}           - Iniciar todos los servicios"
     echo -e "  ${CYAN}stop${NC}            - Detener todos los servicios"
     echo -e "  ${CYAN}restart${NC}         - Reiniciar todos los servicios"
-    echo -e "  ${CYAN}logs${NC} [service]  - Ver logs (drasbot-new, drasbot-bridge, all)"
+    echo -e "  ${CYAN}logs${NC} [service]  - Ver logs (drasbot, drasbot-bridge, all)"
     echo ""
     echo -e "${GREEN}🔧 DESARROLLO${NC}"
     echo -e "  ${CYAN}build${NC}           - Compilar TypeScript del bot"
@@ -55,7 +55,7 @@ show_help() {
     echo -e "  ${CYAN}reset${NC}           - Reset completo del sistema"
     echo ""
     echo -e "${GREEN}📋 SERVICIOS GESTIONADOS${NC}"
-    echo -e "  ${YELLOW}drasbot-new${NC}     - Bot principal (TypeScript, puerto 3000)"
+    echo -e "  ${YELLOW}drasbot${NC}     - Bot principal (TypeScript, puerto 3000)"
     echo -e "  ${YELLOW}drasbot-bridge${NC}  - Bridge WhatsApp (Go, puerto 8080)"
 }
 
@@ -159,7 +159,7 @@ start_services() {
     
     # Iniciar bot
     log_info "Iniciando DrasBot..."
-    pm2 start drasbot-new 2>/dev/null || pm2 restart drasbot-new
+    pm2 start drasbot 2>/dev/null || pm2 restart drasbot
     
     sleep 3
     check_status
@@ -171,7 +171,7 @@ stop_services() {
     log_info "Deteniendo servicios DrasBot..."
     
     check_pm2
-    pm2 stop drasbot-bridge drasbot-new 2>/dev/null || true
+    pm2 stop drasbot-bridge drasbot 2>/dev/null || true
     
     log_success "Servicios detenidos"
 }
@@ -179,7 +179,7 @@ stop_services() {
 # Reiniciar servicios (solo bot por defecto)
 restart_services() {
     show_banner
-    log_info "Reiniciando bot (drasbot-new)..."
+    log_info "Reiniciando bot (drasbot)..."
     
     check_pm2
     
@@ -187,7 +187,7 @@ restart_services() {
     build_bot
     
     # Reiniciar solo el bot (más seguro)
-    pm2 restart drasbot-new
+    pm2 restart drasbot
     
     sleep 2
     check_status
@@ -208,8 +208,8 @@ restart_all_services() {
     log_info "Reiniciando bridge (drasbot-bridge)..."
     pm2 restart drasbot-bridge
     
-    log_info "Reiniciando bot (drasbot-new)..."
-    pm2 restart drasbot-new
+    log_info "Reiniciando bot (drasbot)..."
+    pm2 restart drasbot
     
     sleep 5
     check_status
@@ -223,7 +223,7 @@ dev_restart() {
     log_info "Modo desarrollo: compilando y reiniciando bot..."
     
     build_bot
-    pm2 restart drasbot-new
+    pm2 restart drasbot
     
     sleep 2
     log_success "Bot reiniciado con nuevos cambios"
@@ -231,7 +231,7 @@ dev_restart() {
     # Mostrar logs recientes
     echo ""
     log_info "Logs recientes:"
-    pm2 logs drasbot-new --lines 10
+    pm2 logs drasbot --lines 10
 }
 
 # Ver logs
@@ -239,8 +239,8 @@ show_logs() {
     local service=${1:-"all"}
     
     case $service in
-        "drasbot-new"|"bot")
-            pm2 logs drasbot-new --lines 50
+        "drasbot"|"bot")
+            pm2 logs drasbot --lines 50
             ;;
         "drasbot-bridge"|"bridge")
             pm2 logs drasbot-bridge --lines 50

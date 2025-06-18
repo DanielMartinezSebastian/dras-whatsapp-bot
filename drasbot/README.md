@@ -3,7 +3,7 @@
 ![DrasBot Logo](https://img.shields.io/badge/DrasBot-v2.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
-![Tests](https://img.shields.io/badge/Tests-15%20passing-green.svg)
+![Tests](https://img.shields.io/badge/Tests-37%20passing-green.svg)
 
 A modern, extensible WhatsApp chatbot built with TypeScript, featuring a plugin-based architecture, robust configuration management, and comprehensive testing.
 
@@ -34,6 +34,50 @@ A modern, extensible WhatsApp chatbot built with TypeScript, featuring a plugin-
 - Multi-language Support
 - Plugin Marketplace
 
+## 🔗 WhatsApp Bridge Integration
+
+The bot connects to WhatsApp through a separate **whatsapp-bridge** service (written in Go). This architecture provides:
+
+### Enhanced Bridge Service Features
+
+- **Robust Error Handling**: Custom error classes with detailed error analysis
+- **Smart Health Checking**: Intelligent ping system that differentiates between bridge unavailable vs WhatsApp disconnected  
+- **Automatic Retries**: Configurable retry logic with exponential backoff
+- **Type Safety**: Full TypeScript typing for all bridge operations
+- **Graceful Degradation**: Bot continues to work even if bridge is temporarily unavailable
+
+### Bridge API Integration
+
+```typescript
+// The bridge service provides a complete API
+const bridge = WhatsAppBridgeService.getInstance();
+
+// Connection management
+await bridge.initialize();
+const isConnected = bridge.isConnected();
+const health = await bridge.getHealth();
+
+// Message operations
+await bridge.sendTextMessage('1234567890', 'Hello!');
+await bridge.sendMediaMessage('1234567890', '/path/to/image.jpg', 'Caption');
+const media = await bridge.downloadMedia('messageId', 'chatJid');
+
+// Utility functions
+const jid = bridge.createJID('1234567890'); // => 1234567890@s.whatsapp.net
+const isGroup = bridge.isGroupJID('group@g.us'); // => true
+```
+
+### Bridge Error Handling
+
+The service intelligently handles different error scenarios:
+
+- **Network Errors**: Automatic retries with exponential backoff
+- **Bridge Validation Errors**: Proper parameter validation
+- **WhatsApp Disconnection**: Distinguishes bridge availability from WhatsApp status
+- **Timeout Handling**: Configurable timeouts with retry logic
+
+For detailed information, see [WHATSAPP_BRIDGE_ENHANCED.md](./WHATSAPP_BRIDGE_ENHANCED.md).
+
 ## 🏗️ Architecture
 
 ```
@@ -60,7 +104,7 @@ src/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd drasbot-new
+   cd drasbot
    ```
 
 2. **Install dependencies**
@@ -108,15 +152,18 @@ npm test -- logger.test.ts
 ```
 
 ### Test Coverage
-- **Logger Service**: ✅ 100% (Basic functionality)
-- **Bot Core**: ✅ 100% (Lifecycle management)
+- **Logger Service**: ✅ 100% (8 tests passing)
+- **Bot Core**: ✅ 100% (7 tests passing)
+- **WhatsApp Bridge**: ✅ 100% (22 tests passing) **NEW**
 - **Configuration Service**: ✅ Integrated
 - **Database Service**: ✅ Integrated
+
+**Total: 37 tests passing** ✅
 
 ## 📁 Project Structure
 
 ```
-drasbot-new/
+drasbot/
 ├── src/                 # Source code
 │   ├── core/           # Core bot logic
 │   ├── services/       # Service layer
@@ -297,13 +344,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ Database layer
 - ✅ Logging system
 
-**Phase 2: WhatsApp Integration** 🔄 **IN PROGRESS**
-- 🔄 WhatsApp client service
-- 🔄 Message processing
+**Phase 2: WhatsApp Integration** ✅ **COMPLETED**
+- ✅ WhatsApp Bridge Service (Enhanced)
+- ✅ Robust error handling and retries
+- ✅ Smart health checking
+- ✅ Message sending and media download
+- 🔄 Message processing pipeline
 - 📋 Command system
 - 📋 Context management
 
-**Total Progress: 35% Complete**
+**Total Progress: 60% Complete**
 
 ---
 

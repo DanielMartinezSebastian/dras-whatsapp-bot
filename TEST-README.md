@@ -43,15 +43,15 @@ WEBHOOK_URL: "http://localhost:3000/webhook/whatsapp"  // Webhook del bot
 
 ### Scripts de Auto-respuestas
 
-4. **`drasbot-new/test-auto-responses.sh`** - 💬 Prueba sistema de auto-respuestas
+4. **`drasbot/test-auto-responses.sh`** - 💬 Prueba sistema de auto-respuestas
    ```bash
-   cd drasbot-new
+   cd drasbot
    ./test-auto-responses.sh
    ```
 
-5. **`drasbot-new/debug-auto-responses.js`** - 🔧 Debug del handler de auto-respuestas
+5. **`drasbot/debug-auto-responses.js`** - 🔧 Debug del handler de auto-respuestas
    ```bash
-   cd drasbot-new
+   cd drasbot
    node debug-auto-responses.js
    ```
 
@@ -77,7 +77,7 @@ Antes de ejecutar las pruebas, asegúrate de que estén funcionando:
 
 2. **Bot DrasBot v2.0 (TypeScript)**
    ```bash
-   cd drasbot-new
+   cd drasbot
    npm start
    ```
 
@@ -85,7 +85,7 @@ Antes de ejecutar las pruebas, asegúrate de que estén funcionando:
 
 1. Iniciar bridge y bot
 2. Ejecutar `node test-suite.js` para pruebas generales
-3. Ejecutar `cd drasbot-new && ./test-auto-responses.sh` para auto-respuestas
+3. Ejecutar `cd drasbot && ./test-auto-responses.sh` para auto-respuestas
 4. Revisar logs y respuestas en WhatsApp
 
 ## ✅ Verificación

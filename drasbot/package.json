@@ -1,5 +1,5 @@
 {
-  "name": "drasbot-new",
+  "name": "drasbot",
   "version": "2.0.0",
   "description": "Modern TypeScript WhatsApp Chatbot with Plugin Architecture",
   "main": "dist/index.js",

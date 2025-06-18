@@ -6,7 +6,7 @@
 - **TODO SE EJECUTA POR PM2** - NO más tmux
 - **drasBot-new** es TypeScript y necesita compilación antes de restart
 - **whatsapp-bridge** es Go compilado, restart directo
-- **Sistema legacy eliminado** - Solo drasbot-new + bridge
+- **Sistema legacy eliminado** - Solo drasbot + bridge
 
 ### ✅ SCRIPT DE#### **Reinicio Rápido (Método Recomendado para producción)**
 ```bash
@@ -15,7 +15,7 @@
 
 #### **Solo Bot (Cambios menores en TypeScript)**
 ```bash
-./manage.sh dev && ./manage.sh logs drasbot-new
+./manage.sh dev && ./manage.sh logs drasbot
 ```
 
 #### **Ecosistema Completo (Solo si es necesario)**
@@ -25,12 +25,12 @@
 
 El script anterior `manage.sh` está obsoleto porque:
 - ❌ Usaba tmux para el bridge
-- ❌ No compilaba drasbot-new
+- ❌ No compilaba drasbot
 - ❌ Mezclaba arquitecturas
 
 **Nuevo script automáticamente:**
 - ✅ Cierra sesiones tmux obsoletas
-- ✅ Compila drasbot-new antes de reiniciar
+- ✅ Compila drasbot antes de reiniciar
 - ✅ Gestiona todo por PM2
 - ✅ Health checks automáticos
 
@@ -42,7 +42,7 @@ El script anterior `manage.sh` está obsoleto porque:
    - API REST para comunicación con WhatsApp
    - Restart directo: `pm2 restart drasbot-bridge`
 
-2. **drasbot-new** (id: 1) 
+2. **drasbot** (id: 1) 
    - Tipo: TypeScript/Node.js
    - Puerto: 3000 (webhook)
    - **REQUIERE COMPILACIÓN**: `npm run build` antes de restart
@@ -77,11 +77,11 @@ El script anterior `manage.sh` está obsoleto porque:
 
 #### Para cambios en drasBot-new:
 ```bash
-cd /home/dras/Documentos/PROGRAMACION/drasBot/drasbot-new
+cd /home/dras/Documentos/PROGRAMACION/drasBot/drasbot
 npm run build                    # 1. Compilar TypeScript
 cd ..
-pm2 restart drasbot-new         # 2. Reiniciar servicio
-pm2 logs drasbot-new --lines 20 # 3. Verificar logs
+pm2 restart drasbot         # 2. Reiniciar servicio
+pm2 logs drasbot --lines 20 # 3. Verificar logs
 ```
 
 **O simplemente:**
@@ -126,7 +126,7 @@ curl http://localhost:3000/health # Health check bot (si existe)
 ### 🚨 PROBLEMAS COMUNES Y SOLUCIONES
 
 #### Problema: Bot no responde
-**Causa**: drasbot-new no está compilado o no se reinició después de cambios
+**Causa**: drasbot no está compilado o no se reinició después de cambios
 **Solución**:
 ```bash
 ./manage.sh dev              # Compila y reinicia automáticamente
@@ -152,27 +152,27 @@ curl http://localhost:3000/health # Health check bot (si existe)
 
 ### 📁 ARCHIVOS DE CONFIGURACIÓN
 
-- **PM2 Config**: `/drasbot-new/ecosystem.config.js` (define ambos servicios)
-- **Bot Config**: `/drasbot-new/src/config/`
+- **PM2 Config**: `/drasbot/ecosystem.config.js` (define ambos servicios)
+- **Bot Config**: `/drasbot/src/config/`
 - **Bridge Config**: `/whatsapp-bridge/` (configuración Go)
 
 ### 📊 LOGS Y MONITOREO
 
 - **PM2 logs**: `~/.pm2/logs/`
-- **drasbot-new logs**: `/drasbot-new/logs/`
+- **drasbot logs**: `/drasbot/logs/`
 - **Bridge logs**: Configurados en ecosystem.config.js
 
 ### 🎯 COMANDOS DE DESARROLLO
 
 ```bash
 # Desarrollo con watch mode
-cd drasbot-new && npm run dev
+cd drasbot && npm run dev
 
 # Testing
-cd drasbot-new && npm test
+cd drasbot && npm test
 
 # Build manual
-cd drasbot-new && npm run build
+cd drasbot && npm run build
 
 # Desarrollo del bridge
 cd whatsapp-bridge && go run main.go
@@ -197,7 +197,7 @@ cd whatsapp-bridge && go run main.go
 ### 📋 NOTAS FINALES
 
 1. **Siempre usar `./manage.sh`** para gestión del sistema
-2. **drasbot-new requiere compilación** antes de cualquier restart
+2. **drasbot requiere compilación** antes de cualquier restart
 3. **Todo se gestiona por PM2** - no usar tmux
 4. **El sistema está completamente funcional** y probado
 5. **Los logs son detallados** y permiten debugging fácil
@@ -208,7 +208,7 @@ cd whatsapp-bridge && go run main.go
 
 ```bash
 # Ver logs en tiempo real
-pm2 logs drasbot-new --lines 0  # Bot logs en vivo
+pm2 logs drasbot --lines 0  # Bot logs en vivo
 pm2 logs drasbot-bridge --lines 0 # Bridge logs en vivo
 
 # Estado de conectividad
@@ -221,7 +221,7 @@ pm2 restart all
 pm2 stop all
 
 # Ver detalles de proceso específico
-pm2 describe drasbot-new
+pm2 describe drasbot
 pm2 describe drasbot-bridge
 ```
 
@@ -232,8 +232,8 @@ pm2 describe drasbot-bridge
    - Verificar: `curl http://localhost:8080/status`
 
 2. **"Changes not applied"** 
-   - Compilar ANTES: `cd drasbot-new && npm run build`
-   - Luego restart: `pm2 restart drasbot-new`
+   - Compilar ANTES: `cd drasbot && npm run build`
+   - Luego restart: `pm2 restart drasbot`
 
 3. **"Port in use"**
    - Ver procesos: `pm2 status`
@@ -245,7 +245,7 @@ pm2 describe drasbot-bridge
 ```
 drasBot/
 ├── manage.sh                    # Script de gestión actualizado
-├── drasbot-new/                 # Bot principal (TypeScript)
+├── drasbot/                 # Bot principal (TypeScript)
 │   ├── package.json            # Dependencias propias
 │   ├── tsconfig.json
 │   ├── src/                    # Código fuente
@@ -407,7 +407,7 @@ pm2 status
 pm2 monit
 
 # Información detallada de procesos
-pm2 show drasbot-new
+pm2 show drasbot
 pm2 show drasbot-bridge
 ```
 
@@ -497,7 +497,7 @@ User updated successfully | userId: 7          # Mensajes posteriores
 ```
 
 **Verificación**:
-- ✅ Usuarios se guardan en `./drasbot-new/data/drasbot.db`
+- ✅ Usuarios se guardan en `./drasbot/data/drasbot.db`
 - ✅ Usuarios persisten tras `./manage.sh restart`
 - ✅ Bot reconoce usuarios existentes correctamente
 - ✅ No hay usuarios duplicados por número de teléfono
