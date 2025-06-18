@@ -31,12 +31,13 @@ module.exports = {
 
   // Funciones utilitarias
   log: function (message, color = "reset") {
-    console.log(`${this.colors[color]}${message}${this.colors.reset}`);
+    const colors = module.exports.colors;
+    console.log(`${colors[color]}${message}${colors.reset}`);
   },
 
   header: function (message) {
     console.log("\n" + "=".repeat(70));
-    this.log(message, "bold");
+    module.exports.log(message, "bold");
     console.log("=".repeat(70));
   },
 
