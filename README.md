@@ -558,3 +558,216 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 **🎉 ¡DrasBot v2.0 está listo para producción!**
 
 Para iniciar el sistema: `./manage-new.sh start && ./manage-new.sh health`
+
+## 🏗️ Arquitectura Detallada
+
+### 📊 Flujo Interno de drasbot-new
+
+```mermaid
+graph TD
+    A[index.ts - Entry Point] --> B[DrasBot Core]
+    B --> C[Singleton Services Initialization]
+    
+    C --> D[DatabaseService]
+    C --> E[ConfigService]
+    C --> F[WhatsAppBridgeService]
+    C --> G[WebhookServer]
+    C --> H[MessageProcessorService]
+    C --> I[UserManagerService]
+    C --> J[CommandRegistryService]
+    C --> K[PluginManagerService]
+    C --> L[ContextManagerService]
+    
+    G --> M[HTTP Webhook :3000]
+    M --> N[Incoming Message]
+    N --> H
+    
+    H --> O[Processing Pipeline]
+    O --> P[Stage 1: Message Validation]
+    O --> Q[Stage 2: User Identification]
+    O --> R[Stage 3: Context Detection]
+    O --> S[Stage 4: Command/Context Execution]
+    O --> T[Stage 5: Response Generation]
+    
+    P --> P1[Parse JSON]
+    P --> P2[Validate Format]
+    P --> P3[Extract Metadata]
+    
+    Q --> Q1[Check User in SQLite]
+    Q --> Q2[Create if New User]
+    Q --> Q3[Update Last Activity]
+    
+    R --> R1[Check Active Context]
+    R --> R2[Detect Command Pattern]
+    R --> R3[Route to Handler]
+    
+    S --> S1{Message Type?}
+    S1 -->|Command| S2[CommandRegistry.execute]
+    S1 -->|Context| S3[ContextManager.handle]
+    S1 -->|Auto-Response| S4[AutoResponsesPlugin]
+    
+    T --> T1[Format Response]
+    T --> T2[Send via Bridge]
+    T --> T3[Log Interaction]
+    
+    S2 --> U[Command Handlers]
+    U --> U1[basic.handlers.ts]
+    U --> U2[admin.handlers.ts]
+    U --> U3[bridge.handlers.ts]
+    
+    S4 --> V[Plugin System]
+    V --> V1[auto-responses]
+    V --> V2[test-command]
+    V --> V3[Future Plugins...]
+```
+
+### 🔄 Pipeline de Procesamiento de Mensajes
+
+```mermaid
+sequenceDiagram
+    participant W as WhatsApp
+    participant B as Bridge (Go)
+    participant WS as WebhookServer
+    participant MP as MessageProcessor
+    participant UM as UserManager
+    participant CR as CommandRegistry
+    participant DB as SQLite
+    participant CM as ContextManager
+    
+    W->>B: Mensaje WhatsApp
+    B->>WS: POST /webhook {mensaje}
+    WS->>MP: processIncomingMessage()
+    
+    Note over MP: Stage 1: Validación
+    MP->>MP: validateMessage()
+    MP->>MP: parseMessageContent()
+    
+    Note over MP: Stage 2: Usuario
+    MP->>UM: getUserByJid()
+    UM->>DB: SELECT * FROM users WHERE jid=?
+    alt Usuario existe
+        DB-->>UM: userData
+    else Usuario nuevo
+        UM->>DB: INSERT INTO users
+        DB-->>UM: newUser
+    end
+    UM-->>MP: user
+    
+    Note over MP: Stage 3: Contexto
+    MP->>CM: getActiveContext(userId)
+    CM->>DB: SELECT * FROM contexts WHERE user_id=?
+    DB-->>CM: context
+    CM-->>MP: activeContext
+    
+    Note over MP: Stage 4: Ejecución
+    alt Es comando
+        MP->>CR: findCommand(text)
+        CR-->>MP: command
+        MP->>CR: executeCommand(command, user, args)
+        CR->>U1: handler.execute()
+        U1-->>CR: result
+        CR-->>MP: commandResult
+    else Es contexto activo
+        MP->>CM: handleContextMessage()
+        CM-->>MP: contextResult
+    else Auto-respuesta
+        MP->>V1: handleAutoResponse()
+        V1-->>MP: autoResponse
+    end
+    
+    Note over MP: Stage 5: Respuesta
+    MP->>MP: formatResponse()
+    MP->>B: POST /send {response}
+    B->>W: Envía respuesta
+    
+    MP->>DB: INSERT INTO messages (log)
+    MP->>UM: updateLastActivity(user)
+```
+
+### 🌐 Flujo Completo de la Aplicación
+
+```mermaid
+graph LR
+    subgraph "🖥️ Sistema Host"
+        subgraph "📱 WhatsApp Protocol"
+            WA[WhatsApp Web]
+        end
+        
+        subgraph "🔗 PM2 Process Manager"
+            subgraph "🌉 drasbot-bridge (Go)"
+                direction TB
+                BR[Bridge Server :8080]
+                QR[QR Authentication]
+                WS[WhatsApp Session Store]
+                API[REST API]
+                BR --> QR
+                BR --> WS
+                BR --> API
+            end
+            
+            subgraph "🤖 drasbot-new (TypeScript)"
+                direction TB
+                WH[Webhook Server :3000]
+                MP[Message Processor]
+                SRV[Services Layer]
+                CMD[Commands System]
+                PLG[Plugins System]
+                WH --> MP
+                MP --> SRV
+                MP --> CMD
+                MP --> PLG
+            end
+        end
+        
+        subgraph "💾 Persistence Layer"
+            DB1[Bridge SQLite Store]
+            DB2[Bot SQLite Database]
+            LOG[Logs Directory]
+        end
+    end
+    
+    subgraph "🎯 User Interaction Flow"
+        U1[User sends WhatsApp message]
+        U2[Bot processes & responds]
+        U3[User receives response]
+    end
+    
+    %% Connections
+    WA <--> BR
+    BR <--> API
+    API <--> WH
+    
+    BR --> DB1
+    SRV --> DB2
+    MP --> LOG
+    
+    U1 --> WA
+    WA --> U2
+    U2 --> U3
+    
+    %% Styling
+    classDef processGo fill:#00ADD8,stroke:#fff,stroke-width:2px,color:#fff
+    classDef processTS fill:#3178C6,stroke:#fff,stroke-width:2px,color:#fff
+    classDef database fill:#4CAF50,stroke:#fff,stroke-width:2px,color:#fff
+    classDef user fill:#FF9800,stroke:#fff,stroke-width:2px,color:#fff
+    
+    class BR,QR,WS,API processGo
+    class WH,MP,SRV,CMD,PLG processTS
+    class DB1,DB2,LOG database
+    class U1,U2,U3 user
+```
+
+### ⚙️ Servicios y Responsabilidades
+
+| Servicio | Responsabilidad | Patrón | Estado |
+|----------|----------------|---------|---------|
+| **DrasBot Core** | Orquestador principal | Singleton | ✅ Activo |
+| **MessageProcessor** | Pipeline de procesamiento | Pipeline Pattern | ✅ Activo |
+| **UserManager** | CRUD usuarios SQLite | Repository Pattern | ✅ Activo |
+| **CommandRegistry** | Gestión comandos dinámicos | Command Pattern | ✅ Activo |
+| **PluginManager** | Sistema de plugins | Plugin Pattern | ✅ Activo |
+| **ConfigService** | Configuración hot-reload | Singleton | ✅ Activo |
+| **DatabaseService** | Capa de datos SQLite | Singleton | ✅ Activo |
+| **WebhookServer** | HTTP server Express | Factory | ✅ Activo |
+| **WhatsAppBridge** | Cliente bridge Go | Adapter Pattern | ✅ Activo |
+| **ContextManager** | Gestión conversaciones | State Pattern | ✅ Activo |
