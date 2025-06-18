@@ -181,14 +181,17 @@ export class MessageProcessorService {
    */
   private initializeMessageHandlers(): void {
     this.logger.info('MessageProcessor', 'Initializing message handlers...');
-    
+
     // Add auto-responses handler
     this.messageHandlers.push(new AutoResponsesHandler());
-    
+
     // Sort handlers by priority (higher priority first)
     this.messageHandlers.sort((a, b) => b.getPriority() - a.getPriority());
-    
-    this.logger.info('MessageProcessor', `Loaded ${this.messageHandlers.length} message handlers`);
+
+    this.logger.info(
+      'MessageProcessor',
+      `Loaded ${this.messageHandlers.length} message handlers`
+    );
   }
 
   /**
@@ -577,21 +580,35 @@ export class MessageProcessorService {
     if (context.parsedMessage && context.user) {
       for (const handler of this.messageHandlers) {
         try {
-          const canHandle = await handler.canHandle(context.parsedMessage, context.user);
+          const canHandle = await handler.canHandle(
+            context.parsedMessage,
+            context.user
+          );
           if (canHandle) {
-            this.logger.info('MessageProcessor', `🎯 Message handled by ${handler.metadata.name}`, {
-              userId: context.user.id,
-              handler: handler.metadata.name
-            });
+            this.logger.info(
+              'MessageProcessor',
+              `🎯 Message handled by ${handler.metadata.name}`,
+              {
+                userId: context.user.id,
+                handler: handler.metadata.name,
+              }
+            );
 
-            const result = await handler.handle(context.parsedMessage, context.user);
+            const result = await handler.handle(
+              context.parsedMessage,
+              context.user
+            );
             if (result.success) {
               context.results.push(result);
               return; // Stop processing after first successful handler
             }
           }
         } catch (error) {
-          this.logger.error('MessageProcessor', `Error in message handler ${handler.metadata.name}`, error);
+          this.logger.error(
+            'MessageProcessor',
+            `Error in message handler ${handler.metadata.name}`,
+            error
+          );
         }
       }
     }

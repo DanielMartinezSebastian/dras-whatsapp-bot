@@ -41,7 +41,7 @@ export class WebhookServer {
   private setupMiddleware(): void {
     // Parse JSON bodies
     this.app.use(express.json());
-    
+
     // Add CORS if needed
     this.app.use((_req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
@@ -60,10 +60,10 @@ export class WebhookServer {
   private setupRoutes(): void {
     // Health check
     this.app.get('/health', (_req, res) => {
-      res.json({ 
-        status: 'ok', 
+      res.json({
+        status: 'ok',
         service: 'DrasBot Webhook Server',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
 
@@ -71,16 +71,17 @@ export class WebhookServer {
     this.app.post('/webhook/whatsapp', async (req, res) => {
       try {
         const message: IncomingMessage = req.body;
-        
-        this.logger.info('WebhookServer', 
+
+        this.logger.info(
+          'WebhookServer',
           `Received message from ${message.sender} in ${message.chat_jid}: ${message.content}`
         );
 
         // Validate message
         if (!message.chat_jid || !message.sender || !message.content) {
-          res.status(400).json({ 
-            success: false, 
-            error: 'Missing required fields' 
+          res.status(400).json({
+            success: false,
+            error: 'Missing required fields',
           });
           return;
         }
@@ -88,30 +89,35 @@ export class WebhookServer {
         // Process the message
         await this.processIncomingMessage(message);
 
-        res.json({ 
-          success: true, 
-          message: 'Message processed successfully' 
+        res.json({
+          success: true,
+          message: 'Message processed successfully',
         });
-
       } catch (error) {
-        this.logger.error('WebhookServer', 'Error processing webhook message', error);
-        res.status(500).json({ 
-          success: false, 
-          error: 'Internal server error' 
+        this.logger.error(
+          'WebhookServer',
+          'Error processing webhook message',
+          error
+        );
+        res.status(500).json({
+          success: false,
+          error: 'Internal server error',
         });
       }
     });
 
     // Fallback route
     this.app.use('*', (_req, res) => {
-      res.status(404).json({ 
-        success: false, 
-        error: 'Endpoint not found' 
+      res.status(404).json({
+        success: false,
+        error: 'Endpoint not found',
       });
     });
   }
 
-  private async processIncomingMessage(message: IncomingMessage): Promise<void> {
+  private async processIncomingMessage(
+    message: IncomingMessage
+  ): Promise<void> {
     try {
       // Convert bridge message format to internal format
       const messageData: ProcessorIncomingMessage = {
@@ -122,15 +128,18 @@ export class WebhookServer {
         timestamp: message.timestamp,
         metadata: {
           sender: message.sender,
-          chatJid: message.chat_jid
-        }
+          chatJid: message.chat_jid,
+        },
       };
 
       // Use message processor to handle the message
       await this.messageProcessor.processMessage(messageData);
-
     } catch (error) {
-      this.logger.error('WebhookServer', 'Error processing incoming message', error);
+      this.logger.error(
+        'WebhookServer',
+        'Error processing incoming message',
+        error
+      );
       throw error;
     }
   }
@@ -145,7 +154,10 @@ export class WebhookServer {
       try {
         this.server = this.app.listen(port, () => {
           this.isRunning = true;
-          this.logger.info('WebhookServer', `🌐 Webhook server started on port ${port}`);
+          this.logger.info(
+            'WebhookServer',
+            `🌐 Webhook server started on port ${port}`
+          );
           resolve();
         });
 
@@ -153,9 +165,12 @@ export class WebhookServer {
           this.logger.error('WebhookServer', 'Server error', error);
           reject(error);
         });
-
       } catch (error) {
-        this.logger.error('WebhookServer', 'Failed to start webhook server', error);
+        this.logger.error(
+          'WebhookServer',
+          'Failed to start webhook server',
+          error
+        );
         reject(error);
       }
     });
@@ -167,7 +182,7 @@ export class WebhookServer {
       return;
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.server.close(() => {
         this.isRunning = false;
         this.logger.info('WebhookServer', '🔴 Webhook server stopped');

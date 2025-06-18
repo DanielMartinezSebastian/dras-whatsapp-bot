@@ -24,13 +24,28 @@ export class AutoResponsesHandler implements IMessageHandler {
 
   public readonly config: MessageHandlerConfig = {
     name: 'auto-responses',
-    description: 'Handles greetings and casual messages with friendly responses',
+    description:
+      'Handles greetings and casual messages with friendly responses',
     priority: 10, // Lower priority than commands
     triggers: {
       keywords: [
-        'hola', 'hello', 'hi', 'buenas', 'saludos', 'que tal', 'hey',
-        'buenos dias', 'buenas tardes', 'buenas noches', 'gracias', 'thanks',
-        'adios', 'bye', 'hasta luego', 'nos vemos', 'chao'
+        'hola',
+        'hello',
+        'hi',
+        'buenas',
+        'saludos',
+        'que tal',
+        'hey',
+        'buenos dias',
+        'buenas tardes',
+        'buenas noches',
+        'gracias',
+        'thanks',
+        'adios',
+        'bye',
+        'hasta luego',
+        'nos vemos',
+        'chao',
       ],
       patterns: [
         /^(hola|hello|hi|buenas|hey)[\s\W]*$/i,
@@ -39,7 +54,7 @@ export class AutoResponsesHandler implements IMessageHandler {
         /^(adios|bye|hasta luego|nos vemos|chao)[\s\W]*$/i,
       ],
       sentiment: 'positive',
-      messageTypes: ['text']
+      messageTypes: ['text'],
     },
     responses: {
       templates: [
@@ -47,28 +62,33 @@ export class AutoResponsesHandler implements IMessageHandler {
         '¡Hola {userName}! 👋 ¿En qué puedo ayudarte hoy?',
         '¡Buenas {userName}! 😊 Escribe !help para ver mis comandos.',
         'Hola {userName}! ✨ ¡Es genial verte por aquí!',
-        
+
         // Thanks responses
         '¡De nada {userName}! 😊 Siempre es un placer ayudar.',
         'No hay de qué {userName}! 🤗 Para eso estoy aquí.',
-        
+
         // Goodbyes
         '¡Hasta luego {userName}! 👋 Que tengas un excelente día.',
         '¡Nos vemos {userName}! 😊 Vuelve pronto.',
-        
+
         // General casual
         '¡Hola! 😊 Soy DrasBot v2.0. Escribe !help para ver todo lo que puedo hacer.',
-        'Todo bien por aquí {userName}! 🤖 ¿Necesitas ayuda con algo?'
+        'Todo bien por aquí {userName}! 🤖 ¿Necesitas ayuda con algo?',
       ],
       personalized: true,
       includeUserName: true,
-      includeTime: false
+      includeTime: false,
     },
     conditions: {
-      userLevels: [UserLevel.USER, UserLevel.MODERATOR, UserLevel.ADMIN, UserLevel.OWNER],
+      userLevels: [
+        UserLevel.USER,
+        UserLevel.MODERATOR,
+        UserLevel.ADMIN,
+        UserLevel.OWNER,
+      ],
       cooldown: 30000, // 30 seconds cooldown per user
     },
-    enabled: true
+    enabled: true,
   };
 
   private logger: Logger;
@@ -86,8 +106,10 @@ export class AutoResponsesHandler implements IMessageHandler {
       }
 
       // Check user level permissions
-      if (this.config.conditions?.userLevels && 
-          !this.config.conditions.userLevels.includes(user.userLevel)) {
+      if (
+        this.config.conditions?.userLevels &&
+        !this.config.conditions.userLevels.includes(user.userLevel)
+      ) {
         return false;
       }
 
@@ -97,8 +119,10 @@ export class AutoResponsesHandler implements IMessageHandler {
       }
 
       // Check message type
-      if (this.config.triggers.messageTypes && 
-          !this.config.triggers.messageTypes.includes(message.message_type)) {
+      if (
+        this.config.triggers.messageTypes &&
+        !this.config.triggers.messageTypes.includes(message.message_type)
+      ) {
         return false;
       }
 
@@ -109,9 +133,12 @@ export class AutoResponsesHandler implements IMessageHandler {
 
       // Check if message matches triggers
       return this.matchesTriggers(message.content);
-
     } catch (error) {
-      this.logger.error('AutoResponsesHandler', 'Error checking if can handle message', error);
+      this.logger.error(
+        'AutoResponsesHandler',
+        'Error checking if can handle message',
+        error
+      );
       return false;
     }
   }
@@ -121,7 +148,7 @@ export class AutoResponsesHandler implements IMessageHandler {
       this.logger.info('AutoResponsesHandler', 'Handling casual message', {
         user: user.id,
         messageLength: message.content.length,
-        trigger: this.getMatchedTrigger(message.content)
+        trigger: this.getMatchedTrigger(message.content),
       });
 
       // Update cooldown
@@ -137,17 +164,21 @@ export class AutoResponsesHandler implements IMessageHandler {
           handler: this.config.name,
           trigger: this.getMatchedTrigger(message.content),
           timestamp: new Date().toISOString(),
-          cooldown: this.config.conditions?.cooldown || 0
+          cooldown: this.config.conditions?.cooldown || 0,
         },
       };
-
     } catch (error) {
-      this.logger.error('AutoResponsesHandler', 'Error handling message', error);
-      
+      this.logger.error(
+        'AutoResponsesHandler',
+        'Error handling message',
+        error
+      );
+
       return {
         success: false,
         error: 'Failed to generate auto-response',
-        response: '¡Hola! 😊 Soy DrasBot v2.0. Escribe !help para ver mis comandos.'
+        response:
+          '¡Hola! 😊 Soy DrasBot v2.0. Escribe !help para ver mis comandos.',
       };
     }
   }
@@ -209,16 +240,34 @@ export class AutoResponsesHandler implements IMessageHandler {
     let templates: string[] = [];
 
     // Select appropriate templates based on trigger
-    if (trigger.includes('hola') || trigger.includes('hello') || trigger.includes('hi') || trigger.includes('buenas')) {
-      templates = this.config.responses.templates.filter(t => t.includes('Hola') || t.includes('Buenas'));
+    if (
+      trigger.includes('hola') ||
+      trigger.includes('hello') ||
+      trigger.includes('hi') ||
+      trigger.includes('buenas')
+    ) {
+      templates = this.config.responses.templates.filter(
+        t => t.includes('Hola') || t.includes('Buenas')
+      );
     } else if (trigger.includes('gracias') || trigger.includes('thanks')) {
-      templates = this.config.responses.templates.filter(t => t.includes('nada') || t.includes('placer'));
-    } else if (trigger.includes('adios') || trigger.includes('bye') || trigger.includes('hasta luego')) {
-      templates = this.config.responses.templates.filter(t => t.includes('luego') || t.includes('vemos'));
+      templates = this.config.responses.templates.filter(
+        t => t.includes('nada') || t.includes('placer')
+      );
+    } else if (
+      trigger.includes('adios') ||
+      trigger.includes('bye') ||
+      trigger.includes('hasta luego')
+    ) {
+      templates = this.config.responses.templates.filter(
+        t => t.includes('luego') || t.includes('vemos')
+      );
     } else {
       // Use general templates
-      templates = this.config.responses.templates.filter(t => 
-        t.includes('DrasBot') || t.includes('!help') || t.includes('Todo bien')
+      templates = this.config.responses.templates.filter(
+        t =>
+          t.includes('DrasBot') ||
+          t.includes('!help') ||
+          t.includes('Todo bien')
       );
     }
 
@@ -232,16 +281,19 @@ export class AutoResponsesHandler implements IMessageHandler {
 
     // Replace placeholders
     let response = template;
-    
-    if (this.config.responses.includeUserName && this.config.responses.personalized) {
+
+    if (
+      this.config.responses.includeUserName &&
+      this.config.responses.personalized
+    ) {
       response = response.replace(/{userName}/g, user.name || 'amigo');
     }
 
     if (this.config.responses.includeTime) {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      const timeStr = now.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
       });
       response = response.replace(/{time}/g, timeStr);
     }

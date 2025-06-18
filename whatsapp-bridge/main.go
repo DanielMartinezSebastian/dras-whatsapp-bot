@@ -407,6 +407,50 @@ func extractMediaInfo(msg *waProto.Message) (mediaType string, filename string, 
 	return "", "", "", nil, nil, nil, 0
 }
 
+// IncomingMessage represents a message to send to the bot
+type IncomingMessage struct {
+	ChatJID   string    `json:"chat_jid"`
+	Sender    string    `json:"sender"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// sendMessageToBot sends incoming messages to the bot webhook
+func sendMessageToBot(chatJID, sender, content string, timestamp time.Time, logger waLog.Logger) {
+	// Bot webhook URL
+	botURL := "http://localhost:3000/webhook/whatsapp"
+	
+	// Create the message payload
+	payload := IncomingMessage{
+		ChatJID:   chatJID,
+		Sender:    sender,
+		Content:   content,
+		Timestamp: timestamp,
+	}
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		logger.Warnf("Failed to marshal message payload: %v", err)
+		return
+	}
+
+	// Send HTTP POST to bot
+	resp, err := http.Post(botURL, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		logger.Warnf("Failed to send message to bot: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		logger.Warnf("Bot webhook returned non-200 status: %d", resp.StatusCode)
+		return
+	}
+
+	logger.Infof("Successfully sent message to bot: %s", content)
+}
+
 // Handle regular incoming messages with media support
 func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *events.Message, logger waLog.Logger) {
 	// Save message to database
@@ -465,6 +509,11 @@ func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *ev
 			fmt.Printf("[%s] %s %s: [%s: %s] %s\n", timestamp, direction, sender, mediaType, filename, content)
 		} else if content != "" {
 			fmt.Printf("[%s] %s %s: %s\n", timestamp, direction, sender, content)
+		}
+
+		// Send message to bot if it's not from us and has content
+		if !msg.Info.IsFromMe && content != "" {
+			go sendMessageToBot(chatJID, sender, content, msg.Info.Timestamp, logger)
 		}
 	}
 }

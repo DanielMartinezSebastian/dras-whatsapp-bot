@@ -103,7 +103,10 @@ export class DrasBot {
 
       // Start webhook server for receiving messages from bridge
       await this.webhookServer.start(3000);
-      this.logger.info('DrasBot', 'Webhook server started for bridge integration');
+      this.logger.info(
+        'DrasBot',
+        'Webhook server started for bridge integration'
+      );
 
       // TODO: Initialize WhatsApp client
       // TODO: Initialize message processor
