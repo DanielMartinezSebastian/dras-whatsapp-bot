@@ -6,6 +6,7 @@
  */
 
 import { Command, UserLevel } from '../types';
+import { nameCommands } from './name.commands';
 
 /**
  * Help Command Definition
@@ -101,6 +102,7 @@ export const basicCommands: Command[] = [
   registrationCommand,
   usersCommand,
   adminCommand,
+  ...nameCommands,
 ];
 
 export default basicCommands;

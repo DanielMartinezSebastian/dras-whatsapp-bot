@@ -1,8 +1,9 @@
 module.exports = {
   apps: [
-        {
+    {
       name: 'drasbot',
-      script: 'dist/index.js',     name: 'drasbot-bridge',
+      script: 'dist/index.js',
+      name: 'drasbot-bridge',
       script: 'go',
       args: ['run', 'main.go'],
       cwd: '../whatsapp-bridge',

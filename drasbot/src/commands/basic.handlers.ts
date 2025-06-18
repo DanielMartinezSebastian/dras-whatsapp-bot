@@ -10,6 +10,12 @@ import { WhatsAppBridgeService } from '../services/whatsapp-bridge.service';
 import { ContextManagerService } from '../services/context-manager.service';
 import { CommandRegistryService } from '../services/command-registry.service';
 import {
+  handleSetNameCommand,
+  handleWhoAmICommand,
+  handleProfileCommand,
+  handleProfileEnCommand,
+} from './name.handlers';
+import {
   PluginContext,
   CommandResult,
   UserLevel,
@@ -519,6 +525,25 @@ export const commandHandlers = {
   register: handleRegistrationCommand,
   registrar: handleRegistrationCommand,
   signup: handleRegistrationCommand,
+
+  // Name registration commands
+  mellamo: handleSetNameCommand,
+  soy: handleSetNameCommand,
+  llamame: handleSetNameCommand,
+  'mi-nombre': handleSetNameCommand,
+  nombre: handleSetNameCommand,
+  name: handleSetNameCommand,
+
+  'quien-soy': handleWhoAmICommand,
+  'mi-info': handleWhoAmICommand,
+  whoami: handleWhoAmICommand,
+
+  // Profile commands
+  perfil: handleProfileCommand,
+  'mi-perfil': handleProfileCommand,
+  profile: handleProfileEnCommand,
+  'my-profile': handleProfileEnCommand,
+  'user-profile': handleProfileEnCommand,
 };
 
 export default commandHandlers;

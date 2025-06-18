@@ -1,6 +1,6 @@
 # Progreso de Desarrollo - DrasBot Nueva Arquitectura v3.0
 
-**Última actualización**: 17 de junio de 2025
+**Última actualización**: 18 de junio de 2025
 
 ## 🎯 Estado Actual: FASE CRÍTICA COMPLETADA - DATABASE SQLITE REAL IMPLEMENTADO
 
@@ -170,6 +170,235 @@
 - 🔄 Advanced admin commands
 - 🔄 System diagnostic tools
 - 🔄 Plugin hot-reloading
+
+## 📋 PLAN DE MEJORAS FUTURAS - ROADMAP v3.1+
+
+### 🎯 **FASE 7: ROBUSTEZ Y RELIABILITY (v3.1) - Prioridad ALTA**
+*Estimado: 1-2 semanas | Enfoque: Manejo avanzado de errores y recuperación*
+
+#### 7.1 **Sistema de Queue Persistente para Mensajes Fallidos**
+- **Implementar**: Queue SQLite para mensajes no entregados
+- **Características**:
+  - Tabla `failed_messages` con reintento automático
+  - Backoff exponencial personalizable
+  - Límite de intentos configurable
+  - Cleanup automático de mensajes antiguos
+- **Archivos**: `src/services/message-queue.service.ts`
+- **Tests**: 15+ test cases para queue management
+- **Beneficio**: 0% pérdida de mensajes importantes
+
+#### 7.2 **Sistema de Alertas y Notificaciones**
+- **Implementar**: Notificaciones proactivas para administradores
+- **Características**:
+  - Alertas cuando bridge cae >5 minutos
+  - Notificación de mensajes fallidos acumulados
+  - Email/webhook opcional para eventos críticos
+  - Dashboard de salud en tiempo real
+- **Archivos**: `src/services/alert.service.ts`, `src/utils/notification.ts`
+- **Integration**: Con logging y health checks existentes
+- **Beneficio**: Detección temprana de problemas
+
+#### 7.3 **Métricas y Monitoring Avanzado**
+- **Implementar**: Sistema de métricas detalladas
+- **Características**:
+  - Tasa de éxito/fallo de envíos (%)
+  - Tiempo promedio de procesamiento
+  - Disponibilidad del bridge en tiempo real
+  - Estadísticas de usuarios activos/comandos
+- **Archivos**: `src/services/metrics.service.ts`
+- **Storage**: Agregación en SQLite con retention policy
+- **Beneficio**: Visibilidad completa del rendimiento
+
+### 🚀 **FASE 8: COMANDOS AVANZADOS Y UX (v3.2) - Prioridad MEDIA**
+*Estimado: 1-2 semanas | Enfoque: Funcionalidad de administración*
+
+#### 8.1 **Comandos de Administración Avanzados**
+- **Implementar**: Suite completa de comandos admin
+- **Comandos nuevos**:
+  - `!system` - Estado general del sistema
+  - `!metrics` - Estadísticas detalladas
+  - `!queue` - Estado de queue de mensajes
+  - `!restart bridge` - Reinicio remoto del bridge
+  - `!export logs` - Exportar logs filtrados
+  - `!user ban/unban <phone>` - Gestión de usuarios
+- **Archivos**: `src/commands/admin/`
+- **Permissions**: Solo ADMIN/OWNER level
+- **Beneficio**: Control total del sistema via WhatsApp
+
+#### 8.2 **Herramientas de Diagnóstico del Sistema**
+- **Implementar**: Comandos de diagnóstico profundo
+- **Características**:
+  - `!ping <service>` - Test específico de servicios
+  - `!health detailed` - Reporte completo de salud
+  - `!logs tail <service>` - Ver logs en tiempo real
+  - `!performance` - Métricas de rendimiento actual
+- **Integration**: Con todos los servicios existentes
+- **Output**: Reportes formateados y exportables
+- **Beneficio**: Debugging eficiente desde WhatsApp
+
+#### 8.3 **Plugin Hot-Reloading**
+- **Implementar**: Recarga dinámica de plugins sin reinicio
+- **Características**:
+  - `!plugin reload <name>` - Recargar plugin específico
+  - `!plugin list` - Listar plugins activos
+  - `!plugin status <name>` - Estado detallado
+  - Detección automática de cambios en archivos
+- **Archivos**: Mejoras en `src/services/plugin-manager.service.ts`
+- **Beneficio**: Desarrollo más ágil, sin downtime
+
+### 🔧 **FASE 9: OPTIMIZACIÓN Y PERFORMANCE (v3.3) - Prioridad MEDIA**
+*Estimado: 1 semana | Enfoque: Rendimiento y escalabilidad*
+
+#### 9.1 **Optimizaciones de Rendimiento**
+- **Memory Usage**: Profiling y optimización de memoria
+- **Response Times**: Cache inteligente para comandos frecuentes
+- **Database**: Índices optimizados, query optimization
+- **Bridge Communication**: Connection pooling
+- **Archivos**: Refactoring en servicios core
+- **Objetivo**: <100ms response time, <50MB RAM usage
+
+#### 9.2 **Cache Sistema Inteligente**
+- **Implementar**: Cache multi-nivel
+- **Características**:
+  - Cache en memoria para datos frecuentes
+  - Cache de resultados de comandos
+  - Cache de listas de chats del bridge
+  - TTL configurables por tipo de data
+- **Archivos**: `src/services/cache.service.ts`
+- **Integration**: Transparente con servicios existentes
+- **Beneficio**: 50%+ mejora en response times
+
+### 📊 **FASE 10: ANALYTICS Y BUSINESS INTELLIGENCE (v3.4) - Prioridad BAJA**
+*Estimado: 1-2 semanas | Enfoque: Insights y reportes*
+
+#### 10.1 **Sistema de Analytics Avanzado**
+- **Implementar**: Analytics comprehensivo de uso
+- **Métricas**:
+  - Comandos más usados por período
+  - Usuarios más activos
+  - Patrones de uso por horario/día
+  - Tendencias de crecimiento
+- **Visualización**: Reportes en texto formateado
+- **Export**: CSV/JSON para análisis externo
+
+#### 10.2 **Reportes Automáticos**
+- **Implementar**: Reportes periódicos automáticos
+- **Tipos**:
+  - Reporte diario de actividad
+  - Reporte semanal de tendencias
+  - Reporte mensual ejecutivo
+  - Alertas de anomalías en patrones
+- **Delivery**: Via WhatsApp a administradores
+- **Configuración**: Schedule configurable
+
+### 🌐 **FASE 11: INTEGRACIÓN Y EXTENSIBILIDAD (v3.5) - Prioridad BAJA**
+*Estimado: 2-3 semanas | Enfoque: Conectividad externa*
+
+#### 11.1 **API REST Externa**
+- **Implementar**: API pública para integración externa
+- **Endpoints**:
+  - `/api/send` - Enviar mensaje programático
+  - `/api/status` - Estado del sistema
+  - `/api/users` - Gestión de usuarios
+  - `/api/metrics` - Acceso a métricas
+- **Security**: API keys, rate limiting
+- **Documentation**: OpenAPI/Swagger
+
+#### 11.2 **Webhook System**
+- **Implementar**: Webhooks para eventos importantes
+- **Events**:
+  - Nuevo usuario registrado
+  - Comando ejecutado
+  - Error crítico detectado
+  - Bridge disconnected/reconnected
+- **Configuration**: URLs configurables por evento
+- **Retry**: Retry logic para webhooks fallidos
+
+#### 11.3 **Plugin Marketplace**
+- **Implementar**: Sistema de plugins externos
+- **Características**:
+  - Plugin discovery y instalación
+  - Sandboxing de plugins de terceros
+  - Plugin versioning y updates
+  - Plugin store con ratings
+- **Security**: Code review, permissions
+
+### 🚦 **FASE 12: PRODUCCIÓN EMPRESARIAL (v4.0) - Prioridad BAJA**
+*Estimado: 3-4 semanas | Enfoque: Enterprise features*
+
+#### 12.1 **Multi-Tenancy**
+- **Implementar**: Soporte para múltiples organizaciones
+- **Características**:
+  - Aislamiento de datos por tenant
+  - Configuración independiente
+  - Billing y usage tracking
+  - Admin dashboard por tenant
+
+#### 12.2 **High Availability**
+- **Implementar**: Arquitectura distribuida
+- **Características**:
+  - Load balancing entre instancias
+  - Database replication
+  - Failover automático
+  - Geographic distribution
+
+#### 12.3 **Enterprise Security**
+- **Implementar**: Seguridad empresarial
+- **Características**:
+  - SSO integration
+  - Audit logging avanzado
+  - Compliance reporting
+  - Data encryption at rest
+
+## 📅 **CRONOGRAMA SUGERIDO**
+
+### **Q3 2025 (Julio-Septiembre)**
+- ✅ **Julio**: Fase 7 (Robustez y Reliability)
+- ✅ **Agosto**: Fase 8 (Comandos Avanzados)
+- ✅ **Septiembre**: Fase 9 (Optimización)
+
+### **Q4 2025 (Octubre-Diciembre)**
+- 🔄 **Octubre**: Fase 10 (Analytics)
+- 🔄 **Noviembre**: Fase 11 (Integración)
+- 🔄 **Diciembre**: Documentación y testing
+
+### **Q1 2026 (Enero-Marzo)**
+- 🔄 **Enero-Marzo**: Fase 12 (Enterprise) - Si se requiere
+
+## 🎯 **PRIORIZACIÓN POR IMPACTO**
+
+### **CRÍTICO (Debe hacerse)**
+1. **Queue Persistente** - Evita pérdida de mensajes
+2. **Sistema de Alertas** - Detección temprana de problemas
+3. **Métricas básicas** - Visibilidad del sistema
+
+### **IMPORTANTE (Debería hacerse)**
+4. **Comandos de admin** - Mejor gestión del sistema
+5. **Herramientas de diagnóstico** - Debugging eficiente
+6. **Cache sistema** - Mejor rendimiento
+
+### **DESEABLE (Podría hacerse)**
+7. **Analytics avanzado** - Business intelligence
+8. **API externa** - Integración con otros sistemas
+9. **Plugin marketplace** - Extensibilidad
+
+### **OPCIONAL (Para casos específicos)**
+10. **Multi-tenancy** - Solo si se requiere escala empresarial
+11. **High availability** - Solo para despliegues críticos
+
+## 🔍 **CRITERIOS DE ÉXITO**
+
+### **Métricas Técnicas**
+- **Disponibilidad**: >99.5% uptime
+- **Performance**: <100ms response time promedio
+- **Reliability**: <0.1% pérdida de mensajes
+- **Memory**: <100MB RAM usage
+- **Disk**: <1GB storage growth por mes
+
+### **Métricas de Usuario**
+- **Satisfacción**: >95% comandos exitosos
+- **Adoption**: Uso de funciones avanzadas >50%
+- **Support**: <5% consultas por problemas técnicos
 7. **Performance optimizations** - Memory usage, response times
 8. **Documentation** - API docs, deployment guides
 
@@ -247,28 +476,50 @@ drasbot/
 
 ## 🚀 Siguiente Sprint
 
-### Objetivos Inmediatos (Próxima semana)
-1. **Completar tests del ContextManager** (1-2 días)
-2. **Finalizar integración MessageProcessor** (1 día)
-3. **Implementar comandos básicos** (2-3 días)
-4. **Mejorar persistencia en database** (2-3 días)
+### Objetivos Inmediatos (Próximas 2 semanas)
+1. **Completar implementación SQLite real** (2-3 días)
+2. **Finalizar suite de tests completa** (1-2 días)
+3. **Implementar comandos básicos faltantes** (2-3 días)
+4. **Iniciar Fase 7: Queue persistente para mensajes fallidos** (5-7 días)
 
-### Entregables
-- ✅ Context management system funcional
+### Entregables Corto Plazo
+- ✅ Core architecture al 100%
 - 🔄 Suite de tests completa (125/125)
-- 🔄 Comandos básicos operativos
-- 🔄 Database persistence
+- 🔄 SQLite persistence real
+- 🔄 Message queue service (nuevo)
+
+### Objetivos Mediano Plazo (1-2 meses)
+1. **Sistema de alertas para administradores**
+2. **Métricas y monitoring avanzado**
+3. **Comandos de administración completos**
+4. **Herramientas de diagnóstico del sistema**
 
 ## 📈 Progreso General
 
-**Completado**: ~85% de la arquitectura core
-**Faltante**: ~15% (comandos específicos, persistence, optimizations)
+**Completado**: ~85% de la arquitectura core (v3.0)
+**En Progreso**: ~15% (comandos específicos, persistence, optimizations)
+**Roadmap**: 6 fases adicionales planificadas (v3.1-v4.0)
 
-El proyecto está en **excelente estado** con una base sólida y extensible. La implementación del Context Management System representa un hito importante que completa la infraestructura core del bot.
+### **Estados de Desarrollo**
+- ✅ **v3.0 CORE** (85% completado): Arquitectura base sólida
+- 🔄 **v3.1 RELIABILITY** (0% completado): Queue persistente, alertas, métricas
+- 📋 **v3.2 ADMIN UX** (Planificado): Comandos avanzados, diagnósticos
+- 📋 **v3.3 PERFORMANCE** (Planificado): Optimizaciones, cache
+- 📋 **v3.4 ANALYTICS** (Planificado): Business intelligence
+- 📋 **v3.5+ ENTERPRISE** (Opcional): Features empresariales
+
+El proyecto está en **excelente estado** con una base sólida y extensible. El roadmap de mejoras está diseñado para escalar desde uso personal hasta empresarial según necesidades.
 
 ## 🎉 Hitos Importantes
 
-### Hoy (17 Junio 2025)
+### Hoy (18 Junio 2025)
+- ✅ **Análisis completo de arquitectura y flujo de mensajes**
+- ✅ **Evaluación de manejo de errores y casos de ruptura**
+- ✅ **Plan detallado de mejoras futuras (Roadmap v3.1-v4.0)**
+- ✅ **Identificación de áreas críticas para robustez**
+- ✅ **Cronograma de implementación estructurado**
+
+### Ayer (17 Junio 2025)
 - ✅ **ContextManagerService completamente implementado**
 - ✅ **Context detection inteligente funcional**
 - ✅ **Default context handlers operativos**
@@ -283,4 +534,55 @@ El proyecto está en **excelente estado** con una base sólida y extensible. La 
 
 ---
 
-**Próxima actualización**: Después de completar los tests y comandos básicos
+**Próxima actualización**: Después de completar SQLite real y iniciar Fase 7 (Queue persistente)
+
+---
+
+# 📋 **TASK BACKLOG - IMPLEMENTACIÓN ROADMAP**
+
+## **SPRINT ACTUAL (18-30 Junio 2025)**
+
+### **🔴 CRÍTICO - SQLite Real Implementation**
+- [ ] Reemplazar mocks de database con SQLite real
+- [ ] Migrar todos los tests a SQLite real
+- [ ] Verificar persistencia de datos tras reinicio
+- [ ] Performance testing con datos reales
+
+### **🟡 IMPORTANTE - Tests Suite Completion**
+- [ ] Completar tests faltantes (125/125)
+- [ ] Tests de integración SQLite
+- [ ] Tests de stress para message processor
+- [ ] Coverage report al 100%
+
+### **🟢 DESEABLE - Basic Commands**
+- [ ] Comando `!users` - Listar usuarios registrados
+- [ ] Comando `!stats` - Estadísticas básicas
+- [ ] Comando `!config` - Ver/cambiar configuración
+- [ ] Validación de permisos por comando
+
+## **SPRINT SIGUIENTE (1-15 Julio 2025) - FASE 7**
+
+### **🔴 CRÍTICO - Message Queue Service**
+- [ ] Diseñar schema de `failed_messages` table
+- [ ] Implementar `MessageQueueService`
+- [ ] Retry logic con backoff exponencial
+- [ ] Tests unitarios e integración (15+ tests)
+- [ ] Integration con `MessageProcessor`
+
+### **🔴 CRÍTICO - Alert System**
+- [ ] Diseñar `AlertService` architecture
+- [ ] Implementar notificaciones para bridge down
+- [ ] Alert thresholds configurables
+- [ ] Integration con WhatsApp y logs
+- [ ] Tests para diferentes tipos de alertas
+
+### **🟡 IMPORTANTE - Basic Metrics**
+- [ ] Implementar `MetricsService`
+- [ ] Tracking de success/failure rates
+- [ ] Response time monitoring
+- [ ] Storage en SQLite con retention
+- [ ] Basic reporting commands
+
+---
+
+**NOTA**: Este roadmap está diseñado para escalar el sistema desde uso personal hasta empresarial, priorizando robustez y confiabilidad.

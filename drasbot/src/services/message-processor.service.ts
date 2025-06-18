@@ -20,6 +20,11 @@ import { ContextManagerService } from './context-manager.service';
 import { IMessageHandler } from '../interfaces';
 import { AutoResponsesHandler } from '../plugins/auto-responses';
 import {
+  NameRegistrationContextHandler,
+  NameDetectionHandler,
+  NewUserWelcomeHandler,
+} from '../commands/name.context-handlers';
+import {
   Message,
   User,
   ConversationContext,
@@ -186,6 +191,11 @@ export class MessageProcessorService {
   private initializeMessageHandlers(): void {
     this.logger.info('MessageProcessor', 'Initializing message handlers...');
 
+    // Add name registration handlers (highest priority)
+    this.messageHandlers.push(new NameRegistrationContextHandler());
+    this.messageHandlers.push(new NameDetectionHandler());
+    this.messageHandlers.push(new NewUserWelcomeHandler());
+
     // Add auto-responses handler
     this.messageHandlers.push(new AutoResponsesHandler());
 
@@ -194,7 +204,13 @@ export class MessageProcessorService {
 
     this.logger.info(
       'MessageProcessor',
-      `Loaded ${this.messageHandlers.length} message handlers`
+      `Loaded ${this.messageHandlers.length} message handlers`,
+      {
+        handlers: this.messageHandlers.map(h => ({
+          name: h.metadata.name,
+          priority: h.getPriority(),
+        })),
+      }
     );
   }
 
@@ -729,7 +745,7 @@ export class MessageProcessorService {
     }
 
     for (const result of context.results) {
-      if (result.response && result.success) {
+      if ((result.response || result.message) && result.success) {
         try {
           await this.sendResponse(context, result);
         } catch (error) {
@@ -751,17 +767,22 @@ export class MessageProcessorService {
   ): Promise<void> {
     this.logger.info('MessageProcessor', 'Attempting to send response', {
       hasResponse: !!result.response,
+      hasMessage: !!result.message,
       hasUser: !!context.user,
       responseType: typeof result.response,
+      messageType: typeof result.message,
       command: result.command,
     });
 
-    if (!result.response || !context.user) {
+    const messageContent = result.response || result.message;
+    
+    if (!messageContent || !context.user) {
       this.logger.warn(
         'MessageProcessor',
         'Cannot send response - missing data',
         {
           hasResponse: !!result.response,
+          hasMessage: !!result.message,
           hasUser: !!context.user,
         }
       );
@@ -772,10 +793,10 @@ export class MessageProcessorService {
 
     try {
       // Handle both string and ResponseMessage types
-      if (typeof result.response === 'string') {
-        await this.whatsappBridge.sendTextMessage(recipient, result.response);
+      if (typeof messageContent === 'string') {
+        await this.whatsappBridge.sendTextMessage(recipient, messageContent);
       } else {
-        const response = result.response as ResponseMessage;
+        const response = messageContent as ResponseMessage;
 
         switch (response.type) {
           case 'text':
@@ -805,9 +826,9 @@ export class MessageProcessorService {
       this.logger.debug('MessageProcessor', 'Response sent successfully', {
         recipient,
         type:
-          typeof result.response === 'string'
+          typeof messageContent === 'string'
             ? 'text'
-            : (result.response as ResponseMessage).type,
+            : (messageContent as ResponseMessage).type,
         command: result.command,
       });
     } catch (error) {

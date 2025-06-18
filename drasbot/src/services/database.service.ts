@@ -305,6 +305,16 @@ export class DatabaseService implements IDatabaseService {
 
     try {
       const userId = parseInt(id, 10);
+      
+      // Debug logging to track what data is being passed
+      this.logger.info('Database', 'updateUser called with data', {
+        id,
+        userId,
+        data: JSON.stringify(data),
+        nameField: data.name,
+        nameType: typeof data.name
+      });
+      
       const updates: string[] = [];
       const values: any[] = [];
 
@@ -353,10 +363,23 @@ export class DatabaseService implements IDatabaseService {
       values.push(new Date().toISOString());
       values.push(userId);
 
-      const stmt = this.db.prepare(
-        `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
-      );
-      stmt.run(...values);
+      const sqlQuery = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+      
+      // Debug logging for the SQL query
+      this.logger.info('Database', 'Executing SQL update', {
+        query: sqlQuery,
+        values: values,
+        updateCount: updates.length
+      });
+
+      const stmt = this.db.prepare(sqlQuery);
+      const result = stmt.run(...values);
+      
+      // Log the result of the update
+      this.logger.info('Database', 'SQL update result', {
+        changes: result.changes,
+        lastInsertRowid: result.lastInsertRowid
+      });
 
       const updatedUser = await this.getUserById(userId);
       if (!updatedUser) {
