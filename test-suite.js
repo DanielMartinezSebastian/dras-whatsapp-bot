@@ -18,12 +18,12 @@ async function runAllTests() {
   const tests = [
     {
       name: "Funcionalidad del Bridge",
-      file: "./test-bridge-functionality.js",
+      file: "./test-bridge.js",
       description: "Prueba endpoints básicos del bridge",
     },
     {
       name: "Comandos del Bot",
-      file: "./test-bot-commands.js",
+      file: "./test-commands.js",
       description: "Prueba comandos a través del bridge",
     },
   ];
@@ -63,8 +63,8 @@ if (args.includes("--help") || args.includes("-h")) {
 🔧 Script maestro de pruebas DrasBot v2.0
 
 Uso:
-  node run-all-tests.js              # Ejecutar todas las pruebas
-  node run-all-tests.js --help       # Mostrar esta ayuda
+  node test-suite.js              # Ejecutar todas las pruebas
+  node test-suite.js --help       # Mostrar esta ayuda
 
 Configuración actual:
   📞 Teléfono: ${config.TEST_PHONE}

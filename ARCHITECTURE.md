@@ -10,18 +10,18 @@
 
 ### ✅ SCRIPT DE#### **Reinicio Rápido (Método Recomendado para producción)**
 ```bash
-./manage-new.sh restart && ./manage-new.sh health
+./manage.sh restart && ./manage.sh health
 ```
 
 #### **Solo Bot (Cambios menores en TypeScript)**
 ```bash
-./manage-new.sh dev && ./manage-new.sh logs drasbot-new
+./manage.sh dev && ./manage.sh logs drasbot-new
 ```
 
 #### **Ecosistema Completo (Solo si es necesario)**
 ```bash
-./manage-new.sh restart-all && ./manage-new.sh health
-```AR SIEMPRE: `./manage-new.sh`**
+./manage.sh restart-all && ./manage.sh health
+```AR SIEMPRE: `./manage.sh`**
 
 El script anterior `manage.sh` está obsoleto porque:
 - ❌ Usaba tmux para el bridge
@@ -54,25 +54,25 @@ El script anterior `manage.sh` está obsoleto porque:
 
 ```bash
 # Reiniciar solo el bot (RECOMENDADO para producción)
-./manage-new.sh restart
+./manage.sh restart
 
 # Reiniciar todo el ecosistema (solo si es necesario)
-./manage-new.sh restart-all
+./manage.sh restart-all
 
 # Ver estado completo
-./manage-new.sh status
+./manage.sh status
 
 # Ver logs en tiempo real
-./manage-new.sh logs
+./manage.sh logs
 
 # Health check completo
-./manage-new.sh health
+./manage.sh health
 
 # Solo compilar y reiniciar bot (desarrollo)
-./manage-new.sh dev
+./manage.sh dev
 
 # Reset completo del sistema (emergencia)
-./manage-new.sh reset
+./manage.sh reset
 ```
 
 #### Para cambios en drasBot-new:
@@ -86,7 +86,7 @@ pm2 logs drasbot-new --lines 20 # 3. Verificar logs
 
 **O simplemente:**
 ```bash
-./manage-new.sh dev              # Hace todo automáticamente
+./manage.sh dev              # Hace todo automáticamente
 ```
 
 #### Para el bridge:
@@ -97,7 +97,7 @@ pm2 logs drasbot-bridge --lines 20
 
 **O:**
 ```bash
-./manage-new.sh restart          # Reinicia todo
+./manage.sh restart          # Reinicia todo
 ```
 
 #### Para ver estado:
@@ -129,15 +129,15 @@ curl http://localhost:3000/health # Health check bot (si existe)
 **Causa**: drasbot-new no está compilado o no se reinició después de cambios
 **Solución**:
 ```bash
-./manage-new.sh dev              # Compila y reinicia automáticamente
+./manage.sh dev              # Compila y reinicia automáticamente
 ```
 
 #### Problema: Bridge no conecta
 **Causa**: Bridge puede estar corriendo en tmux en lugar de PM2
 **Solución**:
 ```bash
-./manage-new.sh clean            # Cierra tmux y limpia puertos
-./manage-new.sh restart          # Reinicia todo correctamente
+./manage.sh clean            # Cierra tmux y limpia puertos
+./manage.sh restart          # Reinicia todo correctamente
 ```
 
 #### Problema: "ECONNREFUSED 127.0.0.1:8080"
@@ -147,7 +147,7 @@ curl http://localhost:3000/health # Health check bot (si existe)
 #### Problema: Puertos ocupados
 **Solución**:
 ```bash
-./manage-new.sh clean            # Libera puertos automáticamente
+./manage.sh clean            # Libera puertos automáticamente
 ```
 
 ### 📁 ARCHIVOS DE CONFIGURACIÓN
@@ -183,7 +183,7 @@ cd whatsapp-bridge && go run main.go
 **Cambios realizados:**
 
 1. ✅ Todas las sesiones tmux cerradas
-2. ✅ Script `manage-new.sh` creado y configurado
+2. ✅ Script `manage.sh` creado y configurado
 3. ✅ Compilación automática implementada
 4. ✅ Gestión unificada por PM2
 5. ✅ Health checks implementados
@@ -191,12 +191,12 @@ cd whatsapp-bridge && go run main.go
 7. ✅ Sistema funcionando y probado
 
 **Archivos obsoletos:**
-- `manage.sh` (usar `manage-new.sh`)
+- `manage.sh` (usar `manage.sh`)
 - Cualquier referencia a tmux
 
 ### 📋 NOTAS FINALES
 
-1. **Siempre usar `./manage-new.sh`** para gestión del sistema
+1. **Siempre usar `./manage.sh`** para gestión del sistema
 2. **drasbot-new requiere compilación** antes de cualquier restart
 3. **Todo se gestiona por PM2** - no usar tmux
 4. **El sistema está completamente funcional** y probado
@@ -269,45 +269,45 @@ drasBot/
 
 | Entorno | Comando | Propósito |
 |---------|---------|-----------|
-| **Desarrollo** | `./manage-new.sh dev` | Compilar y reiniciar solo el bot para pruebas rápidas |
-| **Producción** | `./manage-new.sh restart` | Compilar, reiniciar todo el ecosistema y verificar salud |
+| **Desarrollo** | `./manage.sh dev` | Compilar y reiniciar solo el bot para pruebas rápidas |
+| **Producción** | `./manage.sh restart` | Compilar, reiniciar todo el ecosistema y verificar salud |
 
 ### **📋 COMANDOS PARA PRODUCCIÓN**
 
 #### **1. Despliegue Rápido (Recomendado para producción)**
 ```bash
 # Solo reinicia el bot (mantiene conexión WhatsApp estable)
-./manage-new.sh restart
+./manage.sh restart
 ```
 
 #### **2. Despliegue Completo (Solo si necesitas reiniciar el bridge)**
 ```bash
 # Reinicia bot + bridge (puede interrumpir WhatsApp momentáneamente)
-./manage-new.sh restart-all
+./manage.sh restart-all
 ```
 
 #### **3. Actualización Solo del Bot (Cambios menores)**
 ```bash
 # Solo si estás seguro que el bridge está estable
-./manage-new.sh dev
+./manage.sh dev
 ```
 
 #### **3. Verificación Post-Despliegue**
 ```bash
 # Verificar estado
-./manage-new.sh status
+./manage.sh status
 
 # Health check completo
-./manage-new.sh health
+./manage.sh health
 
 # Ver logs en tiempo real (cancelar con Ctrl+C)
-./manage-new.sh logs
+./manage.sh logs
 
 # Ver logs específicos del bot
-./manage-new.sh logs-bot
+./manage.sh logs-bot
 
 # Ver logs específicos del bridge
-./manage-new.sh logs-bridge
+./manage.sh logs-bridge
 ```
 
 ### **🎯 FLUJO RECOMENDADO PARA PRODUCCIÓN**
@@ -318,36 +318,36 @@ drasBot/
 cp -r ~/.pm2/logs/ ~/.pm2/logs-backup-$(date +%Y%m%d-%H%M%S)
 
 # 2. Desplegar cambios (solo bot)
-./manage-new.sh restart
+./manage.sh restart
 
 # 3. Verificar que todo funciona
-./manage-new.sh health
+./manage.sh health
 
 # 4. Monitorear logs por unos minutos
-./manage-new.sh logs
+./manage.sh logs
 ```
 
 #### **Despliegue Completo (Solo si necesitas reiniciar bridge):**
 ```bash
 # 1. Desplegar todo el ecosistema
-./manage-new.sh restart-all
+./manage.sh restart-all
 
 # 2. Verificación intensiva
-./manage-new.sh health
-./manage-new.sh status
+./manage.sh health
+./manage.sh status
 
 # 3. Monitorear logs
-./manage-new.sh logs
+./manage.sh logs
 ```
 
 #### **Despliegue de Emergencia (Problemas críticos):**
 ```bash
 # 1. Reset completo del sistema
-./manage-new.sh reset
+./manage.sh reset
 
 # 2. Verificación intensiva
-./manage-new.sh health
-./manage-new.sh status
+./manage.sh health
+./manage.sh status
 
 # 3. Prueba manual enviando mensaje de WhatsApp
 ```
@@ -356,23 +356,23 @@ cp -r ~/.pm2/logs/ ~/.pm2/logs-backup-$(date +%Y%m%d-%H%M%S)
 
 #### **Reinicio Rápido (Método Recomendado)**
 ```bash
-./manage-new.sh restart && ./manage-new.sh health
+./manage.sh restart && ./manage.sh health
 ```
 
 #### **Solo Bot (Cambios menores en TypeScript)**
 ```bash
-./manage-new.sh dev && ./manage-new.sh logs-bot
+./manage.sh dev && ./manage.sh logs-bot
 ```
 
 #### **Verificación de Estado**
 ```bash
-./manage-new.sh status
+./manage.sh status
 ```
 
 #### **Resolución de Problemas**
 ```bash
 # Si algo va mal
-./manage-new.sh clean && ./manage-new.sh restart
+./manage.sh clean && ./manage.sh restart
 ```
 
 ### **🔍 MONITOREO EN PRODUCCIÓN**
@@ -380,22 +380,22 @@ cp -r ~/.pm2/logs/ ~/.pm2/logs-backup-$(date +%Y%m%d-%H%M%S)
 #### **Logs en Tiempo Real**
 ```bash
 # Todos los servicios
-./manage-new.sh logs
+./manage.sh logs
 
 # Solo el bot (recomendado para debug)
-./manage-new.sh logs-bot
+./manage.sh logs-bot
 
 # Solo el bridge
-./manage-new.sh logs-bridge
+./manage.sh logs-bridge
 ```
 
 #### **Estado del Sistema**
 ```bash
 # Vista completa del estado
-./manage-new.sh status
+./manage.sh status
 
 # Health check de conectividad
-./manage-new.sh health
+./manage.sh health
 
 # Estado PM2 directo
 pm2 status
@@ -414,7 +414,7 @@ pm2 show drasbot-bridge
 ### **⚠️ MEJORES PRÁCTICAS PARA PRODUCCIÓN**
 
 #### **✅ Hacer SIEMPRE:**
-1. **Usar `./manage-new.sh restart`** para cambios importantes
+1. **Usar `./manage.sh restart`** para cambios importantes
 2. **Verificar health** después de cada despliegue
 3. **Monitorear logs** durante 2-3 minutos post-despliegue
 4. **Tener backup** de configuraciones importantes
@@ -427,13 +427,13 @@ pm2 show drasbot-bridge
 #### **🚨 En Caso de Emergencia:**
 ```bash
 # Si el bot no responde para nada
-./manage-new.sh reset
+./manage.sh reset
 
 # Si hay problemas de red/puertos
-./manage-new.sh clean && ./manage-new.sh restart
+./manage.sh clean && ./manage.sh restart
 
 # Si PM2 está corrupto
-pm2 kill && ./manage-new.sh start
+pm2 kill && ./manage.sh start
 ```
 
 ### **📈 AUTOMATIZACIÓN PARA PRODUCCIÓN**
@@ -444,13 +444,13 @@ pm2 kill && ./manage-new.sh start
 # deploy.sh - Para automatizar despliegues
 
 echo "🚀 Iniciando despliegue..."
-./manage-new.sh restart
+./manage.sh restart
 
 echo "⏳ Esperando estabilización..."
 sleep 10
 
 echo "🔍 Verificando salud..."
-./manage-new.sh health
+./manage.sh health
 
 echo "✅ Despliegue completado"
 ```
@@ -458,20 +458,20 @@ echo "✅ Despliegue completado"
 #### **Cron para Monitoreo (Opcional)**
 ```bash
 # Agregar al crontab para verificar cada 5 minutos
-# */5 * * * * cd /home/dras/Documentos/PROGRAMACION/drasBot && ./manage-new.sh health > /tmp/drasbot-health.log 2>&1
+# */5 * * * * cd /home/dras/Documentos/PROGRAMACION/drasBot && ./manage.sh health > /tmp/drasbot-health.log 2>&1
 ```
 
 ### **🎯 RESUMEN: COMANDOS CLAVE PARA PRODUCCIÓN**
 
 | Situación | Comando |
 |-----------|---------|
-| **Despliegue normal** | `./manage-new.sh restart` |
-| **Despliegue completo** | `./manage-new.sh restart-all` |
-| **Cambio menor del bot** | `./manage-new.sh dev` |
-| **Verificar estado** | `./manage-new.sh status` |
-| **Ver logs** | `./manage-new.sh logs` |
-| **Problema crítico** | `./manage-new.sh reset` |
-| **Limpiar sistema** | `./manage-new.sh clean` |
+| **Despliegue normal** | `./manage.sh restart` |
+| **Despliegue completo** | `./manage.sh restart-all` |
+| **Cambio menor del bot** | `./manage.sh dev` |
+| **Verificar estado** | `./manage.sh status` |
+| **Ver logs** | `./manage.sh logs` |
+| **Problema crítico** | `./manage.sh reset` |
+| **Limpiar sistema** | `./manage.sh clean` |
 
 **💡 Reglas de oro:** 
 - **Producción normal**: usar `restart` (solo bot)
@@ -498,7 +498,7 @@ User updated successfully | userId: 7          # Mensajes posteriores
 
 **Verificación**:
 - ✅ Usuarios se guardan en `./drasbot-new/data/drasbot.db`
-- ✅ Usuarios persisten tras `./manage-new.sh restart`
+- ✅ Usuarios persisten tras `./manage.sh restart`
 - ✅ Bot reconoce usuarios existentes correctamente
 - ✅ No hay usuarios duplicados por número de teléfono
 

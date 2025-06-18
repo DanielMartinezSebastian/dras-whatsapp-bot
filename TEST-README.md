@@ -25,20 +25,20 @@ WEBHOOK_URL: "http://localhost:3000/webhook/whatsapp"  // Webhook del bot
 
 ### Scripts Principales
 
-1. **`run-all-tests.js`** - 🎯 Script maestro que ejecuta todas las pruebas
+1. **`test-suite.js`** - 🎯 Script maestro que ejecuta todas las pruebas
    ```bash
-   node run-all-tests.js
-   node run-all-tests.js --help
+   node test-suite.js
+   node test-suite.js --help
    ```
 
-2. **`test-bot-commands.js`** - 🤖 Prueba comandos del bot
+2. **`test-commands.js`** - 🤖 Prueba comandos del bot
    ```bash
-   node test-bot-commands.js
+   node test-commands.js
    ```
 
-3. **`test-bridge-functionality.js`** - 🌉 Prueba funcionalidad del bridge
+3. **`test-bridge.js`** - 🌉 Prueba funcionalidad del bridge
    ```bash
-   node test-bridge-functionality.js
+   node test-bridge.js
    ```
 
 ### Scripts de Auto-respuestas
@@ -84,7 +84,7 @@ Antes de ejecutar las pruebas, asegúrate de que estén funcionando:
 ## 📊 Orden de Ejecución Recomendado
 
 1. Iniciar bridge y bot
-2. Ejecutar `node run-all-tests.js` para pruebas generales
+2. Ejecutar `node test-suite.js` para pruebas generales
 3. Ejecutar `cd drasbot-new && ./test-auto-responses.sh` para auto-respuestas
 4. Revisar logs y respuestas en WhatsApp
 

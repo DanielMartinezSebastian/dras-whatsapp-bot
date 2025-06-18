@@ -154,31 +154,31 @@ system_stats {
 
 ## 🛠️ Gestión del Sistema
 
-### 📜 Script Principal: `./manage-new.sh`
+### 📜 Script Principal: `./manage.sh`
 
-**⚠️ IMPORTANTE**: Usar SIEMPRE `./manage-new.sh` (NO `manage.sh` que está obsoleto)
+**⚠️ IMPORTANTE**: Usar SIEMPRE `./manage.sh` para gestión del sistema
 
 #### Comandos Principales:
 ```bash
 # 🚀 Gestión Básica
-./manage-new.sh start           # Iniciar todo el ecosistema
-./manage-new.sh stop            # Detener todos los procesos
-./manage-new.sh restart         # Reiniciar con compilación automática
-./manage-new.sh status          # Estado completo del sistema
+./manage.sh start           # Iniciar todo el ecosistema
+./manage.sh stop            # Detener todos los procesos
+./manage.sh restart         # Reiniciar con compilación automática
+./manage.sh status          # Estado completo del sistema
 
 # 🔍 Monitoreo y Diagnóstico  
-./manage-new.sh health          # Health check completo
-./manage-new.sh logs [service]  # Logs en tiempo real
-./manage-new.sh monitor         # Monitor avanzado PM2
+./manage.sh health          # Health check completo
+./manage.sh logs [service]  # Logs en tiempo real
+./manage.sh monitor         # Monitor avanzado PM2
 
 # 🔧 Gestión Individual
-./manage-new.sh dev             # Solo drasbot-new (desarrollo)
-./manage-new.sh bridge-restart  # Solo bridge
-./manage-new.sh compile         # Solo compilar TypeScript
+./manage.sh dev             # Solo drasbot-new (desarrollo)
+./manage.sh bridge-restart  # Solo bridge
+./manage.sh compile         # Solo compilar TypeScript
 
 # 🧹 Mantenimiento
-./manage-new.sh clean           # Limpiar procesos colgados
-./manage-new.sh reset           # Reset completo del sistema
+./manage.sh clean           # Limpiar procesos colgados
+./manage.sh reset           # Reset completo del sistema
 ```
 
 #### Funcionalidades Automáticas:
@@ -222,10 +222,10 @@ cd drasBot
 ./install-deps.sh
 
 # Iniciar el sistema
-./manage-new.sh start
+./manage.sh start
 
 # Verificar estado
-./manage-new.sh health
+./manage.sh health
 ```
 
 ### 🔧 Instalación Manual
@@ -310,14 +310,14 @@ whatsapp-bridge/
 #### Comandos de Monitoreo:
 ```bash
 # Monitor en tiempo real
-./manage-new.sh monitor
+./manage.sh monitor
 
 # Logs específicos
-./manage-new.sh logs drasbot-new
-./manage-new.sh logs drasbot-bridge
+./manage.sh logs drasbot-new
+./manage.sh logs drasbot-bridge
 
 # Health check completo
-./manage-new.sh health
+./manage.sh health
 ```
 
 ## 🧪 Testing y Desarrollo
@@ -344,10 +344,10 @@ node ../test-bridge-functionality.js
 
 ```bash
 # Modo desarrollo (hot reload)
-./manage-new.sh dev
+./manage.sh dev
 
 # Debug con logs detallados
-LOG_LEVEL=debug ./manage-new.sh start
+LOG_LEVEL=debug ./manage.sh start
 
 # Compilación manual
 cd drasbot-new
@@ -390,7 +390,7 @@ El sistema ha sido completamente migrado del legacy tmux/whatsapp-chatbot a la n
 
 #### ✅ Implementado:
 - ✅ `drasbot-new/` con TypeScript moderno
-- ✅ `manage-new.sh` para gestión PM2
+- ✅ `manage.sh` para gestión PM2
 - ✅ Persistencia real SQLite
 - ✅ Sistema de comandos dinámico
 - ✅ Arquitectura modular orientada a servicios
@@ -426,13 +426,13 @@ El sistema ha sido completamente migrado del legacy tmux/whatsapp-chatbot a la n
 #### Bridge no conecta:
 ```bash
 # Verificar estado
-./manage-new.sh status
+./manage.sh status
 
 # Reiniciar bridge
-./manage-new.sh bridge-restart
+./manage.sh bridge-restart
 
 # Ver logs específicos
-./manage-new.sh logs drasbot-bridge
+./manage.sh logs drasbot-bridge
 ```
 
 #### DrasBot no responde:
@@ -441,10 +441,10 @@ El sistema ha sido completamente migrado del legacy tmux/whatsapp-chatbot a la n
 cd drasbot-new && npm run build
 
 # Reiniciar con compilación
-./manage-new.sh restart
+./manage.sh restart
 
 # Ver logs detallados
-./manage-new.sh logs drasbot-new
+./manage.sh logs drasbot-new
 ```
 
 #### Usuarios no persisten:
@@ -456,13 +456,13 @@ ls -la drasbot-new/data/drasbot.db
 chmod 644 drasbot-new/data/drasbot.db
 
 # Reset completo si es necesario
-./manage-new.sh reset
+./manage.sh reset
 ```
 
 #### Sistema legacy interfiere:
 ```bash
 # Limpiar procesos tmux obsoletos
-./manage-new.sh clean
+./manage.sh clean
 
 # Verificar que no hay procesos duplicados
 ps aux | grep -E "(whatsapp|drasbot)"
@@ -472,7 +472,7 @@ ps aux | grep -E "(whatsapp|drasbot)"
 
 ```bash
 # Health check completo
-./manage-new.sh health
+./manage.sh health
 
 # Estado detallado PM2
 pm2 status && pm2 show drasbot-new && pm2 show drasbot-bridge
@@ -481,7 +481,7 @@ pm2 status && pm2 show drasbot-new && pm2 show drasbot-bridge
 netstat -tulpn | grep -E "(3000|8080)"
 
 # Logs en tiempo real
-./manage-new.sh monitor
+./manage.sh monitor
 ```
 
 ## 📄 Documentación Técnica
@@ -570,7 +570,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 **🎉 ¡DrasBot v2.0 está listo para producción!**
 
-Para iniciar el sistema: `./manage-new.sh start && ./manage-new.sh health`
+Para iniciar el sistema: `./manage.sh start && ./manage.sh health`
 
 ## 🏗️ Arquitectura Detallada
 
