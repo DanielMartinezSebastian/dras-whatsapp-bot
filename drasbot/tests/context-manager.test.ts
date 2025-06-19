@@ -67,6 +67,9 @@ describe('ContextManagerService', () => {
     // Reset all mocks
     jest.clearAllMocks();
 
+    // Reset singleton to ensure clean state
+    (ContextManagerService as any).instance = undefined;
+
     // Get service instances and setup mocks
     mockConfigService = {
       getValue: jest.fn(),
@@ -78,9 +81,7 @@ describe('ContextManagerService', () => {
     // Mock the ConfigService.getInstance to return our mock
     (ConfigService.getInstance as jest.Mock).mockReturnValue(mockConfigService);
 
-    contextManager = ContextManagerService.getInstance();
-
-    // Setup default mocks
+    // Setup default mocks for getValue
     mockConfigService.getValue.mockImplementation(
       (key: string, defaultValue?: any) => {
         const config = {
@@ -92,6 +93,8 @@ describe('ContextManagerService', () => {
         return config[key as keyof typeof config] || defaultValue;
       }
     );
+
+    contextManager = ContextManagerService.getInstance();
   });
 
   describe('Singleton Pattern', () => {

@@ -2,10 +2,13 @@
  * Command Registry Service Tests
  */
 
+import { jest } from '@jest/globals';
 import { CommandRegistryService } from '../src/services/command-registry.service';
 import { ConfigService } from '../src/services/config.service';
 import { PluginManagerService } from '../src/services/plugin-manager.service';
-import { Command, UserLevel, UserType, MessageType } from '../src/types';
+import { Command, UserLevel, User, MessageType } from '../src/types';
+import { createMockUser } from './mocks/user.mock';
+import { mockWhatsAppBridge } from './mocks/whatsapp-bridge.mock';
 
 describe('CommandRegistryService', () => {
   let commandRegistry: CommandRegistryService;
@@ -171,34 +174,17 @@ describe('CommandRegistryService', () => {
   });
 
   describe('command execution', () => {
-    let mockUser: any;
+    let mockUser: User;
     let mockMessage: any;
     let mockPluginContext: any;
     let mockPluginManager: any;
 
     beforeEach(() => {
-      mockUser = {
-        id: 'user1',
-        phone: '+1234567890',
-        whatsapp_jid: 'user1@s.whatsapp.net',
-        display_name: 'Test User',
-        user_level: UserLevel.USER,
-        level: UserLevel.USER,
-        user_type: 'normal' as UserType,
-        language: 'es',
-        is_registered: true,
-        last_activity: new Date().toISOString(),
-        preferences: {
-          notifications: true,
-          auto_reply: false,
-          language: 'es',
-          timezone: 'UTC',
-          privacy_level: 'normal' as const,
-        },
-        metadata: {},
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      // Setup bridge mocks
+      mockWhatsAppBridge();
+      
+      // Use the mock factory
+      mockUser = createMockUser();
 
       mockMessage = {
         id: 'msg1',
@@ -307,28 +293,12 @@ describe('CommandRegistryService', () => {
     });
 
     it('should handle cooldown correctly', async () => {
-      const mockUser = {
-        id: 'user1',
-        phone: '+1234567890',
-        whatsapp_jid: 'user1@s.whatsapp.net',
-        display_name: 'Test User',
-        user_level: UserLevel.USER,
-        level: UserLevel.USER,
-        user_type: 'individual' as any,
-        language: 'en',
-        is_registered: true,
-        last_activity: new Date().toISOString(),
-        preferences: {
-          notifications: true,
-          auto_reply: false,
-          language: 'en',
-          timezone: 'UTC',
-          privacy_level: 'normal' as any,
-        },
-        metadata: {},
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const mockUser = createMockUser({
+        id: 1,
+        jid: 'user1@s.whatsapp.net',
+        phoneNumber: '+1234567890',
+        name: 'Test User',
+      });
 
       const mockMessage = {
         id: 'msg1',

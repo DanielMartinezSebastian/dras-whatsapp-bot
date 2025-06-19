@@ -3,11 +3,31 @@
  */
 
 import { DrasBot } from '../src/core/bot';
+import { findAvailablePort } from './utils/test-ports.util';
+
+// Mock the webhook service to avoid port conflicts
+jest.mock('../src/services/webhook.service', () => ({
+  WebhookServer: {
+    getInstance: () => ({
+      start: jest.fn(() => Promise.resolve()),
+      stop: jest.fn(() => Promise.resolve()),
+      isRunning: false,
+    }),
+  },
+}));
 
 describe('DrasBot', () => {
   let bot: DrasBot;
+  let testPort: number;
+
+  beforeAll(async () => {
+    testPort = await findAvailablePort();
+    process.env.PORT = testPort.toString();
+  });
 
   beforeEach(() => {
+    // Reset singleton for each test
+    (DrasBot as any).instance = undefined;
     bot = DrasBot.getInstance();
   });
 

@@ -1,7 +1,7 @@
 /**
  * Random Messages Utility
  * Centralized system for managing and generating random responses across the bot
- * 
+ *
  * @version 1.0.0
  * @author DrasBot Team
  */
@@ -70,15 +70,9 @@ export class RandomMessagesUtil {
             motivational_texts: [
               '\n\n💡 Escribe `!help` para ver qué puedo hacer',
             ],
-            greetings: [
-              '¡Hola! 😊 ¿En qué puedo ayudarte?',
-            ],
-            thanks_responses: [
-              '¡De nada! 😊 Siempre es un placer ayudar.',
-            ],
-            goodbyes: [
-              '¡Hasta luego! 👋 Que tengas un excelente día.',
-            ],
+            greetings: ['¡Hola! 😊 ¿En qué puedo ayudarte?'],
+            thanks_responses: ['¡De nada! 😊 Siempre es un placer ayudar.'],
+            goodbyes: ['¡Hasta luego! 👋 Que tengas un excelente día.'],
             general_casual: [
               '¡Hola! 😊 Soy DrasBot v2.0. Escribe !help para ver mis comandos.',
             ],
@@ -198,7 +192,9 @@ export class RandomMessagesUtil {
    */
   public getAvailableCategories(): Array<keyof RandomResponsesConfig> {
     const config = this.loadConfig();
-    return Object.keys(config.random_responses) as Array<keyof RandomResponsesConfig>;
+    return Object.keys(config.random_responses) as Array<
+      keyof RandomResponsesConfig
+    >;
   }
 
   /**
@@ -215,7 +211,7 @@ export class RandomMessagesUtil {
   public getStatistics(): Record<keyof RandomResponsesConfig, number> {
     const categories = this.getAvailableCategories();
     const stats = {} as Record<keyof RandomResponsesConfig, number>;
-    
+
     categories.forEach(category => {
       stats[category] = this.getCategoryCount(category);
     });

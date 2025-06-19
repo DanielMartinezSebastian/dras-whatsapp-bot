@@ -230,7 +230,11 @@ export class WhatsAppBridgeService {
           'Successfully connected to WhatsApp Bridge'
         );
       } else {
-        throw new Error('WhatsApp Bridge is not available');
+        this.connected = false;
+        this.logger.error(
+          'WhatsAppBridge',
+          'WhatsApp Bridge is not available'
+        );
       }
     } catch (error) {
       this.connected = false;
@@ -239,7 +243,7 @@ export class WhatsAppBridgeService {
         'Failed to initialize WhatsApp Bridge',
         error
       );
-      throw error;
+      // Do not re-throw - allow graceful degradation
     }
   }
 
@@ -628,14 +632,27 @@ export class WhatsAppBridgeService {
   }
 
   public async destroy(): Promise<void> {
-    // Clear axios interceptors
-    this.httpClient.interceptors.request.clear();
-    this.httpClient.interceptors.response.clear();
+    try {
+      // Clear axios interceptors safely
+      if (this.httpClient?.interceptors) {
+        if (this.httpClient.interceptors.request && typeof this.httpClient.interceptors.request.clear === 'function') {
+          this.httpClient.interceptors.request.clear();
+        }
+        if (this.httpClient.interceptors.response && typeof this.httpClient.interceptors.response.clear === 'function') {
+          this.httpClient.interceptors.response.clear();
+        }
+      }
 
-    this.connected = false;
+      this.connected = false;
 
-    if (this.config.enableLogging) {
-      this.logger.info('WhatsAppBridge', 'Bridge client destroyed');
+      if (this.config.enableLogging) {
+        this.logger.info('WhatsAppBridge', 'Bridge client destroyed');
+      }
+    } catch (error) {
+      // Ignore errors during cleanup
+      if (this.config.enableLogging) {
+        this.logger.warn('WhatsAppBridge', 'Error during destroy cleanup', { error });
+      }
     }
   }
 

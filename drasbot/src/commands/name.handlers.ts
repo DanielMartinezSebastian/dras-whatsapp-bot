@@ -458,42 +458,42 @@ function getRandomNameConfirmationMessage(name: string): string {
     `🔥 **¡Qué tal ${name}!** Perfecto, ya estás registrado 💪`,
     `⚡ **¡Wola ${name}!** Tu nombre está en el sistema 🎯`,
     `🌟 **¡Hey ${name}!** ¡Registrado como un campeón! 🏆`,
-    
+
     // Mensajes casuales
     `👋 **¡Hola ${name}!** Ya te conozco oficialmente`,
     `😄 **¡Buenas ${name}!** Listo, ya estás en mi agenda`,
     `🎈 **¡Ey ${name}!** Perfecto, ahora ya sabemos quién eres`,
     `✌️ **¡Qué pasa ${name}!** Todo guardado correctamente`,
     `🤙 **¡Bueno ${name}!** Ya tienes tu lugar aquí`,
-    
+
     // Mensajes divertidos
     `🦾 **¡${name} en la casa!** Registro completado, jefe`,
     `🎭 **¡Encantado ${name}!** Ya eres parte de la familia`,
     `🎪 **¡Bienvenido ${name}!** El bot te saluda oficialmente`,
     `🌈 **¡Presente ${name}!** Tu nombre ya está en mi memoria`,
     `� **¡Registrado ${name}!** Ahora eres alguien especial aquí`,
-    
+
     // Mensajes con toque personal
     `💫 **¡Genial ${name}!** Me gusta tu nombre, la verdad`,
     `� **¡Súper ${name}!** Buen nombre, me gusta cómo suena`,
     `⭐ **¡Perfecto ${name}!** Nombre guay, ya estás listo`,
     `🎯 **¡Fantástico ${name}!** Tu nombre mola, registro exitoso`,
     `💎 **¡Excelente ${name}!** Qué buen nombre has elegido`,
-    
+
     // Mensajes cortos y directos
     `✅ **¡Listo ${name}!** Ya estás registrado`,
     `🚀 **¡Hecho ${name}!** Todo perfecto`,
     `🔥 **¡Ya está ${name}!** Registrado con éxito`,
     `⚡ **¡Perfecto ${name}!** Listo para empezar`,
     `🎉 **¡Genial ${name}!** Bienvenido al sistema`,
-    
+
     // Mensajes con emojis únicos
     `🦄 **¡Mítico ${name}!** Ya eres parte de esto`,
     `� **¡Volando ${name}!** Registro completado`,
     `🎸 **¡Rockea ${name}!** Ya estás dentro`,
     `🎮 **¡Player ${name}!** Listo para jugar`,
     `� **¡Sabroso ${name}!** Como tu registro, perfecto`,
-    
+
     // Mensajes únicos y creativos
     `🌮 **¡Órale ${name}!** Ya tienes tu lugar aquí`,
     `� **¡Suena bien ${name}!** Registro musical`,
@@ -518,28 +518,28 @@ function getRandomMotivationalText(): string {
     `\n\n✨ Usa \`!help\` para explorar mis comandos`,
     `\n\n⭐ Escribe \`!help\` para ver la lista completa`,
     `\n\n🎯 Prueba \`!help\` para conocer todo lo disponible`,
-    
+
     // Mensajes casuales
     `\n\n😎 ¡Ahora ya puedes usar todo! Escribe \`!help\``,
     `\n\n🔥 ¡Todo desbloqueado! Prueba \`!help\` a ver qué sale`,
     `\n\n🎈 ¡Listo para la acción! Usa \`!help\` para empezar`,
     `\n\n🌟 ¡Ya tienes acceso VIP! Escribe \`!help\``,
     `\n\n🎊 ¡Bienvenido oficialmente! Prueba \`!help\``,
-    
+
     // Mensajes con humor
     `\n\n🤖 Beep boop, configuración completa. \`!help\` para continuar`,
     `\n\n🎮 Achievement unlocked! Usa \`!help\` para ver tus poderes`,
     `\n\n🍕 Registro tan bueno como una pizza. \`!help\` para el menú`,
     `\n\n🦄 Magia completada. Escribe \`!help\` para los hechizos`,
     `\n\n� Despegamos. Usa \`!help\` para ver el mapa`,
-    
+
     // Mensajes simples
     `\n\n📱 Comando disponible: \`!help\``,
     `\n\n� Lista de comandos: \`!help\``,
     `\n\n� Explorar funciones: \`!help\``,
     `\n\n📚 Manual de usuario: \`!help\``,
     `\n\n🎯 Siguiente paso: \`!help\``,
-    
+
     // Sin texto adicional (a veces menos es más)
     ``,
     ``,

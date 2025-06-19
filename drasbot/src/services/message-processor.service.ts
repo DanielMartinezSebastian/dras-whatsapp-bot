@@ -775,7 +775,7 @@ export class MessageProcessorService {
     });
 
     const messageContent = result.response || result.message;
-    
+
     if (!messageContent || !context.user) {
       this.logger.warn(
         'MessageProcessor',
@@ -907,6 +907,27 @@ export class MessageProcessorService {
    */
   public getProcessingOptions(): ProcessingOptions {
     return { ...this.processingOptions };
+  }
+
+  /**
+   * Get processor status
+   */
+  public getStatus(): {
+    isProcessing: boolean;
+    queueSize: number;
+    config: ProcessingPipelineConfig;
+    bridgeStatus: {
+      healthy: boolean;
+      lastCheck: Date;
+      options: ProcessingOptions;
+    };
+  } {
+    return {
+      isProcessing: this.isProcessing,
+      queueSize: 0, // Not implemented yet, would need a queue system
+      config: this.getConfig(),
+      bridgeStatus: this.getBridgeStatus(),
+    };
   }
 
   /**

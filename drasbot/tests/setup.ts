@@ -3,15 +3,49 @@
  * Configures the testing environment for Jest
  */
 
+import { mockWhatsAppBridge, resetWhatsAppBridgeMocks } from './mocks/whatsapp-bridge.mock';
+import { setupTestPorts, cleanupTestPorts } from './utils/test-ports.util';
+
 // Setup environment for tests
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_PATH = ':memory:';
 process.env.LOG_LEVEL = 'error';
 
+// Initialize test environment
+beforeAll(async () => {
+  // Setup dynamic ports to avoid conflicts
+  await setupTestPorts();
+  
+  // Setup WhatsApp Bridge mocks
+  mockWhatsAppBridge();
+});
+
+// Cleanup after each test
+afterEach(() => {
+  // Reset bridge mocks
+  resetWhatsAppBridgeMocks();
+});
+
+// Final cleanup
+afterAll(() => {
+  // Cleanup test ports
+  cleanupTestPorts();
+});
+
 // Mock external dependencies
 jest.mock('dotenv', () => ({
   config: jest.fn(),
 }));
+
+// Mock Database Service globally
+jest.mock('../src/services/database.service', () => {
+  const { mockDatabaseService } = require('./mocks/database.mock');
+  return {
+    DatabaseService: {
+      getInstance: jest.fn(() => mockDatabaseService),
+    },
+  };
+});
 
 // Extend global namespace for test utilities
 declare global {
